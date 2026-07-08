@@ -29,13 +29,15 @@ resume parsing, and job tracking features will be added later.
 |   `-- main.py
 |-- services/
 |   |-- __init__.py
-|   `-- resume_store.py
+|   |-- resume_store.py
+|   `-- upload_service.py
 |-- templates/
 |   |-- base.html
 |   |-- error.html
 |   |-- index.html
 |   |-- resume_detail.html
-|   `-- resume_form.html
+|   |-- resume_form.html
+|   `-- template_upload.html
 |-- static/
 |   `-- css/
 |       `-- styles.css
@@ -104,6 +106,8 @@ implemented in this initial scaffold.
 - Landing page for upcoming features
 - Resume details form with Flask-WTF validation
 - Temporary in-memory resume storage
+- DOCX/PDF resume template uploads
+- Reusable upload service
 - Flask blueprint structure
 - Environment-based configuration
 - Logging to `logs/app.log`

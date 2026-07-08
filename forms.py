@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField, FileRequired
 from wtforms import EmailField, StringField, SubmitField, TextAreaField
 from wtforms.validators import Email, Length, Optional, Regexp, DataRequired
 
@@ -83,3 +84,20 @@ class ResumeDetailsForm(FlaskForm):
     languages = TextAreaField("Languages", validators=[Optional(), Length(max=1000)])
 
     submit = SubmitField("Save Resume Details")
+
+
+class ResumeTemplateUploadForm(FlaskForm):
+    """Validate resume template uploads.
+
+    DOCX files can be edited later, while PDF files are accepted for display
+    only. The app does not populate either file type yet.
+    """
+
+    template_file = FileField(
+        "Resume Template",
+        validators=[
+            FileRequired(message="Choose a DOCX or PDF file."),
+            FileAllowed(["docx", "pdf"], "Only DOCX and PDF files are allowed."),
+        ],
+    )
+    submit = SubmitField("Upload Template")

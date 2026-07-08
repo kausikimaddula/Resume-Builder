@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 
-from forms import ResumeDetailsForm
+from forms import ResumeDetailsForm, ResumeTemplateUploadForm
 from services.resume_store import get_all_resumes, get_resume, save_resume
+from services.upload_service import save_template_upload
 
 
 main_bp = Blueprint("main", __name__)
@@ -75,3 +78,29 @@ def resume_detail(resume_id: int):
         return redirect(url_for("main.resume_form"))
 
     return render_template("resume_detail.html", resume=resume)
+
+
+@main_bp.route("/templates/upload", methods=["GET", "POST"])
+def upload_template():
+    """Upload a DOCX or PDF resume template to the uploads folder."""
+    form = ResumeTemplateUploadForm()
+    uploaded_template = None
+
+    if form.validate_on_submit():
+        try:
+            upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
+            uploaded_template = save_template_upload(form.template_file.data, upload_folder)
+            current_app.logger.info(
+                "Resume template uploaded: %s",
+                uploaded_template.stored_filename,
+            )
+            flash("Resume template uploaded successfully.", "success")
+        except ValueError as error:
+            current_app.logger.warning("Template upload rejected: %s", error)
+            flash(str(error), "danger")
+
+    return render_template(
+        "template_upload.html",
+        form=form,
+        uploaded_template=uploaded_template,
+    )
