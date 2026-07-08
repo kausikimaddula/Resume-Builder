@@ -1,0 +1,3 @@
+2026-07-08 11:26:05,988 INFO [app] AI Resume Builder & Tracker started
+2026-07-08 11:26:31,147 INFO [app] Home page requested
+2026-07-08 11:26:31,487 WARNING [app] HTTP error 404: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.

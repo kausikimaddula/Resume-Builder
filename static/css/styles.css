@@ -1,0 +1,18 @@
+:root {
+  color-scheme: light;
+}
+
+body {
+  min-height: 100vh;
+}
+
+.py-lg-6 {
+  padding-bottom: 5rem;
+  padding-top: 5rem;
+}
+
+.feature-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+}
