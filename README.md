@@ -9,6 +9,7 @@ resume parsing, and job tracking features will be added later.
 
 - Python 3.13+
 - Flask
+- Flask-WTF
 - OpenAI Python SDK
 - python-dotenv
 - Bootstrap 5
@@ -22,15 +23,19 @@ resume parsing, and job tracking features will be added later.
 |-- requirements.txt
 |-- .env.example
 |-- README.md
+|-- forms.py
 |-- routes/
 |   |-- __init__.py
 |   `-- main.py
 |-- services/
-|   `-- __init__.py
+|   |-- __init__.py
+|   `-- resume_store.py
 |-- templates/
 |   |-- base.html
 |   |-- error.html
-|   `-- index.html
+|   |-- index.html
+|   |-- resume_detail.html
+|   `-- resume_form.html
 |-- static/
 |   `-- css/
 |       `-- styles.css
@@ -97,6 +102,8 @@ implemented in this initial scaffold.
 - Home page
 - Bootstrap 5 navigation bar
 - Landing page for upcoming features
+- Resume details form with Flask-WTF validation
+- Temporary in-memory resume storage
 - Flask blueprint structure
 - Environment-based configuration
 - Logging to `logs/app.log`
