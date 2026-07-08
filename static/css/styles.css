@@ -16,3 +16,19 @@ body {
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
 }
+
+.form-section {
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.sticky-actions {
+  border-radius: 0.5rem;
+  bottom: 1rem;
+  position: sticky;
+  z-index: 10;
+}
+
+.preserve-lines {
+  white-space: pre-line;
+}

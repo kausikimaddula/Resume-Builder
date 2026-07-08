@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Details | AI Resume Builder & Tracker{% endblock %}
+
+{% macro render_field(field, placeholder="", rows=0) %}
+  <div class="mb-3">
+    {{ field.label(class="form-label fw-semibold") }}
+    {% if rows %}
+      {{ field(class="form-control" ~ (" is-invalid" if field.errors else ""), rows=rows, placeholder=placeholder) }}
+    {% else %}
+      {{ field(class="form-control" ~ (" is-invalid" if field.errors else ""), placeholder=placeholder) }}
+    {% endif %}
+    {% if field.errors %}
+      <div class="invalid-feedback">
+        {{ field.errors[0] }}
+      </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% block content %}
+  <section class="py-5 bg-white border-bottom">
+    <div class="container">
+      <div class="row align-items-end g-3">
+        <div class="col-lg-8">
+          <p class="text-uppercase text-primary fw-semibold small mb-2">Resume details</p>
+          <h1 class="h2 fw-bold mb-2">Add your resume information</h1>
+          <p class="text-secondary mb-0">
+            Save the core resume sections in memory for now. Database storage and AI
+            assistance will come later.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-5">
+    <div class="container">
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+
+        <div class="row g-4">
+          <div class="col-lg-6">
+            <div class="form-section bg-white border shadow-sm">
+              <h2 class="h5 fw-bold mb-4">Personal Information</h2>
+              {{ render_field(form.full_name, "Jane Doe") }}
+              {{ render_field(form.email, "jane@example.com") }}
+              {{ render_field(form.phone, "+1 555 123 4567") }}
+              {{ render_field(form.linkedin, "https://www.linkedin.com/in/janedoe") }}
+              {{ render_field(form.github, "https://github.com/janedoe") }}
+              {{ render_field(form.portfolio, "https://janedoe.dev") }}
+              {{ render_field(form.address, "City, State, Country") }}
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="form-section bg-white border shadow-sm">
+              <h2 class="h5 fw-bold mb-4">Education</h2>
+              {{ render_field(form.degree, "B.Tech in Computer Science") }}
+              {{ render_field(form.college, "Example University") }}
+              {{ render_field(form.graduation_year, "2026") }}
+              {{ render_field(form.gpa, "8.7 / 10") }}
+            </div>
+
+            <div class="form-section bg-white border shadow-sm mt-4">
+              <h2 class="h5 fw-bold mb-4">Skills</h2>
+              {{ render_field(form.skills, "Python\nFlask\nSQL\nBootstrap", 6) }}
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="form-section bg-white border shadow-sm">
+              <h2 class="h5 fw-bold mb-4">Experience</h2>
+              {{ render_field(form.company, "Company name") }}
+              {{ render_field(form.role, "Software Developer Intern") }}
+              {{ render_field(form.duration, "Jan 2026 - Jun 2026") }}
+              {{ render_field(form.responsibilities, "Built Flask routes and responsive templates.", 6) }}
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="form-section bg-white border shadow-sm">
+              <h2 class="h5 fw-bold mb-4">Projects</h2>
+              {{ render_field(form.project_name, "Resume Builder") }}
+              {{ render_field(form.project_description, "A web app for managing resume details.", 5) }}
+              {{ render_field(form.technologies, "Python, Flask, Bootstrap") }}
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="form-section bg-white border shadow-sm">
+              <h2 class="h5 fw-bold mb-4">Certifications</h2>
+              {{ render_field(form.certifications, "Certification name - issuer", 5) }}
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="form-section bg-white border shadow-sm">
+              <h2 class="h5 fw-bold mb-4">Achievements</h2>
+              {{ render_field(form.achievements, "Hackathon finalist\nDean's list", 5) }}
+            </div>
+          </div>
+
+          <div class="col-lg-4">
+            <div class="form-section bg-white border shadow-sm">
+              <h2 class="h5 fw-bold mb-4">Languages</h2>
+              {{ render_field(form.languages, "English\nHindi", 5) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="sticky-actions bg-white border shadow-sm mt-4 p-3">
+          <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+            <p class="small text-secondary mb-0">
+              This information is stored temporarily in server memory only.
+            </p>
+            {{ form.submit(class="btn btn-primary btn-lg") }}
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+{% endblock %}

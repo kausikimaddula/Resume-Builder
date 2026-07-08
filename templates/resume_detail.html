@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Saved Resume Details | AI Resume Builder & Tracker{% endblock %}
+
+{% macro show_text(value) %}
+  {{ value if value else "Not provided" }}
+{% endmacro %}
+
+{% block content %}
+  <section class="py-5 bg-white border-bottom">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+          <p class="text-uppercase text-success fw-semibold small mb-2">Saved in memory</p>
+          <h1 class="h2 fw-bold mb-2">{{ resume.personal.full_name }}</h1>
+          <p class="text-secondary mb-0">
+            Resume submission #{{ resume.id }} is available until the server restarts.
+          </p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+          <a class="btn btn-primary" href="{{ url_for('main.resume_form') }}">Add another resume</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-5">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="form-section bg-white border shadow-sm h-100">
+            <h2 class="h5 fw-bold mb-3">Personal Information</h2>
+            <dl class="row mb-0">
+              <dt class="col-sm-4">Email</dt>
+              <dd class="col-sm-8">{{ resume.personal.email }}</dd>
+              <dt class="col-sm-4">Phone</dt>
+              <dd class="col-sm-8">{{ resume.personal.phone }}</dd>
+              <dt class="col-sm-4">LinkedIn</dt>
+              <dd class="col-sm-8">{{ show_text(resume.personal.linkedin) }}</dd>
+              <dt class="col-sm-4">GitHub</dt>
+              <dd class="col-sm-8">{{ show_text(resume.personal.github) }}</dd>
+              <dt class="col-sm-4">Portfolio</dt>
+              <dd class="col-sm-8">{{ show_text(resume.personal.portfolio) }}</dd>
+              <dt class="col-sm-4">Address</dt>
+              <dd class="col-sm-8">{{ show_text(resume.personal.address) }}</dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="form-section bg-white border shadow-sm h-100">
+            <h2 class="h5 fw-bold mb-3">Education</h2>
+            <dl class="row mb-0">
+              <dt class="col-sm-4">Degree</dt>
+              <dd class="col-sm-8">{{ resume.education.degree }}</dd>
+              <dt class="col-sm-4">College</dt>
+              <dd class="col-sm-8">{{ resume.education.college }}</dd>
+              <dt class="col-sm-4">Graduation Year</dt>
+              <dd class="col-sm-8">{{ resume.education.graduation_year }}</dd>
+              <dt class="col-sm-4">GPA</dt>
+              <dd class="col-sm-8">{{ show_text(resume.education.gpa) }}</dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="form-section bg-white border shadow-sm h-100">
+            <h2 class="h5 fw-bold mb-3">Experience</h2>
+            <p class="mb-1"><strong>{{ resume.experience.role }}</strong></p>
+            <p class="text-secondary mb-3">{{ resume.experience.company }} | {{ resume.experience.duration }}</p>
+            <p class="preserve-lines mb-0">{{ resume.experience.responsibilities }}</p>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="form-section bg-white border shadow-sm h-100">
+            <h2 class="h5 fw-bold mb-3">Project</h2>
+            <p class="mb-1"><strong>{{ resume.projects.project_name }}</strong></p>
+            <p class="preserve-lines">{{ resume.projects.description }}</p>
+            <p class="mb-0"><strong>Technologies:</strong> {{ resume.projects.technologies }}</p>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="form-section bg-white border shadow-sm h-100">
+            <h2 class="h6 fw-bold">Skills</h2>
+            <p class="preserve-lines mb-0">{{ resume.skills }}</p>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="form-section bg-white border shadow-sm h-100">
+            <h2 class="h6 fw-bold">Certifications</h2>
+            <p class="preserve-lines mb-0">{{ show_text(resume.certifications) }}</p>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="form-section bg-white border shadow-sm h-100">
+            <h2 class="h6 fw-bold">Achievements</h2>
+            <p class="preserve-lines mb-0">{{ show_text(resume.achievements) }}</p>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="form-section bg-white border shadow-sm h-100">
+            <h2 class="h6 fw-bold">Languages</h2>
+            <p class="preserve-lines mb-0">{{ show_text(resume.languages) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
