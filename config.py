@@ -29,9 +29,11 @@ class Config:
     PORT = int(os.getenv("FLASK_PORT", "5000"))
 
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
     # Uploaded resumes will live here in a future feature.
     UPLOAD_FOLDER = BASE_DIR / "uploads"
+    GENERATED_FOLDER = UPLOAD_FOLDER / "generated"
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
     LOG_FOLDER = BASE_DIR / "logs"

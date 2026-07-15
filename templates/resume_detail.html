@@ -27,6 +27,42 @@
   <section class="py-5">
     <div class="container">
       <div class="row g-4">
+        <div class="col-12">
+          <div class="form-section bg-white border shadow-sm">
+            <div class="row align-items-center g-3">
+              <div class="col-lg-6">
+                <h2 class="h5 fw-bold mb-2">AI Resume Builder</h2>
+                <p class="text-secondary mb-0">
+                  Generate a completed DOCX resume from these details and an uploaded DOCX template.
+                </p>
+              </div>
+              <div class="col-lg-6">
+                {% if generate_form.template_filename.choices %}
+                  <form
+                    class="row g-2 align-items-end"
+                    method="post"
+                    action="{{ url_for('main.generate_resume', resume_id=resume.id) }}"
+                  >
+                    {{ generate_form.hidden_tag() }}
+                    <div class="col-sm">
+                      {{ generate_form.template_filename.label(class="form-label fw-semibold") }}
+                      {{ generate_form.template_filename(class="form-select") }}
+                    </div>
+                    <div class="col-sm-auto">
+                      {{ generate_form.submit(class="btn btn-success w-100") }}
+                    </div>
+                  </form>
+                {% else %}
+                  <div class="alert alert-warning mb-0" role="alert">
+                    Upload a DOCX template before generating a resume.
+                    <a class="alert-link" href="{{ url_for('main.upload_template') }}">Upload template</a>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="col-lg-6">
           <div class="form-section bg-white border shadow-sm h-100">
             <h2 class="h5 fw-bold mb-3">Personal Information</h2>

@@ -26,3 +26,13 @@
 2026-07-08 17:11:49,147 INFO [app] Home page requested
 2026-07-08 17:11:59,801 INFO [app] Home page requested
 2026-07-08 17:12:05,439 INFO [app] Home page requested
+2026-07-08 17:28:32,883 INFO [app] AI Resume Builder & Tracker started
+2026-07-08 17:29:27,407 INFO [app] AI Resume Builder & Tracker started
+2026-07-08 17:29:27,709 INFO [app] Home page requested
+2026-07-15 16:45:07,384 INFO [app] AI Resume Builder & Tracker started
+2026-07-15 16:45:13,784 INFO [app] AI Resume Builder & Tracker started
+2026-07-15 16:45:41,229 INFO [app] Home page requested
+2026-07-15 16:45:41,692 WARNING [app] HTTP error 404: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2026-07-15 16:46:38,245 INFO [app] Home page requested
+2026-07-15 16:46:38,460 WARNING [app] HTTP error 404: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2026-07-15 17:09:36,290 INFO [app] Home page requested
