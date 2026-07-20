@@ -24,6 +24,7 @@ from services.upload_service import (
     save_resume_upload,
 )
 from services.resume_parser import extract_resume_text
+from services.ats_checker import AtsAnalysisError, analyze_resume_ats
 
 
 main_bp = Blueprint("main", __name__)
@@ -132,6 +133,7 @@ def upload_resume():
     form = ResumeUploadForm()
     extracted_text = None
     file_info = None
+    ats_analysis = None
 
     if form.validate_on_submit():
         try:
@@ -146,6 +148,19 @@ def upload_resume():
                 "file_type": uploaded_file.file_type,
             }
             
+            # Perform ATS analysis
+            api_key = current_app.config.get("OPENAI_API_KEY")
+            model = current_app.config.get("OPENAI_MODEL")
+            try:
+                ats_analysis = analyze_resume_ats(
+                    resume_text=extracted_text,
+                    api_key=api_key,
+                    model=model,
+                )
+            except AtsAnalysisError as ats_err:
+                current_app.logger.warning("ATS Score Analysis failed: %s", ats_err)
+                flash(f"ATS Score Analysis could not be completed: {ats_err}", "warning")
+                
             current_app.logger.info(
                 "Resume uploaded and text extracted: %s",
                 uploaded_file.stored_filename,
@@ -160,6 +175,7 @@ def upload_resume():
         form=form,
         extracted_text=extracted_text,
         file_info=file_info,
+        ats_analysis=ats_analysis,
     )
 
 
