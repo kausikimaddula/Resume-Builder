@@ -4,11 +4,25 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Blueprint, current_app, flash, redirect, render_template, url_for
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    send_from_directory,
+    url_for,
+)
 
-from forms import ResumeDetailsForm, ResumeTemplateUploadForm, ResumeUploadForm
+from forms import GenerateResumeForm, ResumeDetailsForm, ResumeTemplateUploadForm, ResumeUploadForm
 from services.resume_store import get_all_resumes, get_resume, save_resume
-from services.upload_service import save_template_upload, save_resume_upload
+from services.resume_builder import ResumeBuilderError, build_resume_from_template
+from services.upload_service import (
+    list_docx_templates,
+    resolve_uploaded_template,
+    save_template_upload,
+    save_resume_upload,
+)
 from services.resume_parser import extract_resume_text
 
 
@@ -78,7 +92,12 @@ def resume_detail(resume_id: int):
         flash("That resume submission is no longer available.", "warning")
         return redirect(url_for("main.resume_form"))
 
-    return render_template("resume_detail.html", resume=resume)
+    generate_form = build_generate_form()
+    return render_template(
+        "resume_detail.html",
+        resume=resume,
+        generate_form=generate_form,
+    )
 
 
 @main_bp.route("/templates/upload", methods=["GET", "POST"])
@@ -142,3 +161,65 @@ def upload_resume():
         extracted_text=extracted_text,
         file_info=file_info,
     )
+
+
+@main_bp.post("/resume/<int:resume_id>/generate")
+def generate_resume(resume_id: int):
+    """Generate a completed DOCX resume from saved details and a DOCX template."""
+    resume = get_resume(resume_id)
+    if resume is None:
+        flash("Resume details were not found. Please submit the form again.", "warning")
+        return redirect(url_for("main.resume_form"))
+
+    form = build_generate_form()
+    if not form.validate_on_submit():
+        flash("Choose a DOCX template before generating a resume.", "danger")
+        return redirect(url_for("main.resume_detail", resume_id=resume_id))
+
+    try:
+        upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
+        generated_folder = Path(current_app.config["GENERATED_FOLDER"])
+        template_path = resolve_uploaded_template(
+            upload_folder,
+            form.template_filename.data,
+        )
+        generated_resume = build_resume_from_template(
+            resume_details=resume,
+            template_path=template_path,
+            output_folder=generated_folder,
+            api_key=current_app.config["OPENAI_API_KEY"],
+            model=current_app.config["OPENAI_MODEL"],
+        )
+    except (FileNotFoundError, ValueError, ResumeBuilderError) as error:
+        current_app.logger.warning("Resume generation failed: %s", error)
+        flash(str(error), "danger")
+        return redirect(url_for("main.resume_detail", resume_id=resume_id))
+
+    current_app.logger.info("Generated resume: %s", generated_resume.filename)
+    flash("Completed resume generated successfully.", "success")
+    return redirect(
+        url_for("main.download_generated_resume", filename=generated_resume.filename)
+    )
+
+
+@main_bp.get("/generated/<path:filename>")
+def download_generated_resume(filename: str):
+    """Download a generated resume from the generated uploads folder."""
+    return send_from_directory(
+        Path(current_app.config["GENERATED_FOLDER"]),
+        filename,
+        as_attachment=True,
+        download_name=filename,
+    )
+
+
+def build_generate_form() -> GenerateResumeForm:
+    """Create a template-selection form with current DOCX uploads."""
+    form = GenerateResumeForm()
+    upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
+    templates = list_docx_templates(upload_folder)
+    form.template_filename.choices = [
+        (template.stored_filename, template.original_filename)
+        for template in templates
+    ]
+    return form

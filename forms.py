@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileRequired
-from wtforms import EmailField, StringField, SubmitField, TextAreaField
+from wtforms import EmailField, SelectField, StringField, SubmitField, TextAreaField
 from wtforms.validators import Email, Length, Optional, Regexp, DataRequired
 
 
@@ -115,3 +115,12 @@ class ResumeUploadForm(FlaskForm):
     )
     submit = SubmitField("Extract Text")
 
+
+class GenerateResumeForm(FlaskForm):
+    """Choose a saved DOCX template for AI resume generation."""
+
+    template_filename = SelectField(
+        "DOCX Template",
+        validators=[DataRequired(message="Choose a DOCX template.")],
+    )
+    submit = SubmitField("Generate Resume")
