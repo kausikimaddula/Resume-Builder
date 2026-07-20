@@ -3,76 +3,151 @@
 {% block title %}Upload Resume | AI Resume Builder & Tracker{% endblock %}
 
 {% block content %}
-  <section class="py-5 bg-white border-bottom">
-    <div class="container">
-      <div class="row align-items-end g-3">
-        <div class="col-lg-8">
-          <p class="text-uppercase text-primary fw-semibold small mb-2">Resume Parser</p>
-          <h1 class="h2 fw-bold mb-2">Upload and Extract Resume Text</h1>
-          <p class="text-secondary mb-0">
-            Upload your existing resume in PDF or DOCX format to parse and extract the plain text content.
-          </p>
-        </div>
+<section class="py-5 bg-white border-bottom">
+  <div class="container">
+    <div class="row align-items-end g-3">
+      <div class="col-lg-8">
+        <p class="text-uppercase text-primary fw-semibold small mb-2">Resume Parser</p>
+        <h1 class="h2 fw-bold mb-2">Upload and Extract Resume Text</h1>
+        <p class="text-secondary mb-0">
+          Upload your existing resume in PDF or DOCX format to parse and extract the plain text content.
+        </p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="py-5">
-    <div class="container">
-      <div class="row g-4">
-        <!-- Input Column -->
-        <div class="col-lg-12">
-          <div class="form-section bg-white border shadow-sm">
-            <form method="post" enctype="multipart/form-data" novalidate class="row align-items-end g-3">
-              {{ form.hidden_tag() }}
+<section class="py-5">
+  <div class="container">
+    <div class="row g-4">
+      <!-- Input Column -->
+      <div class="col-lg-12">
+        <div class="form-section bg-white border shadow-sm">
+          <form method="post" enctype="multipart/form-data" novalidate class="row align-items-end g-3">
+            {{ form.hidden_tag() }}
 
-              <div class="col-md-9 mb-0">
-                {{ form.resume_file.label(class="form-label fw-semibold") }}
-                {{ form.resume_file(class="form-control" ~ (" is-invalid" if form.resume_file.errors else "")) }}
-                {% if form.resume_file.errors %}
-                  <div class="invalid-feedback">
-                    {{ form.resume_file.errors[0] }}
+            <div class="col-md-9 mb-0">
+              {{ form.resume_file.label(class="form-label fw-semibold") }}
+              {{ form.resume_file(class="form-control" ~ (" is-invalid" if form.resume_file.errors else "")) }}
+              {% if form.resume_file.errors %}
+              <div class="invalid-feedback">
+                {{ form.resume_file.errors[0] }}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-3 mb-0 d-grid">
+              {{ form.submit(class="btn btn-primary") }}
+            </div>
+          </form>
+          <div class="form-text mt-2 text-muted">
+            Accepted formats: .docx and .pdf (Max size: 5MB)
+          </div>
+        </div>
+      </div>
+
+      {% if file_info and extracted_text %}
+      <!-- Output Column -->
+      <div class="col-lg-12 border-bottom pb-4 mb-4">
+        <div class="form-section bg-white border shadow-sm">
+          <h2 class="h5 fw-bold mb-3 d-flex justify-content-between align-items-center">
+            <span>Extracted Text — {{ file_info.original_filename }} ({{ file_info.file_type }})</span>
+            <button class="btn btn-sm btn-outline-secondary" onclick="copyText()">Copy Text</button>
+          </h2>
+          <hr>
+          <div class="bg-light p-3 border rounded">
+            <pre id="extracted-text-area" class="mb-0 text-dark overflow-auto"
+              style="max-height: 500px; white-space: pre-wrap; font-family: var(--bs-font-monospace);">{{ extracted_text }}</pre>
+          </div>
+        </div>
+      </div>
+
+      {% if proofread_results %}
+      <!-- Grammar and Spelling Checker Column -->
+      <div class="col-lg-12">
+        <div class="form-section bg-white border shadow-sm p-4">
+          <h2 class="h4 fw-bold mb-3 d-flex justify-content-between align-items-center">
+            <span>Grammar & Spelling Review</span>
+            <span class="badge bg-secondary fs-6 fw-semibold">{{ proofread_results.analysis_type }}</span>
+          </h2>
+          <hr class="mb-4">
+
+          {% if proofread_results.mistakes %}
+          <div class="alert alert-warning mb-4">
+            Found <strong>{{ proofread_results.mistakes|length }}</strong> potential issues in your resume. Check
+            suggestions below:
+          </div>
+
+          <div class="row g-3">
+            {% for mistake in proofread_results.mistakes %}
+            <div class="col-12">
+              <div class="card border border-light-subtle shadow-xs mb-3">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                  <span class="badge bg-danger bg-opacity-10 text-danger border border-danger-subtle fw-semibold">Issue
+                    #{{ loop.index }}</span>
+                  <small class="text-secondary small fw-semibold">Proofreader Notice</small>
+                </div>
+                <div class="card-body">
+                  <div class="mb-3">
+                    <strong class="text-secondary small d-block mb-1 text-uppercase fw-semibold"
+                      style="font-size: 0.75rem; letter-spacing: 0.5px;">Original Sentence</strong>
+                    <div class="p-2 bg-light border border-light-subtle rounded text-dark">
+                      {% if mistake.mistake_word and mistake.mistake_word in mistake.original %}
+                      {{ mistake.original.replace(mistake.mistake_word, '<mark
+                        class="bg-danger bg-opacity-25 text-danger border border-danger-subtle px-1 rounded"
+                        style="font-weight: bold;">' ~ mistake.mistake_word ~ '</mark>') | safe }}
+                      {% else %}
+                      {{ mistake.original }}
+                      {% endif %}
+                    </div>
                   </div>
-                {% endif %}
+                  <div class="mb-3">
+                    <strong class="text-success small d-block mb-1 text-uppercase fw-semibold"
+                      style="font-size: 0.75rem; letter-spacing: 0.5px;">Suggested Correction</strong>
+                    <div class="p-2 bg-success bg-opacity-10 border border-success-subtle rounded text-dark"
+                      style="font-weight: 500;">
+                      {{ mistake.correction }}
+                    </div>
+                  </div>
+                  <div>
+                    <strong class="text-secondary small d-block mb-1 text-uppercase fw-semibold"
+                      style="font-size: 0.75rem; letter-spacing: 0.5px;">Reason & Context</strong>
+                    <p class="mb-0 text-muted small">
+                      {{ mistake.reason }}
+                    </p>
+                  </div>
+                </div>
               </div>
-
-              <div class="col-md-3 mb-0 d-grid">
-                {{ form.submit(class="btn btn-primary") }}
-              </div>
-            </form>
-            <div class="form-text mt-2 text-muted">
-              Accepted formats: .docx and .pdf (Max size: 5MB)
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="alert alert-success d-flex align-items-center mb-0">
+            <svg class="me-2" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path
+                d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+            </svg>
+            <div>
+              <strong>Great job!</strong> No grammar, spelling, or punctuation mistakes were detected in your resume.
             </div>
           </div>
+          {% endif %}
         </div>
-
-        {% if file_info and extracted_text %}
-        <!-- Output Column -->
-        <div class="col-lg-12">
-          <div class="form-section bg-white border shadow-sm">
-            <h2 class="h5 fw-bold mb-3 d-flex justify-content-between align-items-center">
-              <span>Extracted Text — {{ file_info.original_filename }} ({{ file_info.file_type }})</span>
-              <button class="btn btn-sm btn-outline-secondary" onclick="copyText()">Copy Text</button>
-            </h2>
-            <hr>
-            <div class="bg-light p-3 border rounded">
-              <pre id="extracted-text-area" class="mb-0 text-dark overflow-auto" style="max-height: 500px; white-space: pre-wrap; font-family: var(--bs-font-monospace);">{{ extracted_text }}</pre>
-            </div>
-          </div>
-        </div>
-        
-        <script>
-          function copyText() {
-            var text = document.getElementById("extracted-text-area").textContent;
-            navigator.clipboard.writeText(text).then(function() {
-              alert("Text copied to clipboard!");
-            }, function(err) {
-              console.error("Could not copy text: ", err);
-            });
-          }
-        </script>
-        {% endif %}
       </div>
+      {% endif %}
+
+      <script>
+        function copyText() {
+          var text = document.getElementById("extracted-text-area").textContent;
+          navigator.clipboard.writeText(text).then(function () {
+            alert("Text copied to clipboard!");
+          }, function (err) {
+            console.error("Could not copy text: ", err);
+          });
+        }
+      </script>
+      {% endif %}
     </div>
-  </section>
+  </div>
+</section>
 {% endblock %}

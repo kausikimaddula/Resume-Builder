@@ -24,6 +24,7 @@ from services.upload_service import (
     save_resume_upload,
 )
 from services.resume_parser import extract_resume_text
+from services.proofreader import ProofreaderError, proofread_resume
 
 
 main_bp = Blueprint("main", __name__)
@@ -132,6 +133,7 @@ def upload_resume():
     form = ResumeUploadForm()
     extracted_text = None
     file_info = None
+    proofread_results = None
 
     if form.validate_on_submit():
         try:
@@ -146,6 +148,19 @@ def upload_resume():
                 "file_type": uploaded_file.file_type,
             }
             
+            # Perform proofreading analysis
+            api_key = current_app.config.get("OPENAI_API_KEY")
+            model = current_app.config.get("OPENAI_MODEL")
+            try:
+                proofread_results = proofread_resume(
+                    resume_text=extracted_text,
+                    api_key=api_key,
+                    model=model,
+                )
+            except ProofreaderError as pr_err:
+                current_app.logger.warning("Proofreading Analysis failed: %s", pr_err)
+                flash(f"Proofreading Analysis could not be completed: {pr_err}", "warning")
+                
             current_app.logger.info(
                 "Resume uploaded and text extracted: %s",
                 uploaded_file.stored_filename,
@@ -160,6 +175,7 @@ def upload_resume():
         form=form,
         extracted_text=extracted_text,
         file_info=file_info,
+        proofread_results=proofread_results,
     )
 
 
