@@ -3,3 +3,5 @@ Flask-WTF
 email-validator
 openai
 python-dotenv
+pypdf
+python-docx

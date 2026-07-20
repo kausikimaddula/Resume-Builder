@@ -56,3 +56,28 @@ def save_template_upload(file: FileStorage, upload_folder: Path) -> UploadedTemp
         file_type="DOCX template for editing" if extension == "docx" else "PDF for display only",
         path=destination,
     )
+
+
+def save_resume_upload(file: FileStorage, upload_folder: Path) -> UploadedTemplate:
+    """Save an uploaded DOCX or PDF resume inside the uploads folder."""
+    original_filename = file.filename or ""
+
+    if not is_allowed_template(original_filename):
+        raise ValueError("Only DOCX and PDF files are allowed.")
+
+    extension = get_extension(original_filename)
+    safe_name = secure_filename(original_filename)
+    stored_filename = f"{Path(safe_name).stem}-{uuid4().hex[:8]}.{extension}"
+
+    upload_folder.mkdir(parents=True, exist_ok=True)
+    destination = upload_folder / stored_filename
+    file.save(destination)
+
+    return UploadedTemplate(
+        original_filename=original_filename,
+        stored_filename=stored_filename,
+        extension=extension,
+        file_type="DOCX Resume" if extension == "docx" else "PDF Resume",
+        path=destination,
+    )
+

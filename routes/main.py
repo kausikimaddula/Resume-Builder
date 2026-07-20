@@ -6,9 +6,10 @@ from pathlib import Path
 
 from flask import Blueprint, current_app, flash, redirect, render_template, url_for
 
-from forms import ResumeDetailsForm, ResumeTemplateUploadForm
+from forms import ResumeDetailsForm, ResumeTemplateUploadForm, ResumeUploadForm
 from services.resume_store import get_all_resumes, get_resume, save_resume
-from services.upload_service import save_template_upload
+from services.upload_service import save_template_upload, save_resume_upload
+from services.resume_parser import extract_resume_text
 
 
 main_bp = Blueprint("main", __name__)
@@ -103,4 +104,41 @@ def upload_template():
         "template_upload.html",
         form=form,
         uploaded_template=uploaded_template,
+    )
+
+
+@main_bp.route("/resume/upload", methods=["GET", "POST"])
+def upload_resume():
+    """Upload an existing resume to parse and display its content."""
+    form = ResumeUploadForm()
+    extracted_text = None
+    file_info = None
+
+    if form.validate_on_submit():
+        try:
+            upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
+            uploaded_file = save_resume_upload(form.resume_file.data, upload_folder)
+            
+            # Extract text
+            extracted_text = extract_resume_text(uploaded_file.path)
+            
+            file_info = {
+                "original_filename": uploaded_file.original_filename,
+                "file_type": uploaded_file.file_type,
+            }
+            
+            current_app.logger.info(
+                "Resume uploaded and text extracted: %s",
+                uploaded_file.stored_filename,
+            )
+            flash("Resume uploaded and parsed successfully.", "success")
+        except Exception as error:
+            current_app.logger.exception("Failed to upload/parse resume: %s", error)
+            flash(str(error), "danger")
+
+    return render_template(
+        "resume_upload.html",
+        form=form,
+        extracted_text=extracted_text,
+        file_info=file_info,
     )

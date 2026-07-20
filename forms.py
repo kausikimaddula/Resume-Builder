@@ -101,3 +101,17 @@ class ResumeTemplateUploadForm(FlaskForm):
         ],
     )
     submit = SubmitField("Upload Template")
+
+
+class ResumeUploadForm(FlaskForm):
+    """Validate uploaded resume files for text extraction."""
+
+    resume_file = FileField(
+        "Upload Resume",
+        validators=[
+            FileRequired(message="Choose a DOCX or PDF file to extract text from."),
+            FileAllowed(["docx", "pdf"], "Only DOCX and PDF files are allowed."),
+        ],
+    )
+    submit = SubmitField("Extract Text")
+
