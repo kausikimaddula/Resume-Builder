@@ -24,6 +24,7 @@ from services.upload_service import (
     save_resume_upload,
 )
 from services.resume_parser import extract_resume_text
+from services.proofreader import ProofreaderError, proofread_resume
 from services.ats_checker import AtsAnalysisError, analyze_resume_ats
 
 
@@ -134,6 +135,7 @@ def upload_resume():
     extracted_text = None
     file_info = None
     ats_analysis = None
+    proofread_results = None
 
     if form.validate_on_submit():
         try:
@@ -148,9 +150,11 @@ def upload_resume():
                 "file_type": uploaded_file.file_type,
             }
             
-            # Perform ATS analysis
+            # General OpenAI API details
             api_key = current_app.config.get("OPENAI_API_KEY")
             model = current_app.config.get("OPENAI_MODEL")
+            
+            # Perform ATS analysis
             try:
                 ats_analysis = analyze_resume_ats(
                     resume_text=extracted_text,
@@ -160,6 +164,17 @@ def upload_resume():
             except AtsAnalysisError as ats_err:
                 current_app.logger.warning("ATS Score Analysis failed: %s", ats_err)
                 flash(f"ATS Score Analysis could not be completed: {ats_err}", "warning")
+                
+            # Perform proofreading analysis
+            try:
+                proofread_results = proofread_resume(
+                    resume_text=extracted_text,
+                    api_key=api_key,
+                    model=model,
+                )
+            except ProofreaderError as pr_err:
+                current_app.logger.warning("Proofreading Analysis failed: %s", pr_err)
+                flash(f"Proofreading Analysis could not be completed: {pr_err}", "warning")
                 
             current_app.logger.info(
                 "Resume uploaded and text extracted: %s",
@@ -176,6 +191,7 @@ def upload_resume():
         extracted_text=extracted_text,
         file_info=file_info,
         ats_analysis=ats_analysis,
+        proofread_results=proofread_results,
     )
 
 

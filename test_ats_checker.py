@@ -121,9 +121,10 @@ class TestAtsChecker(unittest.TestCase):
         
         # Resolve test file
         if not docx_path.exists():
-            # Create a mock file if not present
-            with open(docx_path, "wb") as f:
-                f.write(b"mock docx file content")
+            from docx import Document
+            doc = Document()
+            doc.add_paragraph("Jane Doe Resume")
+            doc.save(docx_path)
 
         with open(docx_path, "rb") as docx_file:
             response = self.client.post(
