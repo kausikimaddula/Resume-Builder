@@ -10,8 +10,8 @@
                 <p class="text-uppercase text-primary fw-semibold small mb-2">Resume vs JD Matcher</p>
                 <h1 class="h2 fw-bold mb-2">Compare Resume and Job Description</h1>
                 <p class="text-secondary mb-0">
-                    Upload your resume and the target job description (as files or text) to evaluate match percentage,
-                    identify skill gaps, and get recommendations.
+                    Upload your resume and the target job description to evaluate matching percentages, missing
+                    technical/soft skills, project recommendations, and a dedicated learning roadmap.
                 </p>
             </div>
         </div>
@@ -21,7 +21,7 @@
 <section class="py-5">
     <div class="container">
         <div class="row g-4">
-            <!-- Input Section -->
+            <!-- Input Forms Section -->
             <div class="col-12">
                 <div class="form-section bg-white border shadow-sm p-4 rounded">
                     <form method="post" enctype="multipart/form-data" novalidate>
@@ -88,153 +88,179 @@
                 </div>
             </div>
 
-            <!-- Results Display Section -->
+            <!-- Card-Based Results Display Section -->
             {% if match_results %}
             <div class="col-12 mt-5">
-                <div class="form-section bg-white border shadow-sm p-4 rounded mb-4">
-                    <h2 class="h4 fw-bold mb-3 d-flex justify-content-between align-items-center">
-                        <span>Match Analysis Results</span>
-                        <span class="badge bg-secondary fs-6 fw-semibold">{{ match_results.analysis_type }}</span>
-                    </h2>
-                    <div class="text-muted small mb-3">
-                        Compared Resume (<strong>{{ inputs_info.resume_source }}</strong>) vs Job Description
-                        (<strong>{{ inputs_info.jd_source }}</strong>)
-                    </div>
-                    <hr class="mb-4">
+                <h2 class="h4 fw-bold mb-1 d-flex justify-content-between align-items-center">
+                    <span>Match Analysis Dashboard</span>
+                    <span class="badge bg-secondary fs-6 fw-semibold">{{ match_results.analysis_type }}</span>
+                </h2>
+                <p class="text-secondary small mb-4">
+                    Compared Resume (<strong>{{ inputs_info.resume_source }}</strong>) vs Job Description (<strong>{{
+                        inputs_info.jd_source }}</strong>)
+                </p>
 
-                    <!-- Match Percentage Section -->
-                    <div class="row align-items-center g-4 mb-5">
-                        <div class="col-md-3 text-center border-end">
-                            <div class="display-3 fw-bold text-primary mb-1">{{ match_results.match_percentage }}%</div>
-                            <div class="text-uppercase fw-semibold text-secondary small">Overall Match</div>
+                <div class="row g-4">
+
+                    <!-- Card 1: Overall Match Rating -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-secondary mb-3">Overall Match Rating</h3>
+                            <div class="d-flex align-items-center g-3">
+                                <div class="display-3 fw-bold text-primary me-4">{{ match_results.match_percentage }}%
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="progress" style="height: 20px;">
+                                        {% if match_results.match_percentage >= 80 %}
+                                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                            role="progressbar" style="width: {{ match_results.match_percentage }}%;"
+                                            aria-valuenow="{{ match_results.match_percentage }}" aria-valuemin="0"
+                                            aria-valuemax="100"></div>
+                                        {% elif match_results.match_percentage >= 50 %}
+                                        <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+                                            role="progressbar" style="width: {{ match_results.match_percentage }}%;"
+                                            aria-valuenow="{{ match_results.match_percentage }}" aria-valuemin="0"
+                                            aria-valuemax="100"></div>
+                                        {% else %}
+                                        <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated"
+                                            role="progressbar" style="width: {{ match_results.match_percentage }}%;"
+                                            aria-valuenow="{{ match_results.match_percentage }}" aria-valuemin="0"
+                                            aria-valuemax="100"></div>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-muted small mt-2 mb-0">Target match: 80% or deeper skills
+                                        integration.</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-9 ps-md-4">
-                            <h3 class="h6 fw-bold mb-2">Requirement Alignment Rating</h3>
-                            <div class="progress" style="height: 25px;">
-                                {% if match_results.match_percentage >= 80 %}
-                                <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
-                                    role="progressbar"
-                                    style="width: {{ match_results.match_percentage }}%; font-weight: bold;"
-                                    aria-valuenow="{{ match_results.match_percentage }}" aria-valuemin="0"
-                                    aria-valuemax="100">{{ match_results.match_percentage }}%</div>
-                                {% elif match_results.match_percentage >= 50 %}
-                                <div class="progress-bar bg-warning text-dark progress-bar-striped progress-bar-animated"
-                                    role="progressbar"
-                                    style="width: {{ match_results.match_percentage }}%; font-weight: bold;"
-                                    aria-valuenow="{{ match_results.match_percentage }}" aria-valuemin="0"
-                                    aria-valuemax="100">{{ match_results.match_percentage }}%</div>
+                    </div>
+
+                    <!-- Card 2: Matching Skills -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-success mb-3">Matching Skills</h3>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if match_results.matching_skills %}
+                                {% for skill in match_results.matching_skills %}
+                                <span
+                                    class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2 py-1.5 fs-7">{{
+                                    skill }}</span>
+                                {% endfor %}
                                 {% else %}
-                                <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated"
-                                    role="progressbar"
-                                    style="width: {{ match_results.match_percentage }}%; font-weight: bold;"
-                                    aria-valuenow="{{ match_results.match_percentage }}" aria-valuemin="0"
-                                    aria-valuemax="100">{{ match_results.match_percentage }}%</div>
+                                <span class="text-secondary small">No exact tech overlays identified.</span>
                                 {% endif %}
                             </div>
-                            <p class="text-muted small mt-2 mb-0">
-                                A match score of 80% or higher suggests stellar keyword/skills alignment with the JD.
-                            </p>
                         </div>
                     </div>
 
-                    <!-- Skills and Keywords Breakdown -->
-                    <div class="row g-4 mb-4">
-                        <!-- Matching Skills -->
-                        <div class="col-md-6">
-                            <div class="card h-100 border-0 bg-success bg-opacity-10 p-3 rounded">
-                                <h4 class="h6 fw-bold text-success mb-3 d-flex align-items-center">
-                                    <svg class="me-2" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                        <path
-                                            d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
-                                    </svg>
-                                    Matching Skills
-                                </h4>
-                                <div class="d-flex flex-wrap gap-2">
-                                    {% for skill in match_results.matching_skills %}
-                                    <span
-                                        class="badge bg-success bg-opacity-25 text-success border border-success-subtle px-2 py-1.5 fs-7">{{
-                                        skill }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Missing Skills -->
-                        <div class="col-md-6">
-                            <div class="card h-100 border-0 bg-danger bg-opacity-10 p-3 rounded">
-                                <h4 class="h6 fw-bold text-danger mb-3 d-flex align-items-center">
-                                    <svg class="me-2" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                        <path
-                                            d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
-                                    </svg>
-                                    Missing Skills / Gaps
-                                </h4>
-                                <div class="d-flex flex-wrap gap-2">
-                                    {% for skill in match_results.missing_skills %}
-                                    <span
-                                        class="badge bg-danger bg-opacity-25 text-danger border border-danger-subtle px-2 py-1.5 fs-7">{{
-                                        skill }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Recommended Keywords -->
-                        <div class="col-md-6">
-                            <div class="card h-100 border-0 bg-warning bg-opacity-10 p-3 rounded">
-                                <h4 class="h6 fw-bold text-warning-emphasis mb-3 d-flex align-items-center">
-                                    <svg class="me-2" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                        <path
-                                            d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
-                                    </svg>
-                                    Recommended Keywords to Include
-                                </h4>
-                                <div class="d-flex flex-wrap gap-2">
-                                    {% for keyword in match_results.recommended_keywords %}
-                                    <span
-                                        class="badge bg-warning bg-opacity-25 text-warning-emphasis border border-warning-subtle px-2 py-1.5 fs-7">{{
-                                        keyword }}</span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Missing Certifications -->
-                        <div class="col-md-6">
-                            <div class="card h-100 border-0 bg-info bg-opacity-10 p-3 rounded">
-                                <h4 class="h6 fw-bold text-info-emphasis mb-3 d-flex align-items-center">
-                                    <svg class="me-2" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                                        <path
-                                            d="M8 0a8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8zm3.5 11.5a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5V9a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v2.5z" />
-                                    </svg>
-                                    Important Certifications Missing
-                                </h4>
-                                <ul class="list-unstyled mb-0 text-dark small">
-                                    {% for cert in match_results.important_certifications_missing %}
-                                    <li class="mb-2 d-flex align-items-start">
-                                        <span class="text-info-emphasis me-2">•</span>
-                                        <span>{{ cert }}</span>
-                                    </li>
-                                    {% endfor %}
-                                </ul>
+                    <!-- Card 3: Top Missing Technical Skills -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-danger mb-3">Top Missing Technical Skills</h3>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if match_results.missing_technical_skills %}
+                                {% for skill in match_results.missing_technical_skills %}
+                                <span
+                                    class="badge bg-danger bg-opacity-15 text-danger border border-danger-subtle px-2 py-1.5 fs-7">{{
+                                    skill }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="text-success small">No matching tech skill gaps. Great job!</span>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Recommended Improvements -->
-                    <div class="card border border-light-subtle shadow-xs mb-3">
-                        <div class="card-header bg-light fw-bold text-dark">
-                            Recommended Improvements
+                    <!-- Card 4: Top Missing Soft Skills -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-warning-emphasis mb-3">Top Missing Soft Skills
+                            </h3>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if match_results.missing_soft_skills %}
+                                {% for skill in match_results.missing_soft_skills %}
+                                <span
+                                    class="badge bg-warning bg-opacity-15 text-warning-emphasis border border-warning-subtle px-2 py-1.5 fs-7">{{
+                                    skill }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="text-success small">Soft skills criteria fully aligned.</span>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <ul class="list-group list-group-flush mb-0 small">
-                                {% for improvement in match_results.recommended_improvements %}
-                                <li class="list-group-item d-flex align-items-start px-0 bg-transparent text-dark">
-                                    <span class="text-primary me-3 fw-bold">{{ loop.index }}.</span>
-                                    <span>{{ improvement }}</span>
+                    </div>
+
+                    <!-- Card 5: Recommended Keywords -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-secondary mb-3">Recommended Keywords</h3>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if match_results.recommended_keywords %}
+                                {% for word in match_results.recommended_keywords %}
+                                <span class="badge bg-light text-dark border px-2 py-1.5 fs-7">{{ word }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="text-secondary small">Keywords optimized.</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 6: Recommended Certifications -->
+                    <div class="col-md-6">
+                        <div class="card h-100 border shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-info-emphasis mb-3">Recommended Certifications
+                            </h3>
+                            <ul class="list-unstyled mb-0 text-dark small">
+                                {% if match_results.recommended_certifications %}
+                                {% for cert in match_results.recommended_certifications %}
+                                <li class="mb-2 d-flex align-items-start">
+                                    <span class="text-info me-2">•</span>
+                                    <span>{{ cert }}</span>
                                 </li>
                                 {% endfor %}
+                                {% else %}
+                                <li class="text-secondary">No missing certifications identified.</li>
+                                {% endif %}
                             </ul>
+                        </div>
+                    </div>
+
+                    <!-- Card 7: Recommended Projects -->
+                    <div class="col-12 col-lg-6">
+                        <div class="card h-100 border shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-primary mb-3">Recommended Projects</h3>
+                            <div class="row g-3">
+                                {% for project in match_results.recommended_projects %}
+                                <div class="col-12">
+                                    <div class="p-3 bg-light rounded border border-light-subtle">
+                                        <div class="fw-semibold text-dark small mb-1">Project Proposal {{ loop.index }}
+                                        </div>
+                                        <div class="text-secondary small">{{ project }}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 8: Learning Roadmap -->
+                    <div class="col-12 col-lg-6">
+                        <div class="card h-100 border shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-dark mb-3">Learning Roadmap</h3>
+                            <div class="roadmap-timeline position-relative">
+                                {% for step in match_results.learning_roadmap %}
+                                <div class="d-flex align-items-start mb-3 last-mb-0">
+                                    <div class="badge bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center"
+                                        style="width: 28px; height: 28px; font-size: 12px; flex-shrink: 0;">
+                                        {{ loop.index }}
+                                    </div>
+                                    <div>
+                                        <div class="text-secondary small mt-0.5">{{ step }}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
 

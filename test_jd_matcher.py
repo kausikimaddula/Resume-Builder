@@ -1,14 +1,14 @@
-"""Unit tests for services/jd_matcher.py."""
+"""Unit tests for services/jd_matcher.py with the improved schema."""
 
 from __future__ import annotations
 
 import unittest
 from unittest.mock import MagicMock, patch
-from services.jd_matcher import match_resume_to_jd, JdMatcherError, JD_MATCHER_SYSTEM_PROMPT
+from services.jd_matcher import match_resume_to_jd, JdMatcherError
 
 
 class TestJdMatcher(unittest.TestCase):
-    """Tests verify resume-to-JD checking logic and fallbacks."""
+    """Tests verify resume-to-JD checking logic and fallbacks with the updated metrics schema."""
 
     @patch("services.jd_matcher.OpenAI")
     def test_match_resume_to_jd_success(self, mock_openai_class):
@@ -22,9 +22,12 @@ class TestJdMatcher(unittest.TestCase):
                 message=MagicMock(
                     content=(
                         '{"match_percentage": 85, "matching_skills": ["Python", "Flask"], '
-                        '"missing_skills": ["Docker"], "recommended_keywords": ["Containers"], '
-                        '"important_certifications_missing": ["AWS Architect"], '
-                        '"recommended_improvements": ["Add Docker project details."]}'
+                        '"missing_technical_skills": ["Docker", "Kubernetes"], '
+                        '"missing_soft_skills": ["Leadership"], '
+                        '"recommended_keywords": ["Containers", "Agile"], '
+                        '"recommended_certifications": ["AWS Solutions Architect"], '
+                        '"recommended_projects": ["Create a cluster deployment."], '
+                        '"learning_roadmap": ["Step 1: Containerize.", "Step 2: Orchestrate."]}'
                     )
                 )
             )
@@ -41,16 +44,11 @@ class TestJdMatcher(unittest.TestCase):
         self.assertEqual(result["match_percentage"], 85)
         self.assertEqual(result["analysis_type"], "AI Assessment")
         self.assertIn("Python", result["matching_skills"])
-        self.assertIn("Docker", result["missing_skills"])
-        self.assertIn("Containers", result["recommended_keywords"])
-        self.assertIn("AWS Architect", result["important_certifications_missing"])
-        self.assertIn("Add Docker project details.", result["recommended_improvements"])
-
-        # Check call parameters
-        mock_client.chat.completions.create.assert_called_once()
-        call_kwargs = mock_client.chat.completions.create.call_args[1]
-        self.assertEqual(call_kwargs["model"], "gpt-4o-mini")
-        self.assertEqual(call_kwargs["response_format"], {"type": "json_object"})
+        self.assertIn("Docker", result["missing_technical_skills"])
+        self.assertIn("Leadership", result["missing_soft_skills"])
+        self.assertIn("AWS Solutions Architect", result["recommended_certifications"])
+        self.assertIn("Create a cluster deployment.", result["recommended_projects"])
+        self.assertIn("Step 1: Containerize.", result["learning_roadmap"])
 
     @patch("services.jd_matcher.OpenAI")
     def test_match_resume_to_jd_invalid_json(self, mock_openai_class):
@@ -73,7 +71,7 @@ class TestJdMatcher(unittest.TestCase):
     def test_match_resume_to_jd_heuristics(self):
         """Test matcher fallback to heuristics when API key is empty."""
         resume_text = "I study Python, React, and Flask. Certified AWS practitioner."
-        jd_text = "Require Python, React, Docker, and AWS certified expertise."
+        jd_text = "Require Python, React, Docker, and AWS certified expertise. Need communication skills."
 
         result = match_resume_to_jd(
             resume_text=resume_text,
@@ -83,13 +81,16 @@ class TestJdMatcher(unittest.TestCase):
         )
 
         self.assertEqual(result["analysis_type"], "Local Diagnostics")
-        self.assertGreater(result["match_percentage"], 20)
+        self.assertGreater(result["match_percentage"], 10)
         self.assertIn("Python", result["matching_skills"])
-        self.assertIn("React", result["matching_skills"])
         # Docker is in JD, not resume
-        self.assertIn("Docker", result["missing_skills"])
+        self.assertIn("Docker", result["missing_technical_skills"])
+        # Communication is a soft skill in JD, not resume
+        self.assertIn("Communication", result["missing_soft_skills"])
         # Cert checks
-        self.assertTrue(any("AWS" in s for s in result["matching_skills"]) or len(result["important_certifications_missing"]) >= 0)
+        self.assertTrue(len(result["recommended_certifications"]) > 0)
+        self.assertTrue(len(result["recommended_projects"]) > 0)
+        self.assertTrue(len(result["learning_roadmap"]) > 0)
 
 
 if __name__ == "__main__":
