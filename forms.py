@@ -116,6 +116,24 @@ class ResumeUploadForm(FlaskForm):
     submit = SubmitField("Extract Text")
 
 
+class JobDescriptionUploadForm(FlaskForm):
+    """Validate uploaded job description files and text for text extraction."""
+
+    jd_file = FileField(
+        "Upload Job Description File",
+        validators=[
+            Optional(),
+            FileAllowed(["docx", "pdf", "txt"], "Only PDF, DOCX, and TXT files are allowed."),
+        ],
+    )
+    jd_text = TextAreaField(
+        "Or Paste Job Description",
+        validators=[Optional(), Length(max=10000)],
+    )
+    submit = SubmitField("Extract Text")
+
+
+
 class GenerateResumeForm(FlaskForm):
     """Choose a saved DOCX template for AI resume generation."""
 
