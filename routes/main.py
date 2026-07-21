@@ -14,7 +14,13 @@ from flask import (
     url_for,
 )
 
-from forms import GenerateResumeForm, ResumeDetailsForm, ResumeTemplateUploadForm, ResumeUploadForm
+from forms import (
+    GenerateResumeForm,
+    ResumeDetailsForm,
+    ResumeTemplateUploadForm,
+    ResumeUploadForm,
+    JobDescriptionUploadForm,
+)
 from services.resume_store import get_all_resumes, get_resume, save_resume
 from services.resume_builder import ResumeBuilderError, build_resume_from_template
 from services.upload_service import (
@@ -26,6 +32,7 @@ from services.upload_service import (
 from services.resume_parser import extract_resume_text
 from services.proofreader import ProofreaderError, proofread_resume
 from services.ats_checker import AtsAnalysisError, analyze_resume_ats
+from services.job_description import save_jd_upload, extract_jd_text
 
 
 main_bp = Blueprint("main", __name__)
@@ -193,6 +200,50 @@ def upload_resume():
         ats_analysis=ats_analysis,
         proofread_results=proofread_results,
     )
+
+
+@main_bp.route("/job-description/upload", methods=["GET", "POST"])
+def upload_job_description():
+    """Upload an existing job description or paste text to extract and display."""
+    form = JobDescriptionUploadForm()
+    extracted_text = None
+    file_info = None
+
+    if form.validate_on_submit():
+        jd_file = form.jd_file.data
+        jd_text = form.jd_text.data
+
+        if not jd_file and not jd_text.strip():
+            flash("Please upload a file or paste a job description.", "danger")
+        else:
+            try:
+                if jd_file:
+                    upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
+                    uploaded_file = save_jd_upload(jd_file, upload_folder)
+                    extracted_text = extract_jd_text(uploaded_file.path)
+                    file_info = {
+                        "original_filename": uploaded_file.original_filename,
+                        "file_type": uploaded_file.file_type,
+                    }
+                else:
+                    extracted_text = jd_text.strip()
+                    file_info = {
+                        "original_filename": "Pasted Text",
+                        "file_type": "Plain Text",
+                    }
+                flash("Job description processed successfully.", "success")
+                current_app.logger.info("Job description processed successfully")
+            except Exception as error:
+                current_app.logger.exception("Failed to process job description: %s", error)
+                flash(str(error), "danger")
+
+    return render_template(
+        "job_description_upload.html",
+        form=form,
+        extracted_text=extracted_text,
+        file_info=file_info,
+    )
+
 
 
 @main_bp.post("/resume/<int:resume_id>/generate")

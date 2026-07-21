@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Job Description | AI Resume Builder & Tracker{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-white border-bottom">
+    <div class="container">
+        <div class="row align-items-end g-3">
+            <div class="col-lg-8">
+                <p class="text-uppercase text-primary fw-semibold small mb-2">Job Description Parser</p>
+                <h1 class="h2 fw-bold mb-2">Upload or Paste Job Description</h1>
+                <p class="text-secondary mb-0">
+                    Upload a Job Description file (PDF, DOCX, TXT) or paste the text directly to parse and extract the
+                    plain text content.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <!-- Input Card -->
+            <div class="col-lg-12">
+                <div class="form-section bg-white border shadow-sm p-4 rounded">
+                    <form method="post" enctype="multipart/form-data" novalidate class="row g-3">
+                        {{ form.hidden_tag() }}
+
+                        <div class="col-md-6 mb-3 border-end pe-md-4">
+                            <label class="form-label fw-semibold text-dark">{{ form.jd_file.label }}</label>
+                            {{ form.jd_file(class="form-control" ~ (" is-invalid" if form.jd_file.errors else "")) }}
+                            {% if form.jd_file.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.jd_file.errors[0] }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text mt-2 text-muted">
+                                Accepted file formats: .pdf, .docx, .txt (Max size: 5MB)
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3 ps-md-4">
+                            <label class="form-label fw-semibold text-dark">{{ form.jd_text.label }}</label>
+                            {{ form.jd_text(class="form-control" ~ (" is-invalid" if form.jd_text.errors else ""),
+                            rows="6", placeholder="Paste the job description text here...") }}
+                            {% if form.jd_text.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.jd_text.errors[0] }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-12 mt-3 d-grid">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if file_info and extracted_text %}
+            <!-- Output Column -->
+            <div class="col-lg-12 border-bottom pb-4 mb-4">
+                <div class="form-section bg-white border shadow-sm p-4 rounded">
+                    <h2 class="h5 fw-bold mb-3 d-flex justify-content-between align-items-center">
+                        <span>Extracted Text — {{ file_info.original_filename }} ({{ file_info.file_type }})</span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="copyText()">Copy Text</button>
+                    </h2>
+                    <hr>
+                    <div class="bg-light p-3 border rounded">
+                        <pre id="extracted-text-area" class="mb-0 text-dark overflow-auto"
+                            style="max-height: 500px; white-space: pre-wrap; font-family: var(--bs-font-monospace);">{{ extracted_text }}</pre>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                function copyText() {
+                    var text = document.getElementById("extracted-text-area").textContent;
+                    navigator.clipboard.writeText(text).then(function () {
+                        alert("Text copied to clipboard!");
+                    }, function (err) {
+                        console.error("Could not copy text: ", err);
+                    });
+                }
+            </script>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
