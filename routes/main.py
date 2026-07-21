@@ -20,6 +20,7 @@ from forms import (
     ResumeTemplateUploadForm,
     ResumeUploadForm,
     JobDescriptionUploadForm,
+    ResumeJdCompareForm,
 )
 from services.resume_store import get_all_resumes, get_resume, save_resume
 from services.resume_builder import ResumeBuilderError, build_resume_from_template
@@ -33,6 +34,7 @@ from services.resume_parser import extract_resume_text
 from services.proofreader import ProofreaderError, proofread_resume
 from services.ats_checker import AtsAnalysisError, analyze_resume_ats
 from services.job_description import save_jd_upload, extract_jd_text
+from services.jd_matcher import match_resume_to_jd, JdMatcherError
 
 
 main_bp = Blueprint("main", __name__)
@@ -243,6 +245,80 @@ def upload_job_description():
         extracted_text=extracted_text,
         file_info=file_info,
     )
+
+
+@main_bp.route("/compare", methods=["GET", "POST"])
+def compare_resume_vs_jd():
+    """Compare a resume (PDF/DOCX) against a job description (PDF/DOCX/TXT) or paste text."""
+    form = ResumeJdCompareForm()
+    match_results = None
+    inputs_info = None
+
+    if form.validate_on_submit():
+        resume_file = form.resume_file.data
+        resume_text_input = form.resume_text.data
+        jd_file = form.jd_file.data
+        jd_text_input = form.jd_text.data
+
+        has_resume = bool(resume_file or resume_text_input.strip())
+        has_jd = bool(jd_file or jd_text_input.strip())
+
+        if not has_resume or not has_jd:
+            if not has_resume:
+                flash("Please upload a resume file or paste resume text.", "danger")
+            if not has_jd:
+                flash("Please upload a job description file or paste job description text.", "danger")
+        else:
+            try:
+                # 1. Process Resume
+                if resume_file:
+                    upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
+                    uploaded_resume = save_resume_upload(resume_file, upload_folder)
+                    resume_text = extract_resume_text(uploaded_resume.path)
+                    resume_source = uploaded_resume.original_filename
+                else:
+                    resume_text = resume_text_input.strip()
+                    resume_source = "Pasted Resume Text"
+
+                # 2. Process Job Description
+                if jd_file:
+                    upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
+                    uploaded_jd = save_jd_upload(jd_file, upload_folder)
+                    jd_text = extract_jd_text(uploaded_jd.path)
+                    jd_source = uploaded_jd.original_filename
+                else:
+                    jd_text = jd_text_input.strip()
+                    jd_source = "Pasted Job Description Text"
+
+                # 3. Perform Comparison
+                api_key = current_app.config.get("OPENAI_API_KEY")
+                model = current_app.config.get("OPENAI_MODEL")
+                
+                match_results = match_resume_to_jd(
+                    resume_text=resume_text,
+                    jd_text=jd_text,
+                    api_key=api_key,
+                    model=model,
+                )
+                
+                inputs_info = {
+                    "resume_source": resume_source,
+                    "jd_source": jd_source,
+                }
+                
+                flash("Resume vs Job Description comparison completed successfully.", "success")
+                current_app.logger.info("Resume vs JD comparison successful")
+            except Exception as error:
+                current_app.logger.exception("Comparison failed: %s", error)
+                flash(str(error), "danger")
+
+    return render_template(
+        "compare.html",
+        form=form,
+        match_results=match_results,
+        inputs_info=inputs_info,
+    )
+
 
 
 
