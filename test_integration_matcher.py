@@ -1,10 +1,10 @@
-"""Integration test for the /compare route and matcher service."""
+"""Integration test for the /compare route and matcher service with the improved schema."""
 
 from __future__ import annotations
 
 import sys
 from io import BytesIO
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from app import app
 
 
@@ -16,16 +16,18 @@ def test_matcher_integration_flow(
 ) -> bool:
     app.config["WTF_CSRF_ENABLED"] = False
     
-    # Configure mock returns
+    # Configure mock returns matching the improved schema
     mock_extract_resume.return_value = "Mocked Resume Text"
     mock_extract_jd.return_value = "Mocked Job Description Text"
     mock_match.return_value = {
         "match_percentage": 75,
         "matching_skills": ["Python", "Flask"],
-        "missing_skills": ["Docker", "Kubernetes"],
+        "missing_technical_skills": ["Docker", "Kubernetes"],
+        "missing_soft_skills": ["Leadership"],
         "recommended_keywords": ["Containers", "Pod"],
-        "important_certifications_missing": ["AWS Architect"],
-        "recommended_improvements": ["Improve cloud section."],
+        "recommended_certifications": ["AWS Architect"],
+        "recommended_projects": ["Build Docker container deployment project."],
+        "learning_roadmap": ["Step 1: Containerize application.", "Step 2: Learn orchestration."],
         "analysis_type": "AI Assessment",
     }
     
@@ -45,9 +47,9 @@ def test_matcher_integration_flow(
         
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         html = response.get_data(as_text=True)
-        assert "Match Analysis Results" in html, "Couldn't find Match Analysis headers in page output"
+        assert "Match Analysis Dashboard" in html or "Match Analysis Results" in html, "Couldn't find Match Analysis headers in page output"
         assert "Python" in html, "Skills output should list matching keywords like Python"
-        assert "Docker" in html, "Missing skills should suggest Docker"
+        assert "Docker" in html, "Missing tech skills should include Docker"
         print("Copy-paste compare integration test passed!")
 
         # 2. Test File Upload + Pasted Text Mix

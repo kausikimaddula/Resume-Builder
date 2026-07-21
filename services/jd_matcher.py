@@ -10,22 +10,24 @@ from openai import OpenAI, OpenAIError
 
 logger = logging.getLogger(__name__)
 
-# Reusable prompts
+# Reusable prompts - Tailored for GPT-4o-mini
 JD_MATCHER_SYSTEM_PROMPT = (
-    "You are an expert recruiter and talent acquisition professional who specializes in comparing candidates' resumes against job descriptions.\n"
-    "Your goal is to compare the provided Resume and Job Description texts, and analyze the candidate's alignment, matching skills, gaps, keywords, certifications, and areas for improvement.\n\n"
-    "You must return a valid JSON object containing exactly six keys:\n"
-    "1. 'match_percentage': An integer between 0 and 100 representing how well the resume matches the requirements of the job description.\n"
-    "2. 'matching_skills': A list of strings showing the skills, technologies, or tools present in both the resume and the job description.\n"
-    "3. 'missing_skills': A list of strings showing critical skills, technologies, or tools mentioned in the job description that are NOT found or are weak in the resume.\n"
-    "4. 'recommended_keywords': A list of strings listing important keywords, buzzwords, or technical terms from the job description that the candidate should add or emphasize in their resume.\n"
-    "5. 'important_certifications_missing': A list of strings showing industry-standard certifications requested or implied by the job description but not present on the resume.\n"
-    "6. 'recommended_improvements': A list of actionable suggestions and strategies to tailor the resume and make it a stronger fit for this job description.\n\n"
-    "Respond ONLY with a valid JSON object. Do not include any explanations before or after the JSON."
+    "You are an expert recruiter and talent acquisition professional. Compare the provided Resume and Job Description.\n"
+    "Identify key alignments, gaps, and actionable recommendations. Be highly concise and specific.\n\n"
+    "You must return a valid JSON object containing exactly these eight keys:\n"
+    "1. 'match_percentage': An integer between 0 and 100.\n"
+    "2. 'matching_skills': A list of matching technical/professional skills found in both.\n"
+    "3. 'missing_technical_skills': A list of top technical skills/tools from the job description missing or weak in the resume.\n"
+    "4. 'missing_soft_skills': A list of top soft skills/competencies from the job description missing or weak in the resume.\n"
+    "5. 'recommended_keywords': A list of important acronyms, terminology, or keywords from the job description to add.\n"
+    "6. 'recommended_certifications': A list of certifications mentioned, implied, or highly recommended for the role that the resume lacks.\n"
+    "7. 'recommended_projects': A list of 2-3 specific, concrete projects the candidate can build to prove competency in the missing technical skills.\n"
+    "8. 'learning_roadmap': A list of sequential, concise steps (3-4 steps max) to acquire the missing skills and close the gap.\n\n"
+    "Respond ONLY with a valid JSON object."
 )
 
 JD_MATCHER_USER_PROMPT_TEMPLATE = (
-    "Please compare the following resume and job description:\n\n"
+    "Compare this resume and job description using GPT-4o-mini:\n\n"
     "--- START RESUME ---\n"
     "{resume_text}\n"
     "--- END RESUME ---\n\n"
@@ -88,85 +90,125 @@ def _match_resume_to_jd_heuristics(resume_text: str, jd_text: str) -> dict[str, 
     resume_lower = resume_text.lower()
     jd_lower = jd_text.lower()
 
-    # Extract potential keywords/skills from the Job Description
     # Standard technical keywords we can look for
-    common_skills = [
+    tech_skills = [
         "python", "javascript", "typescript", "java", "c++", "c#", "ruby", "go", "rust",
         "react", "node", "express", "angular", "vue", "django", "flask", "fastapi", "spring",
         "html", "css", "sql", "nosql", "mongodb", "postgresql", "mysql", "redis",
-        "aws", "azure", "gcp", "docker", "kubernetes", "git", "ci/cd", "agile", "scrum",
-        "communication", "leadership", "analytics", "statistics", "machine learning", "deep learning",
-        "openai", "pytorch", "tensorflow", "system design", "microservices"
+        "aws", "azure", "gcp", "docker", "kubernetes", "git", "ci/cd",
+        "machine learning", "deep learning", "openai", "pytorch", "tensorflow", "system design", "microservices"
     ]
 
-    jd_skills = {skill for skill in common_skills if _word_in_text(skill, jd_lower)}
-    resume_skills = {skill for skill in common_skills if _word_in_text(skill, resume_lower)}
+    soft_skills = [
+        "leadership", "communication", "team player", "agile", "scrum", "analytics", "statistics",
+        "collaboration", "problem solving", "critical thinking", "mentoring", "negotiation"
+    ]
 
-    matching_skills_set = jd_skills.intersection(resume_skills)
-    missing_skills_set = jd_skills.difference(resume_skills)
+    jd_tech = {skill for skill in tech_skills if _word_in_text(skill, jd_lower)}
+    resume_tech = {skill for skill in tech_skills if _word_in_text(skill, resume_lower)}
 
-    matching_skills = sorted(list(matching_skills_set))
-    missing_skills = sorted(list(missing_skills_set))
+    matching_tech = jd_tech.intersection(resume_tech)
+    missing_tech = jd_tech.difference(resume_tech)
+
+    jd_soft = {skill for skill in soft_skills if _word_in_text(skill, jd_lower)}
+    resume_soft = {skill for skill in soft_skills if _word_in_text(skill, resume_lower)}
+
+    matching_soft = jd_soft.intersection(resume_soft)
+    missing_soft = jd_soft.difference(resume_soft)
+
+    # Union matching
+    matching_skills = sorted(list(matching_tech.union(matching_soft)))
 
     # Basic match percentage calculation based on skill overlap
-    if jd_skills:
-        match_percentage = int((len(matching_skills_set) / len(jd_skills)) * 100)
+    total_jd_expectations = len(jd_tech) + len(jd_soft)
+    total_matching = len(matching_tech) + len(matching_soft)
+
+    if total_jd_expectations:
+        match_percentage = int((total_matching / total_jd_expectations) * 100)
     else:
-        # Default fallback match calculation based on overall common word sets
-        jd_words = set(re.findall(r"\b\w{4,15}\b", jd_lower))
-        res_words = set(re.findall(r"\b\w{4,15}\b", resume_lower))
-        overlap = jd_words.intersection(res_words)
-        if jd_words:
-            match_percentage = int((len(overlap) / len(jd_words)) * 100) 
-        else:
-            match_percentage = 50
+        match_percentage = 45
 
-    # Ensure match_percentage is between normal bounds
-    match_percentage = max(10, min(95, match_percentage))
+    # Clamp match percentage
+    match_percentage = max(15, min(95, match_percentage))
 
-    # Recommended keywords to add
-    recommended_keywords = [skill.upper() for skill in missing_skills[:5]] if missing_skills else ["DEVELOPER", "ENGINEER", "TEAM PLAYER"]
+    # Missing technical skills list
+    missing_tech_list = sorted(list(missing_tech))
+    if not missing_tech_list:
+        missing_tech_list = ["No significant technical skill gaps detected"]
 
-    # Simple heuristic to identify possible missing certifications
-    common_certs = ["aws", "certified", "pmp", "scrum master", "ccna", "comptia", "cissp"]
+    # Missing soft skills list
+    missing_soft_list = sorted(list(missing_soft))
+    if not missing_soft_list:
+        missing_soft_list = ["No significant soft skill gaps detected"]
+
+    # Keywords list
+    recommended_keywords = [skill.upper() for skill in missing_tech_list[:5]]
+
+    # Certs recommendation
+    common_certs = ["aws", "certified", "pmp", "scrum master", "ccna", "comptia", "cissp", "cka"]
     jd_certs = [cert for cert in common_certs if cert in jd_lower]
     resume_certs = [cert for cert in common_certs if cert in resume_lower]
     missing_certs_set = set(jd_certs).difference(set(resume_certs))
 
-    important_certifications_missing = []
+    recommended_certifications = []
     for cert in missing_certs_set:
         if cert == "aws":
-            important_certifications_missing.append("AWS Certified Cloud Practitioner/Solutions Architect")
+            recommended_certifications.append("AWS Solutions Architect Associate")
+        elif cert == "cka":
+            recommended_certifications.append("Certified Kubernetes Administrator (CKA)")
         elif cert == "scrum master":
-            important_certifications_missing.append("Certified ScrumMaster (CSM)")
+            recommended_certifications.append("Certified ScrumMaster (CSM)")
         elif cert == "pmp":
-            important_certifications_missing.append("Project Management Professional (PMP)")
+            recommended_certifications.append("Project Management Professional (PMP)")
         else:
-            important_certifications_missing.append(f"{cert.upper()} Certification")
+            recommended_certifications.append(f"{cert.upper()} Certification")
 
-    if not important_certifications_missing:
-        # Fallback placeholder list to keep it constructive
-        important_certifications_missing = ["Relevant Professional Certifications based on role seniority"]
+    if not recommended_certifications:
+        recommended_certifications = ["Standard professional credentials related to the job type"]
 
-    # Recommended improvements
-    recommended_improvements = [
-        "Include more quantifiable metrics in your resume bullets to showcase impact (e.g. 'Improved efficiency by 20%').",
-        f"Make sure to mention critical competencies matching the JD, specifically: {', '.join(missing_skills[:3])}." if missing_skills else "Align your summary statement to focus on the company's core technology stack.",
-        "Add a dedicated skills section separating frontend, backend, and platform/database tools."
-    ]
+    # Project recommendation based on missing technical skills
+    recommended_projects = []
+    if missing_tech:
+        primary_missing = list(missing_tech)[0]
+        recommended_projects.append(
+            f"Build a clean end-to-end GitHub project that heavily features {primary_missing.capitalize()} setup and deployment."
+        )
+        if len(missing_tech) > 1:
+            second_missing = list(missing_tech)[1]
+            recommended_projects.append(
+                f"Develop a small microservices mock application connecting {primary_missing.capitalize()} with {second_missing.capitalize()}."
+            )
+    else:
+        recommended_projects.append(
+            "Construct a fully-featured full-stack project demonstrating production-grade testing and automation."
+        )
 
-    # Add a fallback warning suggestion to enable AI
-    recommended_improvements.append(
-        "Configure your OPENAI_API_KEY in the environment to unlock comprehensive AI-powered matching diagnostics."
-    )
+    # Learning roadmap based on missing keys
+    learning_roadmap = []
+    steps = 1
+    if missing_tech:
+        for tech in list(missing_tech)[:2]:
+            learning_roadmap.append(f"Step {steps}: Complete tutorials and build test files focusing on {tech.capitalize()}.")
+            steps += 1
+    if missing_soft:
+        primary_soft = list(missing_soft)[0]
+        learning_roadmap.append(f"Step {steps}: Read Scrum/Agile guides to adapt to {primary_soft.capitalize()} standards.")
+        steps += 1
+    
+    learning_roadmap.append(f"Step {steps}: Tailor and submit your revised resume matching the targeted JD requirements.")
+
+    # Local warning additions
+    learning_roadmap.append("Step Note: Set OPENAI_API_KEY to acquire complete AI personalized roadmap recommendations.")
 
     return {
         "match_percentage": match_percentage,
-        "matching_skills": [s.capitalize() for s in matching_skills] if matching_skills else ["General Industry Skills"],
-        "missing_skills": [s.capitalize() for s in missing_skills] if missing_skills else ["No obvious missing skills found"],
+        "matching_skills": [s.capitalize() for s in matching_skills] if matching_skills else ["General Domain Competency"],
+        "missing_technical_skills": [s.capitalize() for s in missing_tech_list],
+        "missing_soft_skills": [s.capitalize() for s in missing_soft_list],
         "recommended_keywords": recommended_keywords,
-        "important_certifications_missing": important_certifications_missing,
-        "recommended_improvements": recommended_improvements,
+        "recommended_certifications": recommended_certifications,
+        "recommended_projects": recommended_projects,
+        "learning_roadmap": learning_roadmap,
         "analysis_type": "Local Diagnostics",
     }
 
@@ -196,10 +238,12 @@ def _parse_matcher_response(raw_text: str) -> dict[str, Any]:
     required_keys = [
         "match_percentage",
         "matching_skills",
-        "missing_skills",
+        "missing_technical_skills",
+        "missing_soft_skills",
         "recommended_keywords",
-        "important_certifications_missing",
-        "recommended_improvements",
+        "recommended_certifications",
+        "recommended_projects",
+        "learning_roadmap",
     ]
     for key in required_keys:
         if key not in parsed:
@@ -215,10 +259,12 @@ def _parse_matcher_response(raw_text: str) -> dict[str, Any]:
     # Ensure list types
     list_keys = [
         "matching_skills",
-        "missing_skills",
+        "missing_technical_skills",
+        "missing_soft_skills",
         "recommended_keywords",
-        "important_certifications_missing",
-        "recommended_improvements",
+        "recommended_certifications",
+        "recommended_projects",
+        "learning_roadmap",
     ]
     for key in list_keys:
         if not isinstance(parsed[key], list):
