@@ -142,3 +142,32 @@ class GenerateResumeForm(FlaskForm):
         validators=[DataRequired(message="Choose a DOCX template.")],
     )
     submit = SubmitField("Generate Resume")
+
+
+class ResumeJdCompareForm(FlaskForm):
+    """Validate inputs for comparing a Resume against a Job Description."""
+
+    resume_file = FileField(
+        "Upload Resume File",
+        validators=[
+            Optional(),
+            FileAllowed(["docx", "pdf"], "Only DOCX and PDF resume files are allowed."),
+        ],
+    )
+    resume_text = TextAreaField(
+        "Or Paste Resume Text",
+        validators=[Optional(), Length(max=10000)],
+    )
+    jd_file = FileField(
+        "Upload Job Description File",
+        validators=[
+            Optional(),
+            FileAllowed(["docx", "pdf", "txt"], "Only PDF, DOCX, and TXT job description files are allowed."),
+        ],
+    )
+    jd_text = TextAreaField(
+        "Or Paste Job Description Text",
+        validators=[Optional(), Length(max=10000)],
+    )
+    submit = SubmitField("Compare Resume vs JD")
+
