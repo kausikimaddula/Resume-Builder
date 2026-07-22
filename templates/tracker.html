@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Tracker Dashboard | AI Resume Builder & Tracker{% endblock %}
+
+{% block content %}
+<section class="py-4 bg-white border-bottom">
+  <div class="container">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+      <div>
+        <h1 class="display-6 fw-bold mb-1">Resume Tracker Dashboard 📊</h1>
+        <p class="text-secondary mb-0">
+          Track all generated and analyzed resumes, monitor ATS scores, and manage job role applications in one place.
+        </p>
+      </div>
+      <div>
+        <button class="btn btn-primary btn-lg fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#addResumeModal">
+          ➕ Track New Resume
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container py-5">
+  <!-- Key Metrics Row -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+        <div class="card-body p-4 d-flex align-items-center">
+          <div class="rounded-circle bg-primary-subtle text-primary p-3 me-3 fs-3">
+            📁
+          </div>
+          <div>
+            <div class="text-uppercase text-secondary fw-semibold small">Total Tracked Resumes</div>
+            <div class="display-6 fw-bold text-dark">{{ total_count }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+        <div class="card-body p-4 d-flex align-items-center">
+          <div class="rounded-circle bg-success-subtle text-success p-3 me-3 fs-3">
+            🎯
+          </div>
+          <div>
+            <div class="text-uppercase text-secondary fw-semibold small">Avg ATS Compatibility</div>
+            <div class="display-6 fw-bold text-dark">{{ avg_ats }}<span class="fs-4 text-muted">%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
+        <div class="card-body p-4 d-flex align-items-center">
+          <div class="rounded-circle bg-info-subtle text-info p-3 me-3 fs-3">
+            ⚡
+          </div>
+          <div>
+            <div class="text-uppercase text-secondary fw-semibold small">Avg Job Match Score</div>
+            <div class="display-6 fw-bold text-dark">{{ avg_match }}<span class="fs-4 text-muted">%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search and Filter Controls -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-4">
+      <form method="GET" action="{{ url_for('main.tracker') }}" class="row g-3 align-items-center">
+        <div class="col-md-6 col-lg-7">
+          <div class="input-group">
+            <span class="input-group-text bg-light border-end-0">🔍</span>
+            <input type="text" id="searchInput" name="search" class="form-control border-start-0" 
+                   placeholder="Search by resume name, job role, or company..." value="{{ search_query }}" onkeyup="filterTableLocally()">
+            {% if search_query %}
+              <a href="{{ url_for('main.tracker') }}" class="btn btn-outline-secondary">Clear</a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+          <select name="sort_by" class="form-select" onchange="this.form.submit()">
+            <option value="date_desc" {% if sort_by == 'date_desc' %}selected{% endif %}>Sort by: Newest First</option>
+            <option value="date_asc" {% if sort_by == 'date_asc' %}selected{% endif %}>Sort by: Oldest First</option>
+            <option value="ats_desc" {% if sort_by == 'ats_desc' %}selected{% endif %}>Sort by: ATS Score (High -> Low)</option>
+            <option value="ats_asc" {% if sort_by == 'ats_asc' %}selected{% endif %}>Sort by: ATS Score (Low -> High)</option>
+            <option value="match_desc" {% if sort_by == 'match_desc' %}selected{% endif %}>Sort by: Match Score (High -> Low)</option>
+            <option value="match_asc" {% if sort_by == 'match_asc' %}selected{% endif %}>Sort by: Match Score (Low -> High)</option>
+            <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>Sort by: Resume Name (A-Z)</option>
+            <option value="company_asc" {% if sort_by == 'company_asc' %}selected{% endif %}>Sort by: Company (A-Z)</option>
+          </select>
+        </div>
+
+        <div class="col-md-2 col-lg-2 text-end">
+          <button type="submit" class="btn btn-secondary w-100">Filter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard Table -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+      {% if resumes %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" id="trackerTable">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-4">Resume Name</th>
+                <th>Company</th>
+                <th>Job Role</th>
+                <th>ATS Score</th>
+                <th>Match Score</th>
+                <th>Creation Date</th>
+                <th class="text-end pe-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in resumes %}
+                <tr class="tracker-row">
+                  <td class="ps-4 fw-semibold text-dark">
+                    {{ item.resume_name }}
+                    {% if item.notes %}
+                      <br><span class="badge bg-light text-secondary border fw-normal small" title="{{ item.notes }}">📝 {{ item.notes | truncate(40) }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis border px-2 py-1">
+                      🏢 {{ item.company_name }}
+                    </span>
+                  </td>
+                  <td class="fw-medium text-body-secondary">
+                    💼 {{ item.job_role }}
+                  </td>
+                  <td>
+                    {% if item.ats_score >= 80 %}
+                      <span class="badge bg-success fs-6 px-3 py-1">{{ item.ats_score }}%</span>
+                    {% elif item.ats_score >= 50 %}
+                      <span class="badge bg-warning text-dark fs-6 px-3 py-1">{{ item.ats_score }}%</span>
+                    {% else %}
+                      <span class="badge bg-danger fs-6 px-3 py-1">{{ item.ats_score }}%</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if item.match_score >= 80 %}
+                      <span class="badge bg-success-subtle text-success border border-success fs-6 px-3 py-1">{{ item.match_score }}%</span>
+                    {% elif item.match_score >= 50 %}
+                      <span class="badge bg-warning-subtle text-warning-emphasis border border-warning fs-6 px-3 py-1">{{ item.match_score }}%</span>
+                    {% else %}
+                      <span class="badge bg-danger-subtle text-danger border border-danger fs-6 px-3 py-1">{{ item.match_score }}%</span>
+                    {% endif %}
+                  </td>
+                  <td class="small text-muted">
+                    {{ item.creation_date.strftime('%b %d, %Y %H:%M') }}
+                  </td>
+                  <td class="text-end pe-4">
+                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#deleteModal{{ item.id }}">
+                      🗑️ Delete
+                    </button>
+
+                    <!-- Delete Confirmation Modal -->
+                    <div class="modal fade text-start" id="deleteModal{{ item.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ item.id }}" aria-hidden="true">
+                      <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                          <div class="modal-header bg-danger text-white">
+                            <h5 class="modal-title" id="deleteModalLabel{{ item.id }}">Confirm Delete</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body p-4">
+                            Are you sure you want to delete the tracked record for <strong>"{{ item.resume_name }}"</strong> ({{ item.company_name }} - {{ item.job_role }})?
+                            <br><small class="text-muted">This action cannot be undone.</small>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <form method="POST" action="{{ url_for('main.delete_tracked_resume', resume_id=item.id) }}">
+                              {{ form.csrf_token }}
+                              <button type="submit" class="btn btn-danger">Delete Record</button>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center py-5">
+          <div class="display-3 text-muted mb-3">📁</div>
+          <h3 class="h5 fw-bold text-dark mb-2">No Tracked Resumes Found</h3>
+          <p class="text-secondary mb-4">
+            {% if search_query %}
+              No resume entries match your search criteria "{{ search_query }}".
+            {% else %}
+              Start tracking your resume submissions, ATS compatibility scores, and job role applications.
+            {% endif %}
+          </p>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addResumeModal">
+            ➕ Add First Resume Entry
+          </button>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Manual Entry Modal -->
+<div class="modal fade" id="addResumeModal" tabindex="-1" aria-labelledby="addResumeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold" id="addResumeModalLabel">Track New Resume Record</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" action="{{ url_for('main.tracker') }}">
+        <div class="modal-body p-4">
+          {{ form.hidden_tag() }}
+
+          <div class="mb-3">
+            <label for="{{ form.resume_name.id }}" class="form-label fw-medium">{{ form.resume_name.label.text }}</label>
+            {{ form.resume_name(class="form-control", placeholder="e.g. Senior Software Engineer Resume - v2") }}
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="{{ form.company_name.id }}" class="form-label fw-medium">{{ form.company_name.label.text }}</label>
+              {{ form.company_name(class="form-control", placeholder="e.g. Google, Microsoft, Startup Inc") }}
+            </div>
+            <div class="col-md-6">
+              <label for="{{ form.job_role.id }}" class="form-label fw-medium">{{ form.job_role.label.text }}</label>
+              {{ form.job_role(class="form-control", placeholder="e.g. Full Stack Developer, Product Manager") }}
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="{{ form.ats_score.id }}" class="form-label fw-medium">{{ form.ats_score.label.text }}</label>
+              {{ form.ats_score(class="form-control", placeholder="0 - 100") }}
+            </div>
+            <div class="col-md-6">
+              <label for="{{ form.match_score.id }}" class="form-label fw-medium">{{ form.match_score.label.text }}</label>
+              {{ form.match_score(class="form-control", placeholder="0 - 100") }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.notes.id }}" class="form-label fw-medium">{{ form.notes.label.text }}</label>
+            {{ form.notes(class="form-control", rows=3, placeholder="Add custom notes, referral details, or submission status...") }}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          {{ form.submit(class="btn btn-primary fw-semibold") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function filterTableLocally() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('.tracker-row');
+
+    rows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      if (text.includes(filter)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+</script>
+{% endblock %}

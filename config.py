@@ -38,3 +38,11 @@ class Config:
 
     LOG_FOLDER = BASE_DIR / "logs"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+    # SQLite Database URI configuration
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        "DATABASE_URL",
+        f"sqlite:///{BASE_DIR / 'instance' / 'resume_tracker.db'}",
+    )
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+

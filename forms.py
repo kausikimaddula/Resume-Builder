@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileRequired
-from wtforms import EmailField, SelectField, StringField, SubmitField, TextAreaField
-from wtforms.validators import Email, Length, Optional, Regexp, DataRequired
+from wtforms import EmailField, IntegerField, SelectField, StringField, SubmitField, TextAreaField
+from wtforms.validators import Email, Length, NumberRange, Optional, Regexp, DataRequired
+
 
 
 class ResumeDetailsForm(FlaskForm):
@@ -191,5 +192,38 @@ class ResumeImprovementForm(FlaskForm):
         validators=[Optional(), Length(max=150)],
     )
     submit = SubmitField("Get AI Resume Improvements")
+
+
+class TrackedResumeForm(FlaskForm):
+    """Validate entries for tracking a resume in the dashboard database."""
+
+    resume_name = StringField(
+        "Resume Name / Title",
+        validators=[DataRequired(), Length(max=150)],
+    )
+    job_role = StringField(
+        "Job Role",
+        validators=[DataRequired(), Length(max=120)],
+    )
+    company_name = StringField(
+        "Company Name",
+        validators=[DataRequired(), Length(max=120)],
+    )
+    ats_score = IntegerField(
+        "ATS Score (0 - 100)",
+        default=0,
+        validators=[Optional(), NumberRange(min=0, max=100)],
+    )
+    match_score = IntegerField(
+        "Match Score (0 - 100)",
+        default=0,
+        validators=[Optional(), NumberRange(min=0, max=100)],
+    )
+    notes = TextAreaField(
+        "Notes / Remarks",
+        validators=[Optional(), Length(max=1000)],
+    )
+    submit = SubmitField("Save to Resume Tracker")
+
 
 

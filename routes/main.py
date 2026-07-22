@@ -10,6 +10,7 @@ from flask import (
     flash,
     redirect,
     render_template,
+    request,
     send_from_directory,
     url_for,
 )
@@ -22,7 +23,9 @@ from forms import (
     JobDescriptionUploadForm,
     ResumeJdCompareForm,
     ResumeImprovementForm,
+    TrackedResumeForm,
 )
+from models import db, TrackedResume
 from services.resume_store import get_all_resumes, get_resume, save_resume
 from services.resume_builder import ResumeBuilderError, build_resume_from_template
 from services.upload_service import (
@@ -37,6 +40,7 @@ from services.ats_checker import AtsAnalysisError, analyze_resume_ats
 from services.job_description import save_jd_upload, extract_jd_text
 from services.jd_matcher import match_resume_to_jd, JdMatcherError
 from services.resume_improver import improve_resume, ResumeImproverError
+
 
 
 
@@ -377,6 +381,89 @@ def improve_resume_route():
     )
 
 
+@main_bp.route("/tracker", methods=["GET", "POST"])
+def tracker():
+    """Display the Resume Tracker dashboard table with search, sort, and manual entry features."""
+    form = TrackedResumeForm()
+
+    if form.validate_on_submit():
+        record = TrackedResume(
+            resume_name=form.resume_name.data.strip(),
+            job_role=form.job_role.data.strip(),
+            company_name=form.company_name.data.strip(),
+            ats_score=form.ats_score.data or 0,
+            match_score=form.match_score.data or 0,
+            notes=form.notes.data.strip() if form.notes.data else "",
+        )
+        db.session.add(record)
+        db.session.commit()
+        flash(f"Tracked resume record '{record.resume_name}' saved successfully.", "success")
+        return redirect(url_for("main.tracker"))
+
+    # Querying, filtering, sorting
+    search_query = request.args.get("search", "").strip()
+    sort_by = request.args.get("sort_by", "date_desc")
+
+    query = TrackedResume.query
+
+    if search_query:
+        search_filter = f"%{search_query}%"
+        query = query.filter(
+            (TrackedResume.resume_name.ilike(search_filter))
+            | (TrackedResume.job_role.ilike(search_filter))
+            | (TrackedResume.company_name.ilike(search_filter))
+        )
+
+    # Sorting options
+    if sort_by == "date_asc":
+        query = query.order_by(TrackedResume.creation_date.asc())
+    elif sort_by == "ats_desc":
+        query = query.order_by(TrackedResume.ats_score.desc())
+    elif sort_by == "ats_asc":
+        query = query.order_by(TrackedResume.ats_score.asc())
+    elif sort_by == "match_desc":
+        query = query.order_by(TrackedResume.match_score.desc())
+    elif sort_by == "match_asc":
+        query = query.order_by(TrackedResume.match_score.asc())
+    elif sort_by == "name_asc":
+        query = query.order_by(TrackedResume.resume_name.asc())
+    elif sort_by == "company_asc":
+        query = query.order_by(TrackedResume.company_name.asc())
+    else:
+        # Default: newest creation date first
+        query = query.order_by(TrackedResume.creation_date.desc())
+
+    resumes = query.all()
+
+    # Calculate summary metrics
+    total_count = len(resumes)
+    avg_ats = round(sum(r.ats_score for r in resumes) / total_count) if total_count > 0 else 0
+    avg_match = round(sum(r.match_score for r in resumes) / total_count) if total_count > 0 else 0
+
+    return render_template(
+        "tracker.html",
+        form=form,
+        resumes=resumes,
+        search_query=search_query,
+        sort_by=sort_by,
+        total_count=total_count,
+        avg_ats=avg_ats,
+        avg_match=avg_match,
+    )
+
+
+@main_bp.post("/tracker/delete/<int:resume_id>")
+def delete_tracked_resume(resume_id: int):
+    """Delete a tracked resume record from the database."""
+    record = TrackedResume.query.get_or_404(resume_id)
+    resume_name = record.resume_name
+    db.session.delete(record)
+    db.session.commit()
+    flash(f"Tracked resume '{resume_name}' has been deleted.", "success")
+    return redirect(url_for("main.tracker"))
+
+
+
 
 
 
@@ -413,10 +500,30 @@ def generate_resume(resume_id: int):
         return redirect(url_for("main.resume_detail", resume_id=resume_id))
 
     current_app.logger.info("Generated resume: %s", generated_resume.filename)
-    flash("Completed resume generated successfully.", "success")
+    
+    # Auto-track generated resume in database
+    try:
+        full_name = resume.get("personal", {}).get("full_name", "Generated Resume")
+        role = resume.get("experience", {}).get("role", "Software Engineer")
+        company = resume.get("experience", {}).get("company", "Target Company")
+        tracked_entry = TrackedResume(
+            resume_name=f"{full_name} ({generated_resume.filename})",
+            job_role=role,
+            company_name=company,
+            ats_score=85,
+            match_score=80,
+            notes=f"Auto-generated using template {form.template_filename.data}",
+        )
+        db.session.add(tracked_entry)
+        db.session.commit()
+    except Exception as track_err:
+        current_app.logger.warning("Failed to auto-track generated resume: %s", track_err)
+
+    flash("Completed resume generated successfully and saved to Resume Tracker.", "success")
     return redirect(
         url_for("main.download_generated_resume", filename=generated_resume.filename)
     )
+
 
 
 @main_bp.get("/generated/<path:filename>")

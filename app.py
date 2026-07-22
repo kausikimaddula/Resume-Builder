@@ -7,10 +7,14 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from flask import Flask, render_template
+from flask_migrate import Migrate
 from werkzeug.exceptions import HTTPException
 
 from config import Config
+from models import db
 from routes.main import main_bp
+
+migrate = Migrate()
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
@@ -24,6 +28,17 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     # variables, so secrets do not need to be hard-coded in the app.
     app.config.from_object(config_class)
 
+    # Ensure instance directory exists for SQLite database
+    instance_dir = Path(app.root_path) / "instance"
+    instance_dir.mkdir(parents=True, exist_ok=True)
+
+    # Initialize SQLAlchemy database and Flask-Migrate
+    db.init_app(app)
+    migrate.init_app(app, db)
+
+    with app.app_context():
+        db.create_all()
+
     # Keep setup steps small and named so new developers can follow the flow.
     configure_logging(app)
     register_blueprints(app)
@@ -31,6 +46,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     app.logger.info("AI Resume Builder & Tracker started")
     return app
+
 
 
 def configure_logging(app: Flask) -> None:

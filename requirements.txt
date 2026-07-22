@@ -1,8 +1,9 @@
 Flask
 Flask-WTF
+Flask-SQLAlchemy
+Flask-Migrate
 email-validator
 openai
 python-docx
 python-dotenv
 pypdf
-python-docx
