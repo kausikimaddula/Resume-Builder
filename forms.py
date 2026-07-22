@@ -171,3 +171,25 @@ class ResumeJdCompareForm(FlaskForm):
     )
     submit = SubmitField("Compare Resume vs JD")
 
+
+class ResumeImprovementForm(FlaskForm):
+    """Validate inputs for AI resume improvement recommendations."""
+
+    resume_file = FileField(
+        "Upload Resume File (DOCX/PDF)",
+        validators=[
+            Optional(),
+            FileAllowed(["docx", "pdf"], "Only DOCX and PDF resume files are allowed."),
+        ],
+    )
+    resume_text = TextAreaField(
+        "Or Paste Resume Text",
+        validators=[Optional(), Length(max=10000)],
+    )
+    target_role = StringField(
+        "Target Job Role / Industry (Optional)",
+        validators=[Optional(), Length(max=150)],
+    )
+    submit = SubmitField("Get AI Resume Improvements")
+
+

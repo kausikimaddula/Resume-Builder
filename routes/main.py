@@ -21,6 +21,7 @@ from forms import (
     ResumeUploadForm,
     JobDescriptionUploadForm,
     ResumeJdCompareForm,
+    ResumeImprovementForm,
 )
 from services.resume_store import get_all_resumes, get_resume, save_resume
 from services.resume_builder import ResumeBuilderError, build_resume_from_template
@@ -35,6 +36,8 @@ from services.proofreader import ProofreaderError, proofread_resume
 from services.ats_checker import AtsAnalysisError, analyze_resume_ats
 from services.job_description import save_jd_upload, extract_jd_text
 from services.jd_matcher import match_resume_to_jd, JdMatcherError
+from services.resume_improver import improve_resume, ResumeImproverError
+
 
 
 main_bp = Blueprint("main", __name__)
@@ -318,6 +321,61 @@ def compare_resume_vs_jd():
         match_results=match_results,
         inputs_info=inputs_info,
     )
+
+
+@main_bp.route("/resume/improve", methods=["GET", "POST"])
+def improve_resume_route():
+    """Analyze a resume (file or text) and generate AI-driven section-wise improvement suggestions."""
+    form = ResumeImprovementForm()
+    suggestions = None
+    input_info = None
+
+    if form.validate_on_submit():
+        resume_file = form.resume_file.data
+        resume_text_input = form.resume_text.data
+        target_role = form.target_role.data or ""
+
+        if not resume_file and not resume_text_input.strip():
+            flash("Please upload a resume file or paste resume text to analyze.", "danger")
+        else:
+            try:
+                if resume_file:
+                    upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
+                    uploaded_resume = save_resume_upload(resume_file, upload_folder)
+                    resume_text = extract_resume_text(uploaded_resume.path)
+                    source_name = uploaded_resume.original_filename
+                else:
+                    resume_text = resume_text_input.strip()
+                    source_name = "Pasted Resume Text"
+
+                api_key = current_app.config.get("OPENAI_API_KEY")
+                model = current_app.config.get("OPENAI_MODEL")
+
+                suggestions = improve_resume(
+                    resume_text=resume_text,
+                    target_role=target_role,
+                    api_key=api_key,
+                    model=model,
+                )
+
+                input_info = {
+                    "source_name": source_name,
+                    "target_role": target_role,
+                }
+
+                flash("Resume improvement analysis completed successfully.", "success")
+                current_app.logger.info("Resume improvement suggestions generated for: %s", source_name)
+            except Exception as error:
+                current_app.logger.exception("Resume improvement failed: %s", error)
+                flash(str(error), "danger")
+
+    return render_template(
+        "resume_improvement.html",
+        form=form,
+        suggestions=suggestions,
+        input_info=input_info,
+    )
+
 
 
 

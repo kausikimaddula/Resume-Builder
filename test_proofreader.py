@@ -106,11 +106,13 @@ class TestProofreader(unittest.TestCase):
         self.app.config["OPENAI_MODEL"] = "gpt-4o-mini"
 
         # Resolve test file
+        docx_path = Path("test_resume.docx")
         if not docx_path.exists():
             from docx import Document
             doc = Document()
             doc.add_paragraph("Jane Doe Resume")
             doc.save(docx_path)
+
 
         with open(docx_path, "rb") as docx_file:
             response = self.client.post(
