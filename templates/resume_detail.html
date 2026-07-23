@@ -7,144 +7,185 @@
 {% endmacro %}
 
 {% block content %}
-  <section class="py-5 bg-white border-bottom">
-    <div class="container">
-      <div class="row align-items-center g-4">
-        <div class="col-lg-8">
-          <p class="text-uppercase text-success fw-semibold small mb-2">Saved in memory</p>
-          <h1 class="h2 fw-bold mb-2">{{ resume.personal.full_name }}</h1>
-          <p class="text-secondary mb-0">
-            Resume submission #{{ resume.id }} is available until the server restarts.
-          </p>
-        </div>
-        <div class="col-lg-5 text-lg-end">
-          <a class="btn btn-outline-success me-1" href="{{ url_for('main.export_resume_details_route', resume_id=resume.id, fmt='docx') }}">Export DOCX</a>
-          <a class="btn btn-outline-danger me-1" href="{{ url_for('main.export_resume_details_route', resume_id=resume.id, fmt='pdf') }}">Export PDF</a>
-          <a class="btn btn-outline-primary me-1" href="{{ url_for('main.version_history', resume_id=resume.id) }}">History</a>
-          <a class="btn btn-primary" href="{{ url_for('main.resume_form') }}">Add New</a>
-        </div>
+<!-- Header Banner -->
+<section class="py-4 bg-white border-bottom shadow-xs">
+  <div class="container">
+    <div class="row align-items-center g-3">
+      <div class="col-lg-7">
+        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold mb-2">
+          <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i> Saved in Server Memory
+        </span>
+        <h1 class="h2 fw-bold text-dark mb-1">{{ resume.personal.full_name }}</h1>
+        <p class="text-secondary mb-0">
+          Submission #{{ resume.id }} is active and available until the server restarts.
+        </p>
+      </div>
+      <div class="col-lg-5 text-lg-end">
+        <a class="btn btn-outline-success me-1 mb-2 mb-sm-0" href="{{ url_for('main.export_resume_details_route', resume_id=resume.id, fmt='docx') }}">
+          <i class="bi bi-file-earmark-word me-1" aria-hidden="true"></i> Export DOCX
+        </a>
+        <a class="btn btn-outline-danger me-1 mb-2 mb-sm-0" href="{{ url_for('main.export_resume_details_route', resume_id=resume.id, fmt='pdf') }}">
+          <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i> Export PDF
+        </a>
+        <a class="btn btn-outline-primary me-1 mb-2 mb-sm-0" href="{{ url_for('main.version_history', resume_id=resume.id) }}">
+          <i class="bi bi-clock-history me-1" aria-hidden="true"></i> History
+        </a>
+        <a class="btn btn-primary mb-2 mb-sm-0" href="{{ url_for('main.resume_form') }}">
+          <i class="bi bi-plus-circle me-1" aria-hidden="true"></i> Add New
+        </a>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="py-5">
-    <div class="container">
-      <div class="row g-4">
-        <div class="col-12">
-          <div class="form-section bg-white border shadow-sm">
-            <div class="row align-items-center g-3">
-              <div class="col-lg-6">
-                <h2 class="h5 fw-bold mb-2">AI Resume Builder</h2>
-                <p class="text-secondary mb-0">
-                  Generate a completed DOCX resume from these details and an uploaded DOCX template.
-                </p>
-              </div>
-              <div class="col-lg-6">
-                {% if generate_form.template_filename.choices %}
-                  <form
-                    class="row g-2 align-items-end"
-                    method="post"
-                    action="{{ url_for('main.generate_resume', resume_id=resume.id) }}"
-                  >
-                    {{ generate_form.hidden_tag() }}
-                    <div class="col-sm">
-                      {{ generate_form.template_filename.label(class="form-label fw-semibold") }}
-                      {{ generate_form.template_filename(class="form-select") }}
-                    </div>
-                    <div class="col-sm-auto">
-                      {{ generate_form.submit(class="btn btn-success w-100") }}
-                    </div>
-                  </form>
-                {% else %}
-                  <div class="alert alert-warning mb-0" role="alert">
-                    Upload a DOCX template before generating a resume.
-                    <a class="alert-link" href="{{ url_for('main.upload_template') }}">Upload template</a>
+<section class="py-5">
+  <div class="container">
+    <div class="row g-4">
+      <!-- Generate Resume Banner Card -->
+      <div class="col-12">
+        <div class="card border-0 shadow-sm p-4 bg-white">
+          <div class="row align-items-center g-3">
+            <div class="col-lg-6">
+              <h2 class="h5 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                <i class="bi bi-file-earmark-diff text-primary" aria-hidden="true"></i> Generate Resume Document
+              </h2>
+              <p class="text-secondary small mb-0">
+                Generate a formatted DOCX/PDF resume by combining these saved details with an uploaded DOCX template.
+              </p>
+            </div>
+            <div class="col-lg-6">
+              {% if generate_form.template_filename.choices %}
+                <form class="row g-2 align-items-end" method="post" action="{{ url_for('main.generate_resume', resume_id=resume.id) }}">
+                  {{ generate_form.hidden_tag() }}
+                  <div class="col-sm">
+                    <label for="{{ generate_form.template_filename.id }}" class="form-label fw-semibold small text-dark visually-hidden">
+                      {{ generate_form.template_filename.label.text }}
+                    </label>
+                    {{ generate_form.template_filename(class="form-select") }}
                   </div>
-                {% endif %}
-              </div>
+                  <div class="col-sm-auto">
+                    <button type="submit" class="btn btn-success w-100 fw-semibold">
+                      <i class="bi bi-magic me-1" aria-hidden="true"></i> Generate Resume
+                    </button>
+                  </div>
+                </form>
+              {% else %}
+                <div class="alert alert-warning mb-0 d-flex align-items-center gap-2" role="alert">
+                  <i class="bi bi-exclamation-triangle-fill fs-5" aria-hidden="true"></i>
+                  <div>
+                    Upload a DOCX template before generating a resume.
+                    <a class="alert-link ms-1 text-decoration-underline" href="{{ url_for('main.upload_template') }}">Upload template</a>
+                  </div>
+                </div>
+              {% endif %}
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="col-lg-6">
-          <div class="form-section bg-white border shadow-sm h-100">
-            <h2 class="h5 fw-bold mb-3">Personal Information</h2>
-            <dl class="row mb-0">
-              <dt class="col-sm-4">Email</dt>
-              <dd class="col-sm-8">{{ resume.personal.email }}</dd>
-              <dt class="col-sm-4">Phone</dt>
-              <dd class="col-sm-8">{{ resume.personal.phone }}</dd>
-              <dt class="col-sm-4">LinkedIn</dt>
-              <dd class="col-sm-8">{{ show_text(resume.personal.linkedin) }}</dd>
-              <dt class="col-sm-4">GitHub</dt>
-              <dd class="col-sm-8">{{ show_text(resume.personal.github) }}</dd>
-              <dt class="col-sm-4">Portfolio</dt>
-              <dd class="col-sm-8">{{ show_text(resume.personal.portfolio) }}</dd>
-              <dt class="col-sm-4">Address</dt>
-              <dd class="col-sm-8">{{ show_text(resume.personal.address) }}</dd>
-            </dl>
-          </div>
+      <!-- Personal Info Card -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100">
+          <h2 class="h5 fw-bold text-dark mb-3 border-bottom pb-2 d-flex align-items-center gap-2">
+            <i class="bi bi-person-vcard text-primary" aria-hidden="true"></i> Personal Information
+          </h2>
+          <dl class="row mb-0 small">
+            <dt class="col-sm-4 text-secondary">Email</dt>
+            <dd class="col-sm-8 fw-semibold text-dark">{{ resume.personal.email }}</dd>
+            <dt class="col-sm-4 text-secondary">Phone</dt>
+            <dd class="col-sm-8 text-dark">{{ resume.personal.phone }}</dd>
+            <dt class="col-sm-4 text-secondary">LinkedIn</dt>
+            <dd class="col-sm-8">{{ show_text(resume.personal.linkedin) }}</dd>
+            <dt class="col-sm-4 text-secondary">GitHub</dt>
+            <dd class="col-sm-8">{{ show_text(resume.personal.github) }}</dd>
+            <dt class="col-sm-4 text-secondary">Portfolio</dt>
+            <dd class="col-sm-8">{{ show_text(resume.personal.portfolio) }}</dd>
+            <dt class="col-sm-4 text-secondary">Address</dt>
+            <dd class="col-sm-8">{{ show_text(resume.personal.address) }}</dd>
+          </dl>
         </div>
+      </div>
 
-        <div class="col-lg-6">
-          <div class="form-section bg-white border shadow-sm h-100">
-            <h2 class="h5 fw-bold mb-3">Education</h2>
-            <dl class="row mb-0">
-              <dt class="col-sm-4">Degree</dt>
-              <dd class="col-sm-8">{{ resume.education.degree }}</dd>
-              <dt class="col-sm-4">College</dt>
-              <dd class="col-sm-8">{{ resume.education.college }}</dd>
-              <dt class="col-sm-4">Graduation Year</dt>
-              <dd class="col-sm-8">{{ resume.education.graduation_year }}</dd>
-              <dt class="col-sm-4">GPA</dt>
-              <dd class="col-sm-8">{{ show_text(resume.education.gpa) }}</dd>
-            </dl>
-          </div>
+      <!-- Education Card -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100">
+          <h2 class="h5 fw-bold text-dark mb-3 border-bottom pb-2 d-flex align-items-center gap-2">
+            <i class="bi bi-mortarboard text-primary" aria-hidden="true"></i> Education
+          </h2>
+          <dl class="row mb-0 small">
+            <dt class="col-sm-4 text-secondary">Degree</dt>
+            <dd class="col-sm-8 fw-semibold text-dark">{{ resume.education.degree }}</dd>
+            <dt class="col-sm-4 text-secondary">College</dt>
+            <dd class="col-sm-8 text-dark">{{ resume.education.college }}</dd>
+            <dt class="col-sm-4 text-secondary">Graduation</dt>
+            <dd class="col-sm-8 text-dark">{{ resume.education.graduation_year }}</dd>
+            <dt class="col-sm-4 text-secondary">GPA</dt>
+            <dd class="col-sm-8">{{ show_text(resume.education.gpa) }}</dd>
+          </dl>
         </div>
+      </div>
 
-        <div class="col-lg-6">
-          <div class="form-section bg-white border shadow-sm h-100">
-            <h2 class="h5 fw-bold mb-3">Experience</h2>
-            <p class="mb-1"><strong>{{ resume.experience.role }}</strong></p>
-            <p class="text-secondary mb-3">{{ resume.experience.company }} | {{ resume.experience.duration }}</p>
-            <p class="preserve-lines mb-0">{{ resume.experience.responsibilities }}</p>
-          </div>
+      <!-- Experience Card -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100">
+          <h2 class="h5 fw-bold text-dark mb-3 border-bottom pb-2 d-flex align-items-center gap-2">
+            <i class="bi bi-briefcase text-primary" aria-hidden="true"></i> Work Experience
+          </h2>
+          <p class="mb-1 fw-bold text-dark">{{ resume.experience.role }}</p>
+          <p class="text-secondary small mb-3"><i class="bi bi-building me-1" aria-hidden="true"></i> {{ resume.experience.company }} | <i class="bi bi-clock me-1" aria-hidden="true"></i> {{ resume.experience.duration }}</p>
+          <p class="preserve-lines mb-0 small text-dark">{{ resume.experience.responsibilities }}</p>
         </div>
+      </div>
 
-        <div class="col-lg-6">
-          <div class="form-section bg-white border shadow-sm h-100">
-            <h2 class="h5 fw-bold mb-3">Project</h2>
-            <p class="mb-1"><strong>{{ resume.projects.project_name }}</strong></p>
-            <p class="preserve-lines">{{ resume.projects.description }}</p>
-            <p class="mb-0"><strong>Technologies:</strong> {{ resume.projects.technologies }}</p>
-          </div>
+      <!-- Project Card -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100">
+          <h2 class="h5 fw-bold text-dark mb-3 border-bottom pb-2 d-flex align-items-center gap-2">
+            <i class="bi bi-rocket-takeoff text-primary" aria-hidden="true"></i> Featured Project
+          </h2>
+          <p class="mb-1 fw-bold text-dark">{{ resume.projects.project_name }}</p>
+          <p class="preserve-lines small text-secondary mb-3">{{ resume.projects.description }}</p>
+          <p class="mb-0 small"><strong class="text-dark">Technologies:</strong> <span class="badge bg-light text-dark border ms-1">{{ resume.projects.technologies }}</span></p>
         </div>
+      </div>
 
-        <div class="col-lg-3 col-md-6">
-          <div class="form-section bg-white border shadow-sm h-100">
-            <h2 class="h6 fw-bold">Skills</h2>
-            <p class="preserve-lines mb-0">{{ resume.skills }}</p>
-          </div>
+      <!-- Skill & Metadata Badge Grid -->
+      <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100">
+          <h2 class="h6 fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+            <i class="bi bi-tools text-primary" aria-hidden="true"></i> Skills
+          </h2>
+          <p class="preserve-lines mb-0 small text-dark">{{ resume.skills }}</p>
         </div>
-        <div class="col-lg-3 col-md-6">
-          <div class="form-section bg-white border shadow-sm h-100">
-            <h2 class="h6 fw-bold">Certifications</h2>
-            <p class="preserve-lines mb-0">{{ show_text(resume.certifications) }}</p>
-          </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100">
+          <h2 class="h6 fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+            <i class="bi bi-patch-check text-primary" aria-hidden="true"></i> Certifications
+          </h2>
+          <p class="preserve-lines mb-0 small text-dark">{{ show_text(resume.certifications) }}</p>
         </div>
-        <div class="col-lg-3 col-md-6">
-          <div class="form-section bg-white border shadow-sm h-100">
-            <h2 class="h6 fw-bold">Achievements</h2>
-            <p class="preserve-lines mb-0">{{ show_text(resume.achievements) }}</p>
-          </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100">
+          <h2 class="h6 fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+            <i class="bi bi-trophy text-primary" aria-hidden="true"></i> Achievements
+          </h2>
+          <p class="preserve-lines mb-0 small text-dark">{{ show_text(resume.achievements) }}</p>
         </div>
-        <div class="col-lg-3 col-md-6">
-          <div class="form-section bg-white border shadow-sm h-100">
-            <h2 class="h6 fw-bold">Languages</h2>
-            <p class="preserve-lines mb-0">{{ show_text(resume.languages) }}</p>
-          </div>
+      </div>
+
+      <div class="col-lg-3 col-md-6">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100">
+          <h2 class="h6 fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+            <i class="bi bi-translate text-primary" aria-hidden="true"></i> Languages
+          </h2>
+          <p class="preserve-lines mb-0 small text-dark">{{ show_text(resume.languages) }}</p>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 {% endblock %}
