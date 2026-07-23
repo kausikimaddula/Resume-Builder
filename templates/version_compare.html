@@ -97,7 +97,10 @@
                 <span class="fw-bold text-dark">Comparison Version (ID: #{{ vb.id }})</span>
               </div>
               <div>
-                <a class="btn btn-sm btn-outline-success" href="{{ url_for('main.download_generated_resume', filename=vb.filename) }}">Download</a>
+                <div class="btn-group btn-group-sm">
+                  <a class="btn btn-outline-success" href="{{ url_for('main.export_version_resume', version_id=vb.id, fmt='docx') }}">DOCX</a>
+                  <a class="btn btn-outline-danger" href="{{ url_for('main.export_version_resume', version_id=vb.id, fmt='pdf') }}">PDF</a>
+                </div>
               </div>
             </div>
             <div class="card-body">

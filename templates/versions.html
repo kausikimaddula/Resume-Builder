@@ -118,8 +118,11 @@
                     </td>
                     <td class="text-end pe-4">
                       <div class="btn-group btn-group-sm">
-                        <a class="btn btn-outline-secondary" href="{{ url_for('main.download_generated_resume', filename=version.filename) }}">
-                          Download
+                        <a class="btn btn-outline-success" href="{{ url_for('main.export_version_resume', version_id=version.id, fmt='docx') }}">
+                          DOCX
+                        </a>
+                        <a class="btn btn-outline-danger" href="{{ url_for('main.export_version_resume', version_id=version.id, fmt='pdf') }}">
+                          PDF
                         </a>
                         {% if loop.index > 1 %}
                           <a class="btn btn-outline-primary" href="{{ url_for('main.compare_versions_route', a=versions[loop.index0 - 2].id, b=version.id) }}">
