@@ -2,39 +2,15 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 from typing import Any
-from openai import OpenAI, OpenAIError
+
+# Import shared AI service helpers and centralized prompts
+from services.openai_service import OpenAI, OpenAiServiceError, execute_json_chat_completion
+from services.prompts import JD_MATCHER_SYSTEM_PROMPT, JD_MATCHER_USER_PROMPT_TEMPLATE
 
 logger = logging.getLogger(__name__)
-
-# Reusable prompts - Tailored for GPT-4o-mini
-JD_MATCHER_SYSTEM_PROMPT = (
-    "You are an expert recruiter and talent acquisition professional. Compare the provided Resume and Job Description.\n"
-    "Identify key alignments, gaps, and actionable recommendations. Be highly concise and specific.\n\n"
-    "You must return a valid JSON object containing exactly these eight keys:\n"
-    "1. 'match_percentage': An integer between 0 and 100.\n"
-    "2. 'matching_skills': A list of matching technical/professional skills found in both.\n"
-    "3. 'missing_technical_skills': A list of top technical skills/tools from the job description missing or weak in the resume.\n"
-    "4. 'missing_soft_skills': A list of top soft skills/competencies from the job description missing or weak in the resume.\n"
-    "5. 'recommended_keywords': A list of important acronyms, terminology, or keywords from the job description to add.\n"
-    "6. 'recommended_certifications': A list of certifications mentioned, implied, or highly recommended for the role that the resume lacks.\n"
-    "7. 'recommended_projects': A list of 2-3 specific, concrete projects the candidate can build to prove competency in the missing technical skills.\n"
-    "8. 'learning_roadmap': A list of sequential, concise steps (3-4 steps max) to acquire the missing skills and close the gap.\n\n"
-    "Respond ONLY with a valid JSON object."
-)
-
-JD_MATCHER_USER_PROMPT_TEMPLATE = (
-    "Compare this resume and job description using GPT-4o-mini:\n\n"
-    "--- START RESUME ---\n"
-    "{resume_text}\n"
-    "--- END RESUME ---\n\n"
-    "--- START JOB DESCRIPTION ---\n"
-    "{jd_text}\n"
-    "--- END JOB DESCRIPTION ---\n"
-)
 
 
 class JdMatcherError(Exception):
@@ -65,24 +41,61 @@ def match_resume_to_jd(
     )
 
     try:
-        response = client.chat.completions.create(
+        raw_json = execute_json_chat_completion(
+            system_prompt=JD_MATCHER_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            api_key=api_key,
             model=model,
-            messages=[
-                {"role": "system", "content": JD_MATCHER_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            response_format={"type": "json_object"},
+            client=client,
         )
-    except OpenAIError as error:
-        raise JdMatcherError(f"OpenAI request failed: {error}") from error
+    except OpenAiServiceError as error:
+        raise JdMatcherError(str(error)) from error
 
-    raw_text = response.choices[0].message.content or ""
-    if not raw_text:
-        raise JdMatcherError("OpenAI returned an empty response.")
-
-    result = _parse_matcher_response(raw_text)
+    result = _validate_matcher_schema(raw_json)
     result["analysis_type"] = "AI Assessment"
     return result
+
+
+def _validate_matcher_schema(parsed: dict[str, Any]) -> dict[str, Any]:
+    """Validate required keys and data structures from JD matcher JSON response."""
+    required_keys = [
+        "match_percentage",
+        "matching_skills",
+        "missing_technical_skills",
+        "missing_soft_skills",
+        "recommended_keywords",
+        "recommended_certifications",
+        "recommended_projects",
+        "learning_roadmap",
+    ]
+    for key in required_keys:
+        if key not in parsed:
+            raise JdMatcherError(f"Missing required key in matching analysis JSON: '{key}'")
+
+    # Coerce match_percentage
+    try:
+        parsed["match_percentage"] = int(parsed["match_percentage"])
+        parsed["match_percentage"] = max(0, min(100, parsed["match_percentage"]))
+    except (ValueError, TypeError):
+        parsed["match_percentage"] = 0
+
+    # Ensure list types
+    list_keys = [
+        "matching_skills",
+        "missing_technical_skills",
+        "missing_soft_skills",
+        "recommended_keywords",
+        "recommended_certifications",
+        "recommended_projects",
+        "learning_roadmap",
+    ]
+    for key in list_keys:
+        if not isinstance(parsed[key], list):
+            parsed[key] = [str(parsed[key])] if parsed[key] else []
+        else:
+            parsed[key] = [str(item) for item in parsed[key]]
+
+    return parsed
 
 
 def _match_resume_to_jd_heuristics(resume_text: str, jd_text: str) -> dict[str, Any]:
@@ -217,59 +230,3 @@ def _word_in_text(word: str, text: str) -> bool:
     """Helper to check if a word/phrase exists in text as a whole word."""
     pattern = r"\b" + re.escape(word) + r"\b"
     return bool(re.search(pattern, text))
-
-
-def _parse_matcher_response(raw_text: str) -> dict[str, Any]:
-    """Clean and parse JSON from OpenAI response."""
-    cleaned = raw_text.strip()
-    fenced = re.search(r"```(json)?\s*(.*?)```", cleaned, re.DOTALL | re.IGNORECASE)
-    if fenced:
-        cleaned = fenced.group(2).strip()
-
-    try:
-        parsed = json.loads(cleaned)
-    except json.JSONDecodeError as error:
-        raise JdMatcherError("OpenAI returned content that was not valid JSON.") from error
-
-    if not isinstance(parsed, dict):
-        raise JdMatcherError("OpenAI response is not a valid JSON object.")
-
-    # Validate required keys
-    required_keys = [
-        "match_percentage",
-        "matching_skills",
-        "missing_technical_skills",
-        "missing_soft_skills",
-        "recommended_keywords",
-        "recommended_certifications",
-        "recommended_projects",
-        "learning_roadmap",
-    ]
-    for key in required_keys:
-        if key not in parsed:
-            raise JdMatcherError(f"Missing required key in matching analysis JSON: '{key}'")
-
-    # Coerce match_percentage
-    try:
-        parsed["match_percentage"] = int(parsed["match_percentage"])
-        parsed["match_percentage"] = max(0, min(100, parsed["match_percentage"]))
-    except (ValueError, TypeError):
-        parsed["match_percentage"] = 0
-
-    # Ensure list types
-    list_keys = [
-        "matching_skills",
-        "missing_technical_skills",
-        "missing_soft_skills",
-        "recommended_keywords",
-        "recommended_certifications",
-        "recommended_projects",
-        "learning_roadmap",
-    ]
-    for key in list_keys:
-        if not isinstance(parsed[key], list):
-            parsed[key] = [str(parsed[key])] if parsed[key] else []
-        else:
-            parsed[key] = [str(item) for item in parsed[key]]
-
-    return parsed

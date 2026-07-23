@@ -2,30 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import re
 from typing import Any
-from openai import OpenAI, OpenAIError
 
-# Module-level constant prompts to keep them reusable
-ATS_SYSTEM_PROMPT = (
-    "You are an advanced Application Tracking System (ATS) simulator and professional resume reviewer.\n"
-    "Your objective is to analyze the formatting, section completeness, keyword usage, readability, "
-    "action verbs, contact information, and experience quality of the provided resume text.\n\n"
-    "You must return a valid JSON object containing exactly four keys:\n"
-    "1. 'score': An integer from 0 to 100 representing the overall ATS compatibility and quality score.\n"
-    "2. 'strengths': A list of strings highlighting the strong points of the resume (e.g. good formatting clues, strong action words, complete contact details).\n"
-    "3. 'weaknesses': A list of strings indicating areas where the resume falls short (e.g. poor readability, passive language, lack of sections, missing contact metrics).\n"
-    "4. 'suggestions': A list of actionable suggestions and recommendations for improvement to maximize the ATS score.\n\n"
-    "Assess the resume rigorously, as a real ATS processor and hiring manager would."
-)
-
-ATS_USER_PROMPT_TEMPLATE = (
-    "Please analyze the following resume text:\n\n"
-    "--- START RESUME ---\n"
-    "{resume_text}\n"
-    "--- END RESUME ---\n"
-)
+# Import shared AI service helpers and centralized prompts
+from services.openai_service import OpenAI, OpenAiServiceError, execute_json_chat_completion
+from services.prompts import ATS_SYSTEM_PROMPT, ATS_USER_PROMPT_TEMPLATE
 
 
 class AtsAnalysisError(Exception):
@@ -50,24 +32,43 @@ def analyze_resume_ats(
     user_prompt = ATS_USER_PROMPT_TEMPLATE.format(resume_text=resume_text)
 
     try:
-        response = client.chat.completions.create(
+        raw_json = execute_json_chat_completion(
+            system_prompt=ATS_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            api_key=api_key,
             model=model,
-            messages=[
-                {"role": "system", "content": ATS_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            response_format={"type": "json_object"},
+            client=client,
         )
-    except OpenAIError as error:
-        raise AtsAnalysisError(f"OpenAI request failed: {error}") from error
+    except OpenAiServiceError as error:
+        raise AtsAnalysisError(str(error)) from error
 
-    raw_text = response.choices[0].message.content or ""
-    if not raw_text:
-        raise AtsAnalysisError("OpenAI returned an empty response.")
-
-    result = _parse_ats_response(raw_text)
+    result = _validate_ats_schema(raw_json)
     result["analysis_type"] = "AI Assessment"
     return result
+
+
+def _validate_ats_schema(parsed: dict[str, Any]) -> dict[str, Any]:
+    """Validate and coerce required keys from ATS analysis JSON response."""
+    required_keys = ["score", "strengths", "weaknesses", "suggestions"]
+    for key in required_keys:
+        if key not in parsed:
+            raise AtsAnalysisError(f"Missing required key in ATS analysis JSON: '{key}'")
+
+    # Coerce/verify score
+    try:
+        parsed["score"] = int(parsed["score"])
+        parsed["score"] = max(0, min(100, parsed["score"]))
+    except (ValueError, TypeError):
+        parsed["score"] = 0
+
+    # Ensure list types for strings
+    for key in ["strengths", "weaknesses", "suggestions"]:
+        if not isinstance(parsed[key], list):
+            parsed[key] = [str(parsed[key])] if parsed[key] else []
+        else:
+            parsed[key] = [str(item) for item in parsed[key]]
+
+    return parsed
 
 
 def _analyze_resume_heuristics(resume_text: str) -> dict[str, Any]:
@@ -149,40 +150,3 @@ def _analyze_resume_heuristics(resume_text: str) -> dict[str, Any]:
         "suggestions": suggestions,
         "analysis_type": "Local Diagnostics",
     }
-
-
-def _parse_ats_response(raw_text: str) -> dict[str, Any]:
-    """Clean and parse JSON from OpenAI response."""
-    cleaned = raw_text.strip()
-    fenced = re.search(r"```(json)?\s*(.*?)```", cleaned, re.DOTALL | re.IGNORECASE)
-    if fenced:
-        cleaned = fenced.group(2).strip()
-
-    try:
-        parsed = json.loads(cleaned)
-    except json.JSONDecodeError as error:
-        raise AtsAnalysisError("OpenAI returned content that was not valid JSON.") from error
-
-    if not isinstance(parsed, dict):
-        raise AtsAnalysisError("OpenAI response is not a valid JSON object.")
-
-    # Validate required keys
-    required_keys = ["score", "strengths", "weaknesses", "suggestions"]
-    for key in required_keys:
-        if key not in parsed:
-            raise AtsAnalysisError(f"Missing required key in ATS analysis JSON: '{key}'")
-
-    # Coerce/verify types
-    try:
-        parsed["score"] = int(parsed["score"])
-        parsed["score"] = max(0, min(100, parsed["score"]))
-    except (ValueError, TypeError):
-        parsed["score"] = 0
-
-    for key in ["strengths", "weaknesses", "suggestions"]:
-        if not isinstance(parsed[key], list):
-            parsed[key] = [str(parsed[key])] if parsed[key] else []
-        else:
-            parsed[key] = [str(item) for item in parsed[key]]
-
-    return parsed

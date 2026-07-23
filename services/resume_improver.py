@@ -2,31 +2,11 @@
 
 from __future__ import annotations
 
-import json
-import re
 from typing import Any
-from openai import OpenAI, OpenAIError
 
-IMPROVER_SYSTEM_PROMPT = (
-    "You are an expert resume writer, hiring manager, and ATS optimization specialist.\n"
-    "Your goal is to analyze a candidate's resume and generate actionable, section-wise improvement suggestions.\n\n"
-    "You must return a valid JSON object containing exactly six section keys:\n"
-    "1. 'project_descriptions': A list of objects with keys 'original', 'improved', and 'reason'. Enhance impact, quantify achievements, and highlight technologies.\n"
-    "2. 'experience_wording': A list of objects with keys 'original', 'improved', and 'impact'. Upgrade weak bullet points into high-impact accomplishment statements.\n"
-    "3. 'summaries': A list of objects with keys 'title' and 'text'. Provide compelling executive summary variations (e.g. Impact-Driven, Technical Focus, Executive Overview).\n"
-    "4. 'skills_ordering': A list of objects with keys 'category', 'ordered_skills', and 'rationale'. Categorize and order skills logically (e.g., Core technical first, tools later).\n"
-    "5. 'action_verbs': A list of objects with keys 'weak_verb', 'power_verb', and 'example'. Identify passive/overused verbs in the resume and suggest high-power action verbs.\n"
-    "6. 'ats_optimization': A list of objects with keys 'area', 'suggestion', and 'importance'. Provide formatting, keyword placement, and header optimization tips to maximize ATS parser compatibility.\n\n"
-    "Keep suggestions concrete, professional, and tailored to the provided resume and optional target role."
-)
-
-IMPROVER_USER_PROMPT_TEMPLATE = (
-    "Please provide comprehensive resume improvement suggestions for the following resume:\n\n"
-    "{target_role_info}"
-    "--- START RESUME ---\n"
-    "{resume_text}\n"
-    "--- END RESUME ---\n"
-)
+# Import shared AI service helpers and centralized prompts
+from services.openai_service import OpenAI, OpenAiServiceError, execute_json_chat_completion
+from services.prompts import IMPROVER_SYSTEM_PROMPT, IMPROVER_USER_PROMPT_TEMPLATE
 
 
 class ResumeImproverError(Exception):
@@ -56,33 +36,23 @@ def improve_resume(
     )
 
     try:
-        response = client.chat.completions.create(
+        raw_json = execute_json_chat_completion(
+            system_prompt=IMPROVER_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            api_key=api_key,
             model=model,
-            messages=[
-                {"role": "system", "content": IMPROVER_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            response_format={"type": "json_object"},
+            client=client,
         )
-    except OpenAIError as error:
-        raise ResumeImproverError(f"OpenAI request failed: {error}") from error
+    except OpenAiServiceError as error:
+        raise ResumeImproverError(str(error)) from error
 
-    raw_text = response.choices[0].message.content or ""
-    if not raw_text:
-        raise ResumeImproverError("OpenAI returned an empty response.")
-
-    result = _parse_improver_response(raw_text)
+    result = _validate_improver_schema(raw_json)
     result["analysis_type"] = "AI Powered Assessment"
     return result
 
 
-def _parse_improver_response(raw_text: str) -> dict[str, Any]:
-    """Parse JSON output from OpenAI and validate section schema."""
-    try:
-        data = json.loads(raw_text)
-    except json.JSONDecodeError as error:
-        raise ResumeImproverError("AI response was not valid JSON.") from error
-
+def _validate_improver_schema(data: dict[str, Any]) -> dict[str, Any]:
+    """Validate output dictionary schema for improver."""
     if not isinstance(data, dict):
         raise ResumeImproverError("AI response root must be a JSON object.")
 
