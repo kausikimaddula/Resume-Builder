@@ -18,6 +18,7 @@
           </p>
         </div>
         <div class="col-lg-4 text-lg-end">
+          <a class="btn btn-outline-primary me-2" href="{{ url_for('main.version_history', resume_id=resume.id) }}">View Version History</a>
           <a class="btn btn-primary" href="{{ url_for('main.resume_form') }}">Add another resume</a>
         </div>
       </div>
