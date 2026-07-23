@@ -11,7 +11,10 @@ from typing import Any
 from uuid import uuid4
 
 from docx import Document
-from openai import OpenAI, OpenAIError
+
+# Import shared AI service helpers and centralized prompts
+from services.openai_service import OpenAI, OpenAiServiceError, execute_json_chat_completion, parse_and_clean_json
+from services.prompts import RESUME_BUILDER_SYSTEM_PROMPT
 
 
 PLACEHOLDER_KEYS = {
@@ -134,59 +137,33 @@ def generate_resume_content(
     """Ask OpenAI for dynamic placeholder mapping and polished resume content."""
     client = OpenAI(api_key=api_key)
 
-    system_prompt = (
-        "You are an expert AI resume builder. Your job is to help the user fill a DOCX resume template with their details "
-        "while preserving the original formatting and style.\n\n"
-        "You must return a valid JSON object containing exactly two keys: 'placeholders' and 'resume_content'.\n"
-        "1. 'placeholders': Analyze the template outline (visible text, paragraph snippets, and placeholders). Identify "
-        "any placeholders (like `{{full_name}}`, `[Your Name]`, `[Email]`, `[Phone]`) or sample/example text (like `John Doe`, `your.email@example.com`, `Software Engineer`, `ABC Corporation`, `University Name`, etc.) representing fields in the resume. "
-        "Map each template placeholder or sample text to the corresponding value from the user's details. The keys must be the exact, "
-        "case-sensitive strings as they appear in the template outline, and the values must be the replacement values from the user's details. "
-        "Be extremely precise. This mapping will be used for direct substring replacement in the document.\n"
-        "2. 'resume_content': A dictionary containing polished, professional versions of the user's resume details. "
-        "Use this as a clean, resume-ready fallback of the details."
-    )
-
-    user_prompt = {
+    user_prompt_dict = {
         "task": "Build the mapping and polish the content to fit the template.",
         "user_details": resume_details,
         "template_outline": template_outline,
     }
+    user_prompt = json.dumps(user_prompt_dict, ensure_ascii=True)
 
     try:
-        response = client.chat.completions.create(
+        raw_json = execute_json_chat_completion(
+            system_prompt=RESUME_BUILDER_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            api_key=api_key,
             model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": json.dumps(user_prompt, ensure_ascii=True)},
-            ],
-            response_format={"type": "json_object"},
+            client=client,
         )
-    except OpenAIError as error:
-        raise ResumeBuilderError(f"OpenAI request failed: {error}") from error
+    except OpenAiServiceError as error:
+        raise ResumeBuilderError(str(error)) from error
 
-    raw_text = response.choices[0].message.content or ""
-    if not raw_text:
-        raise ResumeBuilderError("OpenAI returned an empty response.")
-
-    return parse_json_response(raw_text)
+    return raw_json
 
 
 def parse_json_response(raw_text: str) -> dict[str, Any]:
     """Parse model JSON, tolerating accidental fenced code blocks."""
-    cleaned = raw_text.strip()
-    fenced = re.search(r"```(?:json)?\s*(.*?)```", cleaned, re.DOTALL | re.IGNORECASE)
-    if fenced:
-        cleaned = fenced.group(1).strip()
-
     try:
-        parsed = json.loads(cleaned)
-    except json.JSONDecodeError as error:
-        raise ResumeBuilderError("OpenAI returned content that was not valid JSON.") from error
-
-    if not isinstance(parsed, dict):
-        raise ResumeBuilderError("OpenAI returned an unexpected JSON structure.")
-    return parsed
+        return parse_and_clean_json(raw_text)
+    except OpenAiServiceError as error:
+        raise ResumeBuilderError(str(error)) from error
 
 
 def replace_template_placeholders(

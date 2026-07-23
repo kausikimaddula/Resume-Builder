@@ -2,31 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import re
 from typing import Any
-from openai import OpenAI, OpenAIError
 
-# Reusable module-level prompts for the proofreader
-PROOFREADER_SYSTEM_PROMPT = (
-    "You are a professional resume proofreader and copy editor assistant.\n"
-    "Your task is to analyze the provided resume text for any grammar mistakes, spelling mistakes, "
-    "punctuation errors, repeated words, weak wording, passive voice constructs, and inconsistent tenses.\n\n"
-    "You must return a valid JSON object containing exactly one key 'mistakes', which maps to a list of objects.\n"
-    "Each object in the 'mistakes' list must contain exactly these four keys:\n"
-    "1. 'original': The complete original sentence or phrase containing the mistake.\n"
-    "2. 'correction': The corrected version of that complete sentence or phrase.\n"
-    "3. 'reason': A brief, helpful explanation of the rule violated (e.g. grammar, typo, passive voice, weak word choice).\n"
-    "4. 'mistake_word': The exact substring within the original sentence that is incorrect or sub-optimal.\n\n"
-    "If no mistakes are found, return the list as empty."
-)
-
-PROOFREADER_USER_PROMPT_TEMPLATE = (
-    "Please proofread the following resume text:\n\n"
-    "--- START RESUME ---\n"
-    "{resume_text}\n"
-    "--- END RESUME ---\n"
-)
+# Import shared AI service helpers and centralized prompts
+from services.openai_service import OpenAI, OpenAiServiceError, execute_json_chat_completion
+from services.prompts import PROOFREADER_SYSTEM_PROMPT, PROOFREADER_USER_PROMPT_TEMPLATE
 
 
 class ProofreaderError(Exception):
@@ -51,38 +32,23 @@ def proofread_resume(
     user_prompt = PROOFREADER_USER_PROMPT_TEMPLATE.format(resume_text=resume_text)
 
     try:
-        response = client.chat.completions.create(
+        raw_json = execute_json_chat_completion(
+            system_prompt=PROOFREADER_SYSTEM_PROMPT,
+            user_prompt=user_prompt,
+            api_key=api_key,
             model=model,
-            messages=[
-                {"role": "system", "content": PROOFREADER_SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            response_format={"type": "json_object"},
+            client=client,
         )
-    except OpenAIError as error:
-        raise ProofreaderError(f"OpenAI request failed: {error}") from error
+    except OpenAiServiceError as error:
+        raise ProofreaderError(str(error)) from error
 
-    raw_text = response.choices[0].message.content or ""
-    if not raw_text:
-        raise ProofreaderError("OpenAI returned an empty response.")
-
-    result = _parse_proofreader_response(raw_text)
+    result = _validate_proofreader_schema(raw_json)
     result["analysis_type"] = "AI Assessment"
     return result
 
 
-def _parse_proofreader_response(raw_text: str) -> dict[str, Any]:
-    """Clean and parse JSON from OpenAI response for proofreader."""
-    cleaned = raw_text.strip()
-    fenced = re.search(r"```(json)?\s*(.*?)```", cleaned, re.DOTALL | re.IGNORECASE)
-    if fenced:
-        cleaned = fenced.group(2).strip()
-
-    try:
-        parsed = json.loads(cleaned)
-    except json.JSONDecodeError as error:
-        raise ProofreaderError("OpenAI returned content that was not valid JSON.") from error
-
+def _validate_proofreader_schema(parsed: dict[str, Any]) -> dict[str, Any]:
+    """Validate JSON response schema for proofreader."""
     if not isinstance(parsed, dict) or "mistakes" not in parsed:
         raise ProofreaderError("OpenAI response matches incorrect JSON schema (missing 'mistakes').")
 
@@ -93,10 +59,9 @@ def _parse_proofreader_response(raw_text: str) -> dict[str, Any]:
     verified_mistakes = []
     required_keys = ["original", "correction", "reason", "mistake_word"]
 
-    for idx, mistake in enumerate(mistakes):
+    for mistake in mistakes:
         if not isinstance(mistake, dict):
             continue
-        # Ensure all required keys exist
         is_valid = True
         for key in required_keys:
             if key not in mistake:
@@ -171,7 +136,6 @@ def _proofread_heuristics(resume_text: str) -> dict[str, Any]:
         if match_pv:
             mistake_word = match_pv.group(0)
             verb = match_pv.group(2)
-            # Make a simple active suggestion (e.g. Led project instead of was led by)
             mistakes.append({
                 "original": sentence_stripped,
                 "correction": f"[Active Suggestion]: Rephrase to use direct verbs (e.g. 'I {verb} ...')",
