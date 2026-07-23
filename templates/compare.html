@@ -91,10 +91,26 @@
             <!-- Card-Based Results Display Section -->
             {% if match_results %}
             <div class="col-12 mt-5">
-                <h2 class="h4 fw-bold mb-1 d-flex justify-content-between align-items-center">
-                    <span>Match Analysis Dashboard</span>
-                    <span class="badge bg-secondary fs-6 fw-semibold">{{ match_results.analysis_type }}</span>
-                </h2>
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+                    <h2 class="h4 fw-bold mb-0 d-flex align-items-center gap-2">
+                        <span>Match Analysis Dashboard</span>
+                        <span class="badge bg-secondary fs-6 fw-semibold">{{ match_results.analysis_type }}</span>
+                    </h2>
+                    <div class="d-flex align-items-center gap-2">
+                        <form method="post" action="{{ url_for('main.export_jd_match_report_route', fmt='docx') }}" class="d-inline">
+                            <input type="hidden" name="match_data_json" value="{{ match_results | tojson }}">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                Export JD Match Report (.docx)
+                            </button>
+                        </form>
+                        <form method="post" action="{{ url_for('main.export_jd_match_report_route', fmt='pdf') }}" class="d-inline">
+                            <input type="hidden" name="match_data_json" value="{{ match_results | tojson }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                Export JD Match Report (.pdf)
+                            </button>
+                        </form>
+                    </div>
+                </div>
                 <p class="text-secondary small mb-4">
                     Compared Resume (<strong>{{ inputs_info.resume_source }}</strong>) vs Job Description (<strong>{{
                         inputs_info.jd_source }}</strong>)

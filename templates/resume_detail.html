@@ -17,9 +17,11 @@
             Resume submission #{{ resume.id }} is available until the server restarts.
           </p>
         </div>
-        <div class="col-lg-4 text-lg-end">
-          <a class="btn btn-outline-primary me-2" href="{{ url_for('main.version_history', resume_id=resume.id) }}">View Version History</a>
-          <a class="btn btn-primary" href="{{ url_for('main.resume_form') }}">Add another resume</a>
+        <div class="col-lg-5 text-lg-end">
+          <a class="btn btn-outline-success me-1" href="{{ url_for('main.export_resume_details_route', resume_id=resume.id, fmt='docx') }}">Export DOCX</a>
+          <a class="btn btn-outline-danger me-1" href="{{ url_for('main.export_resume_details_route', resume_id=resume.id, fmt='pdf') }}">Export PDF</a>
+          <a class="btn btn-outline-primary me-1" href="{{ url_for('main.version_history', resume_id=resume.id) }}">History</a>
+          <a class="btn btn-primary" href="{{ url_for('main.resume_form') }}">Add New</a>
         </div>
       </div>
     </div>

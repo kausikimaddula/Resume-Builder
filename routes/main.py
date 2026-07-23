@@ -4,12 +4,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import json
+import re
+
 from flask import (
     Blueprint,
+    Response,
     current_app,
     flash,
     redirect,
     render_template,
+    request,
     send_from_directory,
     url_for,
 )
@@ -44,6 +49,15 @@ from services.version_service import (
     get_versions_for_resume,
     get_version,
     compare_versions,
+)
+from services.export_service import (
+    ExportServiceError,
+    export_resume_docx,
+    export_resume_pdf,
+    export_ats_report_docx,
+    export_ats_report_pdf,
+    export_jd_match_report_docx,
+    export_jd_match_report_pdf,
 )
 
 
@@ -545,3 +559,146 @@ def build_generate_form() -> GenerateResumeForm:
         for template in templates
     ]
     return form
+
+
+@main_bp.get("/export/resume/<int:version_id>/<string:fmt>")
+def export_version_resume(version_id: int, fmt: str):
+    """Export a saved resume version as DOCX or PDF."""
+    db_path = current_app.config["DATABASE_PATH"]
+    version_record = get_version(db_path, version_id)
+    if not version_record:
+        flash("Resume version not found.", "warning")
+        return redirect(url_for("main.version_history"))
+
+    details_json = version_record.get("resume_details_json")
+    if not details_json:
+        flash("Resume details snapshot missing for this version.", "warning")
+        return redirect(url_for("main.version_history"))
+
+    try:
+        details = json.loads(details_json)
+        safe_name = re.sub(r"[^\w\-]", "_", details.get("personal", {}).get("full_name", "Resume"))
+        version_num = version_record.get("version_number", 1)
+
+        if fmt.lower() == "docx":
+            file_bytes = export_resume_docx(details)
+            mimetype = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            filename = f"{safe_name}_v{version_num}.docx"
+        elif fmt.lower() == "pdf":
+            file_bytes = export_resume_pdf(details)
+            mimetype = "application/pdf"
+            filename = f"{safe_name}_v{version_num}.pdf"
+        else:
+            flash("Unsupported export format requested.", "danger")
+            return redirect(url_for("main.version_history"))
+
+        return Response(
+            file_bytes,
+            mimetype=mimetype,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as error:
+        current_app.logger.exception("Export failed: %s", error)
+        flash(f"Export failed: {error}", "danger")
+        return redirect(url_for("main.version_history"))
+
+
+@main_bp.get("/export/resume/details/<int:resume_id>/<string:fmt>")
+def export_resume_details_route(resume_id: int, fmt: str):
+    """Export saved in-memory resume details as DOCX or PDF."""
+    resume = get_resume(resume_id)
+    if not resume:
+        flash("Resume details not found.", "warning")
+        return redirect(url_for("main.resume_form"))
+
+    try:
+        safe_name = re.sub(r"[^\w\-]", "_", resume.get("personal", {}).get("full_name", "Resume"))
+
+        if fmt.lower() == "docx":
+            file_bytes = export_resume_docx(resume)
+            mimetype = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            filename = f"{safe_name}_resume.docx"
+        elif fmt.lower() == "pdf":
+            file_bytes = export_resume_pdf(resume)
+            mimetype = "application/pdf"
+            filename = f"{safe_name}_resume.pdf"
+        else:
+            flash("Unsupported export format requested.", "danger")
+            return redirect(url_for("main.resume_detail", resume_id=resume_id))
+
+        return Response(
+            file_bytes,
+            mimetype=mimetype,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as error:
+        current_app.logger.exception("Resume export failed: %s", error)
+        flash(f"Resume export failed: {error}", "danger")
+        return redirect(url_for("main.resume_detail", resume_id=resume_id))
+
+
+@main_bp.post("/export/ats-report/<string:fmt>")
+def export_ats_report_route(fmt: str):
+    """Export ATS Compatibility analysis report as DOCX or PDF."""
+    ats_json_str = request.form.get("ats_data_json", "")
+    if not ats_json_str:
+        flash("No ATS analysis data available for export.", "warning")
+        return redirect(url_for("main.upload_resume"))
+
+    try:
+        ats_data = json.loads(ats_json_str)
+        if fmt.lower() == "docx":
+            file_bytes = export_ats_report_docx(ats_data)
+            mimetype = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            filename = "ATS_Compatibility_Report.docx"
+        elif fmt.lower() == "pdf":
+            file_bytes = export_ats_report_pdf(ats_data)
+            mimetype = "application/pdf"
+            filename = "ATS_Compatibility_Report.pdf"
+        else:
+            flash("Unsupported export format requested.", "danger")
+            return redirect(url_for("main.upload_resume"))
+
+        return Response(
+            file_bytes,
+            mimetype=mimetype,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as error:
+        current_app.logger.exception("ATS report export failed: %s", error)
+        flash(f"ATS report export failed: {error}", "danger")
+        return redirect(url_for("main.upload_resume"))
+
+
+@main_bp.post("/export/jd-match-report/<string:fmt>")
+def export_jd_match_report_route(fmt: str):
+    """Export Job Description Match report as DOCX or PDF."""
+    match_json_str = request.form.get("match_data_json", "")
+    if not match_json_str:
+        flash("No Job Description match data available for export.", "warning")
+        return redirect(url_for("main.compare_resume_vs_jd"))
+
+    try:
+        match_data = json.loads(match_json_str)
+        if fmt.lower() == "docx":
+            file_bytes = export_jd_match_report_docx(match_data)
+            mimetype = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            filename = "JD_Match_Analysis_Report.docx"
+        elif fmt.lower() == "pdf":
+            file_bytes = export_jd_match_report_pdf(match_data)
+            mimetype = "application/pdf"
+            filename = "JD_Match_Analysis_Report.pdf"
+        else:
+            flash("Unsupported export format requested.", "danger")
+            return redirect(url_for("main.compare_resume_vs_jd"))
+
+        return Response(
+            file_bytes,
+            mimetype=mimetype,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as error:
+        current_app.logger.exception("JD match report export failed: %s", error)
+        flash(f"JD match report export failed: {error}", "danger")
+        return redirect(url_for("main.compare_resume_vs_jd"))
+
