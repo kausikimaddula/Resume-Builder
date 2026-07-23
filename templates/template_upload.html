@@ -3,67 +3,112 @@
 {% block title %}Upload Template | AI Resume Builder & Tracker{% endblock %}
 
 {% block content %}
-  <section class="py-5 bg-white border-bottom">
-    <div class="container">
-      <div class="row align-items-end g-3">
-        <div class="col-lg-8">
-          <p class="text-uppercase text-primary fw-semibold small mb-2">Template upload</p>
-          <h1 class="h2 fw-bold mb-2">Upload a resume template</h1>
-          <p class="text-secondary mb-0">
-            Upload DOCX templates for future editing or PDF files for display only.
-            Template population is not implemented yet.
-          </p>
-        </div>
+<!-- Header Banner -->
+<section class="py-4 bg-white border-bottom shadow-xs">
+  <div class="container">
+    <div class="row align-items-center g-3">
+      <div class="col-lg-8">
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold mb-2">
+          <i class="bi bi-journal-arrow-up me-1" aria-hidden="true"></i> Template Manager
+        </span>
+        <h1 class="h2 fw-bold text-dark mb-1">Upload Resume Template</h1>
+        <p class="text-secondary mb-0">
+          Upload custom DOCX templates for automatic resume generation, or PDF files for visual reference.
+        </p>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="py-5">
-    <div class="container">
-      <div class="row g-4">
-        <div class="col-lg-7">
-          <div class="form-section bg-white border shadow-sm">
-            <form method="post" enctype="multipart/form-data" novalidate>
-              {{ form.hidden_tag() }}
+<section class="py-5">
+  <div class="container">
+    <div class="row g-4">
+      <!-- Input Column -->
+      <div class="col-lg-7">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100">
+          <h2 class="h5 fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-file-earmark-plus text-primary" aria-hidden="true"></i>
+            <span>Select Template File</span>
+          </h2>
 
-              <div class="mb-3">
-                {{ form.template_file.label(class="form-label fw-semibold") }}
-                {{ form.template_file(class="form-control" ~ (" is-invalid" if form.template_file.errors else "")) }}
-                {% if form.template_file.errors %}
-                  <div class="invalid-feedback">
-                    {{ form.template_file.errors[0] }}
-                  </div>
-                {% endif %}
-                <div class="form-text">
-                  Accepted file types: .docx and .pdf
-                </div>
+          <form method="post" enctype="multipart/form-data" novalidate class="d-flex flex-column h-100">
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3 flex-grow-1">
+              <label for="{{ form.template_file.id }}" class="form-label fw-semibold text-dark visually-hidden">
+                {{ form.template_file.label.text }}
+              </label>
+
+              <!-- Drag & Drop Dropzone -->
+              <div class="drop-zone shadow-xs h-100 d-flex flex-column justify-content-center align-items-center">
+                <i class="bi bi-journal-arrow-up display-4 text-primary mb-2 d-block" aria-hidden="true"></i>
+                <span class="d-block fw-semibold text-dark mb-1">Drag and drop DOCX or PDF template here</span>
+                <span class="d-block text-muted small mb-2">or click to select file</span>
+                <span class="badge bg-light text-secondary border px-3 py-1">Accepted: .docx, .pdf</span>
+
+                {{ form.template_file(class="drop-zone__input" ~ (" is-invalid" if form.template_file.errors else "")) }}
+                <div class="drop-zone__file-name mt-3 small text-primary"></div>
               </div>
 
-              {{ form.submit(class="btn btn-primary") }}
-            </form>
-          </div>
-        </div>
+              {% if form.template_file.errors %}
+              <div class="text-danger small mt-2 d-flex align-items-center gap-1" role="alert">
+                <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
+                <span>{{ form.template_file.errors[0] }}</span>
+              </div>
+              {% endif %}
+            </div>
 
-        <div class="col-lg-5">
-          <div class="form-section bg-white border shadow-sm h-100">
-            <h2 class="h5 fw-bold mb-3">Upload Status</h2>
-            {% if uploaded_template %}
-              <dl class="row mb-0">
-                <dt class="col-sm-5">Uploaded file</dt>
-                <dd class="col-sm-7">{{ uploaded_template.original_filename }}</dd>
-                <dt class="col-sm-5">Stored as</dt>
-                <dd class="col-sm-7">{{ uploaded_template.stored_filename }}</dd>
-                <dt class="col-sm-5">Type</dt>
-                <dd class="col-sm-7">{{ uploaded_template.file_type }}</dd>
-              </dl>
-            {% else %}
-              <p class="text-secondary mb-0">
-                No template uploaded in this request yet.
-              </p>
-            {% endif %}
-          </div>
+            <!-- Upload Progress Bar Container -->
+            <div class="upload-progress-bar mb-3 d-none">
+              <div class="d-flex justify-content-between align-items-center mb-1 small text-secondary">
+                <span>Uploading Template...</span>
+                <span class="fw-bold text-primary">Processing</span>
+              </div>
+              <div class="progress" style="height: 10px;">
+                <div class="progress-bar progress-bar-indigo progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg shadow-sm fw-semibold">
+              <i class="bi bi-cloud-upload me-1" aria-hidden="true"></i> Upload Template File
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Upload Status Column -->
+      <div class="col-lg-5">
+        <div class="card border-0 shadow-sm p-4 bg-white h-100">
+          <h2 class="h5 fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle text-primary" aria-hidden="true"></i>
+            <span>Upload Status</span>
+          </h2>
+          {% if uploaded_template %}
+            <div class="p-3 bg-success-subtle text-success-emphasis border border-success-subtle rounded mb-3">
+              <div class="d-flex align-items-center gap-2 font-semibold mb-1">
+                <i class="bi bi-check-circle-fill text-success fs-5" aria-hidden="true"></i>
+                <span class="fw-bold">Template Uploaded Successfully</span>
+              </div>
+              <span class="small text-secondary">Template registered in server memory for document generation.</span>
+            </div>
+
+            <dl class="row mb-0 small">
+              <dt class="col-sm-5 text-secondary">Uploaded file</dt>
+              <dd class="col-sm-7 fw-bold text-dark">{{ uploaded_template.original_filename }}</dd>
+              <dt class="col-sm-5 text-secondary">Stored name</dt>
+              <dd class="col-sm-7 font-monospace text-muted">{{ uploaded_template.stored_filename }}</dd>
+              <dt class="col-sm-5 text-secondary">File format</dt>
+              <dd class="col-sm-7"><span class="badge bg-secondary">{{ uploaded_template.file_type }}</span></dd>
+            </dl>
+          {% else %}
+            <div class="p-4 text-center text-muted my-auto">
+              <i class="bi bi-file-earmark-code display-5 text-secondary opacity-50 mb-3 d-block" aria-hidden="true"></i>
+              <p class="mb-0 small">No template uploaded in this active session yet.</p>
+            </div>
+          {% endif %}
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 {% endblock %}

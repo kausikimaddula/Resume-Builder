@@ -3,19 +3,22 @@
 {% block title %}Compare Resume Versions | AI Resume Builder & Tracker{% endblock %}
 
 {% block content %}
-<section class="py-5 bg-white border-bottom">
+<!-- Header Banner -->
+<section class="py-4 bg-white border-bottom shadow-xs">
   <div class="container">
     <div class="row align-items-center g-3">
       <div class="col-lg-8">
-        <p class="text-uppercase text-primary fw-semibold small mb-2">Version Comparison</p>
-        <h1 class="h2 fw-bold mb-2">Compare Resume Versions</h1>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold mb-2">
+          <i class="bi bi-arrow-left-right me-1" aria-hidden="true"></i> SQLite Version Diff Engine
+        </span>
+        <h1 class="h2 fw-bold text-dark mb-1">Compare Resume Versions</h1>
         <p class="text-secondary mb-0">
-          Compare any two generated resume versions from SQLite database side-by-side to review Date, ATS Score, Match Score, and content changes.
+          Compare any two generated resume versions side-by-side to review ATS Score deltas, Match Score changes, and line-by-line diffs.
         </p>
       </div>
       <div class="col-lg-4 text-lg-end">
         <a class="btn btn-outline-secondary" href="{{ url_for('main.version_history') }}">
-          View All Versions
+          <i class="bi bi-list-task me-1" aria-hidden="true"></i> View All Versions
         </a>
       </div>
     </div>
@@ -24,141 +27,141 @@
 
 <section class="py-5">
   <div class="container">
-    <div class="card border shadow-sm mb-5">
-      <div class="card-body p-4">
-        <h2 class="h5 fw-bold mb-3">Select Versions to Compare</h2>
-        <form method="post" action="{{ url_for('main.compare_versions_route') }}" class="row g-3 align-items-end">
-          {{ form.hidden_tag() }}
-          <div class="col-md-5">
-            <label class="form-label fw-semibold">{{ form.version_a.label }}</label>
-            {{ form.version_a(class="form-select") }}
-          </div>
-          <div class="col-md-5">
-            <label class="form-label fw-semibold">{{ form.version_b.label }}</label>
-            {{ form.version_b(class="form-select") }}
-          </div>
-          <div class="col-md-2">
-            {{ form.submit(class="btn btn-primary w-100") }}
-          </div>
-        </form>
-      </div>
+    <!-- Version Selection Card -->
+    <div class="card border-0 shadow-sm mb-5 p-4 bg-white">
+      <h2 class="h5 fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-sliders text-primary" aria-hidden="true"></i> Select Versions to Compare
+      </h2>
+      <form method="post" action="{{ url_for('main.compare_versions_route') }}" class="row g-3 align-items-end">
+        {{ form.hidden_tag() }}
+        <div class="col-md-5">
+          <label for="{{ form.version_a.id }}" class="form-label fw-semibold text-dark small">{{ form.version_a.label.text }}</label>
+          {{ form.version_a(class="form-select") }}
+        </div>
+        <div class="col-md-5">
+          <label for="{{ form.version_b.id }}" class="form-label fw-semibold text-dark small">{{ form.version_b.label.text }}</label>
+          {{ form.version_b(class="form-select") }}
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100 fw-semibold shadow-sm">
+            <i class="bi bi-arrow-left-right me-1" aria-hidden="true"></i> Compare
+          </button>
+        </div>
+      </form>
     </div>
 
     {% if comparison_results %}
       {% set va = comparison_results.version_a %}
       {% set vb = comparison_results.version_b %}
 
-      <!-- Side by Side Metrics Grid -->
+      <!-- Side by Side Metrics Cards Grid -->
       <div class="row g-4 mb-5">
         <div class="col-md-6">
-          <div class="card h-100 border-primary border-top border-4 shadow-sm">
-            <div class="card-header bg-white py-3">
-              <span class="badge bg-primary fs-6 me-2">{{ va.version_name }}</span>
-              <span class="fw-bold text-dark">Base Version (ID: #{{ va.id }})</span>
+          <div class="card h-100 border-0 border-top border-4 border-primary shadow-sm bg-white p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <div>
+                <span class="badge bg-primary fs-6 me-2">{{ va.version_name }}</span>
+                <span class="fw-bold text-dark">Base Version (ID: #{{ va.id }})</span>
+              </div>
             </div>
-            <div class="card-body">
-              <dl class="row mb-0">
-                <dt class="col-sm-4 text-secondary">Date</dt>
-                <dd class="col-sm-8 fw-semibold">{{ va.created_at }}</dd>
+            <dl class="row mb-0 small">
+              <dt class="col-sm-4 text-secondary">Timestamp</dt>
+              <dd class="col-sm-8 fw-semibold text-dark">{{ va.created_at }}</dd>
 
-                <dt class="col-sm-4 text-secondary">ATS Score</dt>
-                <dd class="col-sm-8">
-                  {% if va.ats_score is not none %}
-                    <span class="badge bg-info text-dark fs-6">{{ va.ats_score }}/100</span>
-                  {% else %}
-                    <span class="badge bg-secondary">N/A</span>
-                  {% endif %}
-                </dd>
+              <dt class="col-sm-4 text-secondary">ATS Score</dt>
+              <dd class="col-sm-8">
+                {% if va.ats_score is not none %}
+                  <span class="badge bg-info-subtle text-info border border-info-subtle fs-6">{{ va.ats_score }}/100</span>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary">N/A</span>
+                {% endif %}
+              </dd>
 
-                <dt class="col-sm-4 text-secondary">Match Score</dt>
-                <dd class="col-sm-8">
-                  {% if va.match_score is not none %}
-                    <span class="badge bg-info text-dark fs-6">{{ va.match_score }}%</span>
-                  {% else %}
-                    <span class="badge bg-light text-secondary border">N/A</span>
-                  {% endif %}
-                </dd>
+              <dt class="col-sm-4 text-secondary">Match Score</dt>
+              <dd class="col-sm-8">
+                {% if va.match_score is not none %}
+                  <span class="badge bg-info-subtle text-info border border-info-subtle fs-6">{{ va.match_score }}%</span>
+                {% else %}
+                  <span class="badge bg-light text-secondary border">N/A</span>
+                {% endif %}
+              </dd>
 
-                <dt class="col-sm-4 text-secondary">Template</dt>
-                <dd class="col-sm-8">{{ va.template_filename }}</dd>
+              <dt class="col-sm-4 text-secondary">Template</dt>
+              <dd class="col-sm-8 font-monospace text-dark">{{ va.template_filename }}</dd>
 
-                <dt class="col-sm-4 text-secondary">Changes</dt>
-                <dd class="col-sm-8 text-muted small preserve-lines">{{ va.changes if va.changes else "Initial version" }}</dd>
-              </dl>
-            </div>
+              <dt class="col-sm-4 text-secondary">Changes</dt>
+              <dd class="col-sm-8 text-muted small preserve-lines">{{ va.changes if va.changes else "Initial version" }}</dd>
+            </dl>
           </div>
         </div>
 
         <div class="col-md-6">
-          <div class="card h-100 border-success border-top border-4 shadow-sm">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <div class="card h-100 border-0 border-top border-4 border-success shadow-sm bg-white p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
               <div>
                 <span class="badge bg-success fs-6 me-2">{{ vb.version_name }}</span>
                 <span class="fw-bold text-dark">Comparison Version (ID: #{{ vb.id }})</span>
               </div>
-              <div>
-                <div class="btn-group btn-group-sm">
-                  <a class="btn btn-outline-success" href="{{ url_for('main.export_version_resume', version_id=vb.id, fmt='docx') }}">DOCX</a>
-                  <a class="btn btn-outline-danger" href="{{ url_for('main.export_version_resume', version_id=vb.id, fmt='pdf') }}">PDF</a>
-                </div>
+              <div class="btn-group btn-group-sm">
+                <a class="btn btn-outline-success" href="{{ url_for('main.export_version_resume', version_id=vb.id, fmt='docx') }}">DOCX</a>
+                <a class="btn btn-outline-danger" href="{{ url_for('main.export_version_resume', version_id=vb.id, fmt='pdf') }}">PDF</a>
               </div>
             </div>
-            <div class="card-body">
-              <dl class="row mb-0">
-                <dt class="col-sm-4 text-secondary">Date</dt>
-                <dd class="col-sm-8 fw-semibold">{{ vb.created_at }}</dd>
+            <dl class="row mb-0 small">
+              <dt class="col-sm-4 text-secondary">Timestamp</dt>
+              <dd class="col-sm-8 fw-semibold text-dark">{{ vb.created_at }}</dd>
 
-                <dt class="col-sm-4 text-secondary">ATS Score</dt>
-                <dd class="col-sm-8">
-                  {% if vb.ats_score is not none %}
-                    <span class="badge bg-success fs-6 me-2">{{ vb.ats_score }}/100</span>
-                    {% if comparison_results.ats_delta is not none %}
-                      {% if comparison_results.ats_delta > 0 %}
-                        <span class="badge bg-success">+{{ comparison_results.ats_delta }} pts</span>
-                      {% elif comparison_results.ats_delta < 0 %}
-                        <span class="badge bg-danger">{{ comparison_results.ats_delta }} pts</span>
-                      {% else %}
-                        <span class="badge bg-secondary">No change</span>
-                      {% endif %}
+              <dt class="col-sm-4 text-secondary">ATS Score</dt>
+              <dd class="col-sm-8">
+                {% if vb.ats_score is not none %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 me-2">{{ vb.ats_score }}/100</span>
+                  {% if comparison_results.ats_delta is not none %}
+                    {% if comparison_results.ats_delta > 0 %}
+                      <span class="badge bg-success">+{{ comparison_results.ats_delta }} pts</span>
+                    {% elif comparison_results.ats_delta < 0 %}
+                      <span class="badge bg-danger">{{ comparison_results.ats_delta }} pts</span>
+                    {% else %}
+                      <span class="badge bg-secondary">No change</span>
                     {% endif %}
-                  {% else %}
-                    <span class="badge bg-secondary">N/A</span>
                   {% endif %}
-                </dd>
+                {% else %}
+                  <span class="badge bg-secondary-subtle text-secondary">N/A</span>
+                {% endif %}
+              </dd>
 
-                <dt class="col-sm-4 text-secondary">Match Score</dt>
-                <dd class="col-sm-8">
-                  {% if vb.match_score is not none %}
-                    <span class="badge bg-success fs-6 me-2">{{ vb.match_score }}%</span>
-                    {% if comparison_results.match_delta is not none %}
-                      {% if comparison_results.match_delta > 0 %}
-                        <span class="badge bg-success">+{{ comparison_results.match_delta }}%</span>
-                      {% elif comparison_results.match_delta < 0 %}
-                        <span class="badge bg-danger">{{ comparison_results.match_delta }}%</span>
-                      {% else %}
-                        <span class="badge bg-secondary">No change</span>
-                      {% endif %}
+              <dt class="col-sm-4 text-secondary">Match Score</dt>
+              <dd class="col-sm-8">
+                {% if vb.match_score is not none %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 me-2">{{ vb.match_score }}%</span>
+                  {% if comparison_results.match_delta is not none %}
+                    {% if comparison_results.match_delta > 0 %}
+                      <span class="badge bg-success">+{{ comparison_results.match_delta }}%</span>
+                    {% elif comparison_results.match_delta < 0 %}
+                      <span class="badge bg-danger">{{ comparison_results.match_delta }}%</span>
+                    {% else %}
+                      <span class="badge bg-secondary">No change</span>
                     {% endif %}
-                  {% else %}
-                    <span class="badge bg-light text-secondary border">N/A</span>
                   {% endif %}
-                </dd>
+                {% else %}
+                  <span class="badge bg-light text-secondary border">N/A</span>
+                {% endif %}
+              </dd>
 
-                <dt class="col-sm-4 text-secondary">Template</dt>
-                <dd class="col-sm-8">{{ vb.template_filename }}</dd>
+              <dt class="col-sm-4 text-secondary">Template</dt>
+              <dd class="col-sm-8 font-monospace text-dark">{{ vb.template_filename }}</dd>
 
-                <dt class="col-sm-4 text-secondary">Changes</dt>
-                <dd class="col-sm-8 text-dark small fw-semibold preserve-lines">{{ vb.changes if vb.changes else "No changes recorded." }}</dd>
-              </dl>
-            </div>
+              <dt class="col-sm-4 text-secondary">Changes</dt>
+              <dd class="col-sm-8 text-dark small fw-semibold preserve-lines">{{ vb.changes if vb.changes else "No changes recorded." }}</dd>
+            </dl>
           </div>
         </div>
       </div>
 
-      <!-- Line-by-Line Content Differences -->
-      <div class="card border shadow-sm">
-        <div class="card-header bg-white py-3">
-          <h2 class="h5 fw-bold mb-0">Content Diff ({{ va.version_name }} vs {{ vb.version_name }})</h2>
+      <!-- Line-by-Line Content Differences Card -->
+      <div class="card border-0 shadow-sm bg-white">
+        <div class="card-header bg-light py-3 border-bottom d-flex align-items-center gap-2">
+          <i class="bi bi-file-code text-primary" aria-hidden="true"></i>
+          <h2 class="h5 fw-bold text-dark mb-0">Content Diff ({{ va.version_name }} vs {{ vb.version_name }})</h2>
         </div>
         <div class="card-body p-0">
           {% if comparison_results.diff_lines %}

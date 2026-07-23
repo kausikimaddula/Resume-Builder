@@ -3,15 +3,17 @@
 {% block title %}Resume vs JD Matcher | AI Resume Builder & Tracker{% endblock %}
 
 {% block content %}
-<section class="py-5 bg-white border-bottom">
+<!-- Header Banner -->
+<section class="py-4 bg-white border-bottom shadow-xs">
     <div class="container">
-        <div class="row align-items-end g-3">
+        <div class="row align-items-center g-3">
             <div class="col-lg-8">
-                <p class="text-uppercase text-primary fw-semibold small mb-2">Resume vs JD Matcher</p>
-                <h1 class="h2 fw-bold mb-2">Compare Resume and Job Description</h1>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-semibold mb-2">
+                    <i class="bi bi-ui-checks-grid me-1" aria-hidden="true"></i> Match Analysis Engine
+                </span>
+                <h1 class="h2 fw-bold text-dark mb-1">Compare Resume and Job Description</h1>
                 <p class="text-secondary mb-0">
-                    Upload your resume and the target job description to evaluate matching percentages, missing
-                    technical/soft skills, project recommendations, and a dedicated learning roadmap.
+                    Evaluate matching percentages, identify missing technical and soft skills, get recommended project proposals, and review a personalized learning roadmap.
                 </p>
             </div>
         </div>
@@ -21,68 +23,93 @@
 <section class="py-5">
     <div class="container">
         <div class="row g-4">
-            <!-- Input Forms Section -->
+            <!-- Dual Form Input Panel Card -->
             <div class="col-12">
-                <div class="form-section bg-white border shadow-sm p-4 rounded">
-                    <form method="post" enctype="multipart/form-data" novalidate>
+                <div class="card border-0 shadow-sm p-4 bg-white">
+                    <form method="post" enctype="multipart/form-data" novalidate class="row g-4">
                         {{ form.hidden_tag() }}
 
-                        <div class="row g-4">
-                            <!-- Resume Input Panel -->
-                            <div class="col-md-6 border-end pe-md-4">
-                                <h2 class="h5 fw-bold text-dark mb-3 border-bottom pb-2">1. Resume Input</h2>
+                        <!-- 1. Resume Input Column -->
+                        <div class="col-md-6 border-end pe-md-4">
+                            <h2 class="h5 fw-bold text-dark mb-3 border-bottom pb-2 d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark-person text-primary" aria-hidden="true"></i> 1. Resume Input
+                            </h2>
 
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold text-dark">{{ form.resume_file.label }}</label>
-                                    {{ form.resume_file(class="form-control" ~ (" is-invalid" if form.resume_file.errors
-                                    else "")) }}
-                                    {% if form.resume_file.errors %}
-                                    <div class="invalid-feedback">{{ form.resume_file.errors[0] }}</div>
-                                    {% endif %}
-                                    <div class="form-text text-muted">Accepted formats: .docx, .pdf (Max size: 5MB)
-                                    </div>
+                            <div class="mb-3">
+                                <label for="{{ form.resume_file.id }}" class="form-label fw-semibold text-dark small">
+                                    {{ form.resume_file.label.text }}
+                                </label>
+                                <div class="drop-zone shadow-xs">
+                                    <i class="bi bi-cloud-arrow-up display-5 text-primary mb-2 d-block" aria-hidden="true"></i>
+                                    <span class="d-block fw-semibold text-dark mb-1">Drag and drop resume here</span>
+                                    <span class="badge bg-light text-secondary border px-3 py-1">Formats: .docx, .pdf</span>
+                                    {{ form.resume_file(class="drop-zone__input" ~ (" is-invalid" if form.resume_file.errors else "")) }}
+                                    <div class="drop-zone__file-name mt-2 small text-primary"></div>
                                 </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold text-dark">{{ form.resume_text.label }}</label>
-                                    {{ form.resume_text(class="form-control" ~ (" is-invalid" if form.resume_text.errors
-                                    else ""), rows="8", placeholder="Alternatively, paste your plain resume text
-                                    here...") }}
-                                    {% if form.resume_text.errors %}
-                                    <div class="invalid-feedback">{{ form.resume_text.errors[0] }}</div>
-                                    {% endif %}
-                                </div>
+                                {% if form.resume_file.errors %}
+                                <div class="text-danger small mt-1" role="alert">{{ form.resume_file.errors[0] }}</div>
+                                {% endif %}
                             </div>
 
-                            <!-- JD Input Panel -->
-                            <div class="col-md-6 ps-md-4">
-                                <h2 class="h5 fw-bold text-dark mb-3 border-bottom pb-2">2. Job Description Input</h2>
-
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold text-dark">{{ form.jd_file.label }}</label>
-                                    {{ form.jd_file(class="form-control" ~ (" is-invalid" if form.jd_file.errors else
-                                    "")) }}
-                                    {% if form.jd_file.errors %}
-                                    <div class="invalid-feedback">{{ form.jd_file.errors[0] }}</div>
-                                    {% endif %}
-                                    <div class="form-text text-muted">Accepted formats: .pdf, .docx, .txt (Max size:
-                                        5MB)</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold text-dark">{{ form.jd_text.label }}</label>
-                                    {{ form.jd_text(class="form-control" ~ (" is-invalid" if form.jd_text.errors else
-                                    ""), rows="8", placeholder="Alternatively, paste the job description text here...")
-                                    }}
-                                    {% if form.jd_text.errors %}
-                                    <div class="invalid-feedback">{{ form.jd_text.errors[0] }}</div>
-                                    {% endif %}
-                                </div>
+                            <div class="mb-3">
+                                <label for="{{ form.resume_text.id }}" class="form-label fw-semibold text-dark small">
+                                    {{ form.resume_text.label.text }}
+                                </label>
+                                {{ form.resume_text(class="form-control" ~ (" is-invalid" if form.resume_text.errors else ""), rows="5", placeholder="Or paste your plain resume text here...") }}
+                                {% if form.resume_text.errors %}
+                                <div class="text-danger small mt-1" role="alert">{{ form.resume_text.errors[0] }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-3 border-top d-grid">
-                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        <!-- 2. Job Description Input Column -->
+                        <div class="col-md-6 ps-md-4">
+                            <h2 class="h5 fw-bold text-dark mb-3 border-bottom pb-2 d-flex align-items-center gap-2">
+                                <i class="bi bi-briefcase text-info" aria-hidden="true"></i> 2. Job Description Input
+                            </h2>
+
+                            <div class="mb-3">
+                                <label for="{{ form.jd_file.id }}" class="form-label fw-semibold text-dark small">
+                                    {{ form.jd_file.label.text }}
+                                </label>
+                                <div class="drop-zone shadow-xs">
+                                    <i class="bi bi-cloud-arrow-up display-5 text-info mb-2 d-block" aria-hidden="true"></i>
+                                    <span class="d-block fw-semibold text-dark mb-1">Drag and drop JD file here</span>
+                                    <span class="badge bg-light text-secondary border px-3 py-1">Formats: .pdf, .docx, .txt</span>
+                                    {{ form.jd_file(class="drop-zone__input" ~ (" is-invalid" if form.jd_file.errors else "")) }}
+                                    <div class="drop-zone__file-name mt-2 small text-info"></div>
+                                </div>
+                                {% if form.jd_file.errors %}
+                                <div class="text-danger small mt-1" role="alert">{{ form.jd_file.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ form.jd_text.id }}" class="form-label fw-semibold text-dark small">
+                                    {{ form.jd_text.label.text }}
+                                </label>
+                                {{ form.jd_text(class="form-control" ~ (" is-invalid" if form.jd_text.errors else ""), rows="5", placeholder="Or paste job description text here...") }}
+                                {% if form.jd_text.errors %}
+                                <div class="text-danger small mt-1" role="alert">{{ form.jd_text.errors[0] }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar Container -->
+                        <div class="col-12 upload-progress-bar d-none">
+                            <div class="d-flex justify-content-between align-items-center mb-1 small text-secondary">
+                                <span>Running Resume vs JD Skill Analysis...</span>
+                                <span class="fw-bold text-success">Processing</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar progress-bar-emerald progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-grid">
+                            <button type="submit" class="btn btn-success btn-lg shadow-sm fw-semibold">
+                                <i class="bi bi-play-circle me-1" aria-hidden="true"></i> Analyze Resume vs Job Description
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -90,62 +117,64 @@
 
             <!-- Card-Based Results Display Section -->
             {% if match_results %}
-            <div class="col-12 mt-5">
-                <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
-                    <h2 class="h4 fw-bold mb-0 d-flex align-items-center gap-2">
-                        <span>Match Analysis Dashboard</span>
-                        <span class="badge bg-secondary fs-6 fw-semibold">{{ match_results.analysis_type }}</span>
-                    </h2>
+            <div class="col-12">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                    <div>
+                        <h2 class="h4 fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-bar-chart-line text-success" aria-hidden="true"></i>
+                            <span>Match Analysis Dashboard</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 fw-semibold ms-2">{{ match_results.analysis_type }}</span>
+                        </h2>
+                        <span class="text-secondary small">
+                            Comparing Resume (<strong>{{ inputs_info.resume_source }}</strong>) vs Job Description (<strong>{{ inputs_info.jd_source }}</strong>)
+                        </span>
+                    </div>
                     <div class="d-flex align-items-center gap-2">
                         <form method="post" action="{{ url_for('main.export_jd_match_report_route', fmt='docx') }}" class="d-inline">
                             <input type="hidden" name="match_data_json" value="{{ match_results | tojson }}">
-                            <button type="submit" class="btn btn-sm btn-outline-primary">
-                                Export JD Match Report (.docx)
+                            <button type="submit" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
+                                <i class="bi bi-file-earmark-word text-primary" aria-hidden="true"></i> Export Report (.docx)
                             </button>
                         </form>
                         <form method="post" action="{{ url_for('main.export_jd_match_report_route', fmt='pdf') }}" class="d-inline">
                             <input type="hidden" name="match_data_json" value="{{ match_results | tojson }}">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                Export JD Match Report (.pdf)
+                            <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1">
+                                <i class="bi bi-file-earmark-pdf text-danger" aria-hidden="true"></i> Export Report (.pdf)
                             </button>
                         </form>
                     </div>
                 </div>
-                <p class="text-secondary small mb-4">
-                    Compared Resume (<strong>{{ inputs_info.resume_source }}</strong>) vs Job Description (<strong>{{
-                        inputs_info.jd_source }}</strong>)
-                </p>
 
                 <div class="row g-4">
 
                     <!-- Card 1: Overall Match Rating -->
                     <div class="col-md-6">
-                        <div class="card h-100 border shadow-sm p-4 bg-white">
-                            <h3 class="h6 fw-bold text-uppercase text-secondary mb-3">Overall Match Rating</h3>
-                            <div class="d-flex align-items-center g-3">
-                                <div class="display-3 fw-bold text-primary me-4">{{ match_results.match_percentage }}%
-                                </div>
+                        <div class="card h-100 border-0 shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-secondary mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-speedometer text-primary" aria-hidden="true"></i> Overall Match Score
+                            </h3>
+                            <div class="d-flex align-items-center gap-4">
+                                <div class="display-3 fw-bold text-primary">{{ match_results.match_percentage }}%</div>
                                 <div class="flex-grow-1">
-                                    <div class="progress" style="height: 20px;">
+                                    <div class="progress mb-2" style="height: 22px;">
                                         {% if match_results.match_percentage >= 80 %}
-                                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                                        <div class="progress-bar progress-bar-emerald progress-bar-striped progress-bar-animated fw-bold"
                                             role="progressbar" style="width: {{ match_results.match_percentage }}%;"
                                             aria-valuenow="{{ match_results.match_percentage }}" aria-valuemin="0"
-                                            aria-valuemax="100"></div>
+                                            aria-valuemax="100">{{ match_results.match_percentage }}%</div>
                                         {% elif match_results.match_percentage >= 50 %}
-                                        <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+                                        <div class="progress-bar progress-bar-amber progress-bar-striped progress-bar-animated text-dark fw-bold"
                                             role="progressbar" style="width: {{ match_results.match_percentage }}%;"
                                             aria-valuenow="{{ match_results.match_percentage }}" aria-valuemin="0"
-                                            aria-valuemax="100"></div>
+                                            aria-valuemax="100">{{ match_results.match_percentage }}%</div>
                                         {% else %}
-                                        <div class="progress-bar bg-danger progress-bar-striped progress-bar-animated"
+                                        <div class="progress-bar progress-bar-rose progress-bar-striped progress-bar-animated fw-bold"
                                             role="progressbar" style="width: {{ match_results.match_percentage }}%;"
                                             aria-valuenow="{{ match_results.match_percentage }}" aria-valuemin="0"
-                                            aria-valuemax="100"></div>
+                                            aria-valuemax="100">{{ match_results.match_percentage }}%</div>
                                         {% endif %}
                                     </div>
-                                    <p class="text-muted small mt-2 mb-0">Target match: 80% or deeper skills
-                                        integration.</p>
+                                    <p class="text-muted small mb-0">Target match: 80% or higher for strong interview chances.</p>
                                 </div>
                             </div>
                         </div>
@@ -153,17 +182,19 @@
 
                     <!-- Card 2: Matching Skills -->
                     <div class="col-md-6">
-                        <div class="card h-100 border shadow-sm p-4 bg-white">
-                            <h3 class="h6 fw-bold text-uppercase text-success mb-3">Matching Skills</h3>
+                        <div class="card h-100 border-0 shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-success mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Matching Skills Identified
+                            </h3>
                             <div class="d-flex flex-wrap gap-2">
                                 {% if match_results.matching_skills %}
                                 {% for skill in match_results.matching_skills %}
-                                <span
-                                    class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2 py-1.5 fs-7">{{
-                                    skill }}</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-7 rounded-pill d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-check2" aria-hidden="true"></i> {{ skill }}
+                                </span>
                                 {% endfor %}
                                 {% else %}
-                                <span class="text-secondary small">No exact tech overlays identified.</span>
+                                <span class="text-secondary small">No exact tech skill overlaps identified.</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -171,17 +202,19 @@
 
                     <!-- Card 3: Top Missing Technical Skills -->
                     <div class="col-md-6">
-                        <div class="card h-100 border shadow-sm p-4 bg-white">
-                            <h3 class="h6 fw-bold text-uppercase text-danger mb-3">Top Missing Technical Skills</h3>
+                        <div class="card h-100 border-0 shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-danger mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> Missing Technical Skills
+                            </h3>
                             <div class="d-flex flex-wrap gap-2">
                                 {% if match_results.missing_technical_skills %}
                                 {% for skill in match_results.missing_technical_skills %}
-                                <span
-                                    class="badge bg-danger bg-opacity-15 text-danger border border-danger-subtle px-2 py-1.5 fs-7">{{
-                                    skill }}</span>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fs-7 rounded-pill d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-x-circle" aria-hidden="true"></i> {{ skill }}
+                                </span>
                                 {% endfor %}
                                 {% else %}
-                                <span class="text-success small">No matching tech skill gaps. Great job!</span>
+                                <span class="text-success small">No missing technical skills gaps. Great job!</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -189,15 +222,16 @@
 
                     <!-- Card 4: Top Missing Soft Skills -->
                     <div class="col-md-6">
-                        <div class="card h-100 border shadow-sm p-4 bg-white">
-                            <h3 class="h6 fw-bold text-uppercase text-warning-emphasis mb-3">Top Missing Soft Skills
+                        <div class="card h-100 border-0 shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-warning-emphasis mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-people-fill text-warning-emphasis" aria-hidden="true"></i> Missing Soft Skills
                             </h3>
                             <div class="d-flex flex-wrap gap-2">
                                 {% if match_results.missing_soft_skills %}
                                 {% for skill in match_results.missing_soft_skills %}
-                                <span
-                                    class="badge bg-warning bg-opacity-15 text-warning-emphasis border border-warning-subtle px-2 py-1.5 fs-7">{{
-                                    skill }}</span>
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 fs-7 rounded-pill d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-plus-circle" aria-hidden="true"></i> {{ skill }}
+                                </span>
                                 {% endfor %}
                                 {% else %}
                                 <span class="text-success small">Soft skills criteria fully aligned.</span>
@@ -208,12 +242,14 @@
 
                     <!-- Card 5: Recommended Keywords -->
                     <div class="col-md-6">
-                        <div class="card h-100 border shadow-sm p-4 bg-white">
-                            <h3 class="h6 fw-bold text-uppercase text-secondary mb-3">Recommended Keywords</h3>
+                        <div class="card h-100 border-0 shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-secondary mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-tags-fill text-primary" aria-hidden="true"></i> Recommended ATS Keywords
+                            </h3>
                             <div class="d-flex flex-wrap gap-2">
                                 {% if match_results.recommended_keywords %}
                                 {% for word in match_results.recommended_keywords %}
-                                <span class="badge bg-light text-dark border px-2 py-1.5 fs-7">{{ word }}</span>
+                                <span class="badge bg-light text-dark border px-2.5 py-2 fs-7 rounded">{{ word }}</span>
                                 {% endfor %}
                                 {% else %}
                                 <span class="text-secondary small">Keywords optimized.</span>
@@ -224,14 +260,15 @@
 
                     <!-- Card 6: Recommended Certifications -->
                     <div class="col-md-6">
-                        <div class="card h-100 border shadow-sm p-4 bg-white">
-                            <h3 class="h6 fw-bold text-uppercase text-info-emphasis mb-3">Recommended Certifications
+                        <div class="card h-100 border-0 shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-info-emphasis mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-award-fill text-info" aria-hidden="true"></i> Recommended Certifications
                             </h3>
                             <ul class="list-unstyled mb-0 text-dark small">
                                 {% if match_results.recommended_certifications %}
                                 {% for cert in match_results.recommended_certifications %}
-                                <li class="mb-2 d-flex align-items-start">
-                                    <span class="text-info me-2">•</span>
+                                <li class="mb-2 d-flex align-items-start gap-2">
+                                    <i class="bi bi-patch-check text-info mt-1" aria-hidden="true"></i>
                                     <span>{{ cert }}</span>
                                 </li>
                                 {% endfor %}
@@ -244,13 +281,17 @@
 
                     <!-- Card 7: Recommended Projects -->
                     <div class="col-12 col-lg-6">
-                        <div class="card h-100 border shadow-sm p-4 bg-white">
-                            <h3 class="h6 fw-bold text-uppercase text-primary mb-3">Recommended Projects</h3>
+                        <div class="card h-100 border-0 shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-primary mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-folder-check text-primary" aria-hidden="true"></i> Recommended Portfolio Projects
+                            </h3>
                             <div class="row g-3">
                                 {% for project in match_results.recommended_projects %}
                                 <div class="col-12">
                                     <div class="p-3 bg-light rounded border border-light-subtle">
-                                        <div class="fw-semibold text-dark small mb-1">Project Proposal {{ loop.index }}
+                                        <div class="fw-semibold text-dark small mb-1 d-flex align-items-center gap-2">
+                                            <span class="badge bg-primary rounded-circle" style="width: 20px; height: 20px; font-size: 10px; display: inline-flex; align-items: center; justify-content: center;">{{ loop.index }}</span>
+                                            Project Idea
                                         </div>
                                         <div class="text-secondary small">{{ project }}</div>
                                     </div>
@@ -262,18 +303,16 @@
 
                     <!-- Card 8: Learning Roadmap -->
                     <div class="col-12 col-lg-6">
-                        <div class="card h-100 border shadow-sm p-4 bg-white">
-                            <h3 class="h6 fw-bold text-uppercase text-dark mb-3">Learning Roadmap</h3>
-                            <div class="roadmap-timeline position-relative">
+                        <div class="card h-100 border-0 shadow-sm p-4 bg-white">
+                            <h3 class="h6 fw-bold text-uppercase text-dark mb-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-map-fill text-danger" aria-hidden="true"></i> Learning Roadmap
+                            </h3>
+                            <div class="timeline">
                                 {% for step in match_results.learning_roadmap %}
-                                <div class="d-flex align-items-start mb-3 last-mb-0">
-                                    <div class="badge bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center"
-                                        style="width: 28px; height: 28px; font-size: 12px; flex-shrink: 0;">
-                                        {{ loop.index }}
-                                    </div>
-                                    <div>
-                                        <div class="text-secondary small mt-0.5">{{ step }}</div>
-                                    </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-marker"></div>
+                                    <div class="fw-semibold text-dark small mb-1">Step {{ loop.index }}</div>
+                                    <div class="text-secondary small">{{ step }}</div>
                                 </div>
                                 {% endfor %}
                             </div>

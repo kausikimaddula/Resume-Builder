@@ -3,12 +3,15 @@
 {% block title %}Resume Versions | AI Resume Builder & Tracker{% endblock %}
 
 {% block content %}
-<section class="py-5 bg-white border-bottom">
+<!-- Header Banner -->
+<section class="py-4 bg-white border-bottom shadow-xs">
   <div class="container">
-    <div class="row align-items-center g-4">
+    <div class="row align-items-center g-3">
       <div class="col-lg-8">
-        <p class="text-uppercase text-primary fw-semibold small mb-2">SQLite Version History</p>
-        <h1 class="h2 fw-bold mb-2">
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold mb-2">
+          <i class="bi bi-clock-history me-1" aria-hidden="true"></i> SQLite Version History
+        </span>
+        <h1 class="h2 fw-bold text-dark mb-1">
           {% if resume %}
             Versions for {{ resume.personal.full_name }}
           {% else %}
@@ -21,11 +24,11 @@
       </div>
       <div class="col-lg-4 text-lg-end">
         <a class="btn btn-outline-primary me-2" href="{{ url_for('main.compare_versions_route') }}">
-          Compare Versions
+          <i class="bi bi-arrow-left-right me-1" aria-hidden="true"></i> Compare Versions
         </a>
         {% if resume_id %}
           <a class="btn btn-primary" href="{{ url_for('main.resume_detail', resume_id=resume_id) }}">
-            Back to Resume
+            <i class="bi bi-file-earmark-person me-1" aria-hidden="true"></i> Back to Resume
           </a>
         {% endif %}
       </div>
@@ -36,28 +39,32 @@
 <section class="py-5">
   <div class="container">
     {% if compare_form.version_a.choices|length >= 2 %}
-      <div class="card border shadow-sm mb-4">
-        <div class="card-body p-4">
-          <h2 class="h5 fw-bold mb-3">Compare Two Versions</h2>
-          <form method="post" action="{{ url_for('main.compare_versions_route') }}" class="row g-3 align-items-end">
-            {{ compare_form.hidden_tag() }}
-            <div class="col-md-5">
-              <label class="form-label fw-semibold">{{ compare_form.version_a.label }}</label>
-              {{ compare_form.version_a(class="form-select") }}
-            </div>
-            <div class="col-md-5">
-              <label class="form-label fw-semibold">{{ compare_form.version_b.label }}</label>
-              {{ compare_form.version_b(class="form-select") }}
-            </div>
-            <div class="col-md-2">
-              {{ compare_form.submit(class="btn btn-success w-100") }}
-            </div>
-          </form>
-        </div>
+      <!-- Compare Form Card -->
+      <div class="card border-0 shadow-sm mb-4 p-4 bg-white">
+        <h2 class="h5 fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-arrow-left-right text-primary" aria-hidden="true"></i> Quick Compare Two Versions
+        </h2>
+        <form method="post" action="{{ url_for('main.compare_versions_route') }}" class="row g-3 align-items-end">
+          {{ compare_form.hidden_tag() }}
+          <div class="col-md-5">
+            <label for="{{ compare_form.version_a.id }}" class="form-label fw-semibold text-dark small">{{ compare_form.version_a.label.text }}</label>
+            {{ compare_form.version_a(class="form-select") }}
+          </div>
+          <div class="col-md-5">
+            <label for="{{ compare_form.version_b.id }}" class="form-label fw-semibold text-dark small">{{ compare_form.version_b.label.text }}</label>
+            {{ compare_form.version_b(class="form-select") }}
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-success w-100 fw-semibold">
+              <i class="bi bi-check2-circle me-1" aria-hidden="true"></i> Compare
+            </button>
+          </div>
+        </form>
       </div>
     {% endif %}
 
-    <div class="card border shadow-sm">
+    <!-- Versions Table Card -->
+    <div class="card border-0 shadow-sm bg-white">
       <div class="card-body p-0">
         {% if versions %}
           <div class="table-responsive">
@@ -65,12 +72,12 @@
               <thead class="table-light">
                 <tr>
                   <th scope="col" class="ps-4">Version</th>
-                  <th scope="col">Date</th>
+                  <th scope="col">Timestamp</th>
                   <th scope="col">ATS Score</th>
                   <th scope="col">Match Score</th>
-                  <th scope="col">Changes</th>
+                  <th scope="col">Changes Summary</th>
                   <th scope="col">Template / File</th>
-                  <th scope="col" class="text-end pe-4">Actions</th>
+                  <th scope="col" class="text-end pe-4">Export & Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -78,55 +85,55 @@
                   <tr>
                     <td class="ps-4">
                       <span class="badge bg-primary fs-6">{{ version.version_name }}</span>
-                      <div class="small text-muted">ID: #{{ version.id }}</div>
+                      <div class="small text-muted font-monospace mt-1">ID: #{{ version.id }}</div>
                     </td>
                     <td>
-                      <span class="fw-semibold text-dark">{{ version.created_at }}</span>
+                      <span class="fw-semibold text-dark small">{{ version.created_at }}</span>
                     </td>
                     <td>
                       {% if version.ats_score is not none %}
                         {% if version.ats_score >= 80 %}
-                          <span class="badge bg-success fs-6">{{ version.ats_score }}/100</span>
+                          <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1.5 fs-7">{{ version.ats_score }}/100</span>
                         {% elif version.ats_score >= 60 %}
-                          <span class="badge bg-warning text-dark fs-6">{{ version.ats_score }}/100</span>
+                          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1.5 fs-7">{{ version.ats_score }}/100</span>
                         {% else %}
-                          <span class="badge bg-danger fs-6">{{ version.ats_score }}/100</span>
+                          <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5 fs-7">{{ version.ats_score }}/100</span>
                         {% endif %}
                       {% else %}
-                        <span class="badge bg-secondary">N/A</span>
+                        <span class="badge bg-secondary-subtle text-secondary">N/A</span>
                       {% endif %}
                     </td>
                     <td>
                       {% if version.match_score is not none %}
                         {% if version.match_score >= 75 %}
-                          <span class="badge bg-success fs-6">{{ version.match_score }}%</span>
+                          <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1.5 fs-7">{{ version.match_score }}%</span>
                         {% elif version.match_score >= 50 %}
-                          <span class="badge bg-info text-dark fs-6">{{ version.match_score }}%</span>
+                          <span class="badge bg-info-subtle text-info border border-info-subtle px-2.5 py-1.5 fs-7">{{ version.match_score }}%</span>
                         {% else %}
-                          <span class="badge bg-warning text-dark fs-6">{{ version.match_score }}%</span>
+                          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1.5 fs-7">{{ version.match_score }}%</span>
                         {% endif %}
                       {% else %}
                         <span class="badge bg-light text-secondary border">N/A</span>
                       {% endif %}
                     </td>
-                    <td style="max-width: 320px;">
+                    <td style="max-width: 300px;">
                       <p class="mb-0 small text-secondary preserve-lines">{{ version.changes if version.changes else "No changes recorded." }}</p>
                     </td>
                     <td>
-                      <div class="small fw-semibold">{{ version.template_filename }}</div>
-                      <div class="small text-muted">{{ version.filename }}</div>
+                      <div class="small fw-semibold text-dark">{{ version.template_filename }}</div>
+                      <div class="small text-muted font-monospace">{{ version.filename }}</div>
                     </td>
                     <td class="text-end pe-4">
                       <div class="btn-group btn-group-sm">
-                        <a class="btn btn-outline-success" href="{{ url_for('main.export_version_resume', version_id=version.id, fmt='docx') }}">
-                          DOCX
+                        <a class="btn btn-outline-success d-inline-flex align-items-center gap-1" href="{{ url_for('main.export_version_resume', version_id=version.id, fmt='docx') }}">
+                          <i class="bi bi-file-earmark-word" aria-hidden="true"></i> DOCX
                         </a>
-                        <a class="btn btn-outline-danger" href="{{ url_for('main.export_version_resume', version_id=version.id, fmt='pdf') }}">
-                          PDF
+                        <a class="btn btn-outline-danger d-inline-flex align-items-center gap-1" href="{{ url_for('main.export_version_resume', version_id=version.id, fmt='pdf') }}">
+                          <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> PDF
                         </a>
                         {% if loop.index > 1 %}
-                          <a class="btn btn-outline-primary" href="{{ url_for('main.compare_versions_route', a=versions[loop.index0 - 2].id, b=version.id) }}">
-                            Compare vs Prev
+                          <a class="btn btn-outline-primary d-inline-flex align-items-center gap-1" href="{{ url_for('main.compare_versions_route', a=versions[loop.index0 - 2].id, b=version.id) }}">
+                            <i class="bi bi-arrow-left-right" aria-hidden="true"></i> Diff
                           </a>
                         {% endif %}
                       </div>
@@ -138,9 +145,12 @@
           </div>
         {% else %}
           <div class="p-5 text-center">
+            <i class="bi bi-clock-history display-4 text-secondary opacity-50 mb-3 d-block" aria-hidden="true"></i>
             <h3 class="h5 text-muted">No resume versions found in SQLite.</h3>
-            <p class="text-secondary mb-3">Whenever a resume is generated or regenerated, a version (Version 1, Version 2, etc.) will be automatically saved here.</p>
-            <a class="btn btn-primary" href="{{ url_for('main.resume_form') }}">Create Resume Details</a>
+            <p class="text-secondary mb-3">Whenever a resume is generated, a version snapshot will automatically be saved here.</p>
+            <a class="btn btn-primary" href="{{ url_for('main.resume_form') }}">
+              <i class="bi bi-plus-circle me-1" aria-hidden="true"></i> Create Resume Details
+            </a>
           </div>
         {% endif %}
       </div>
