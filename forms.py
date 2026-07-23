@@ -193,3 +193,12 @@ class ResumeImprovementForm(FlaskForm):
     submit = SubmitField("Get AI Resume Improvements")
 
 
+class VersionCompareForm(FlaskForm):
+    """Form to select two versions for comparison."""
+
+    version_a = SelectField("Base Version (Version A)", coerce=int, validators=[DataRequired()])
+    version_b = SelectField("Comparison Version (Version B)", coerce=int, validators=[DataRequired()])
+    submit = SubmitField("Compare Versions")
+
+
+

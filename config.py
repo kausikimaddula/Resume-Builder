@@ -36,5 +36,8 @@ class Config:
     GENERATED_FOLDER = UPLOAD_FOLDER / "generated"
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
+    DATABASE_PATH = BASE_DIR / "resume_builder.db"
+
     LOG_FOLDER = BASE_DIR / "logs"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+

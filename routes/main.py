@@ -22,6 +22,7 @@ from forms import (
     JobDescriptionUploadForm,
     ResumeJdCompareForm,
     ResumeImprovementForm,
+    VersionCompareForm,
 )
 from services.resume_store import get_all_resumes, get_resume, save_resume
 from services.resume_builder import ResumeBuilderError, build_resume_from_template
@@ -37,10 +38,17 @@ from services.ats_checker import AtsAnalysisError, analyze_resume_ats
 from services.job_description import save_jd_upload, extract_jd_text
 from services.jd_matcher import match_resume_to_jd, JdMatcherError
 from services.resume_improver import improve_resume, ResumeImproverError
-
+from services.version_service import (
+    create_resume_version,
+    get_all_versions,
+    get_versions_for_resume,
+    get_version,
+    compare_versions,
+)
 
 
 main_bp = Blueprint("main", __name__)
+
 
 
 @main_bp.get("/")
@@ -407,16 +415,113 @@ def generate_resume(resume_id: int):
             api_key=current_app.config["OPENAI_API_KEY"],
             model=current_app.config["OPENAI_MODEL"],
         )
+
+        # Extract text from generated docx for ATS & version text snapshot
+        extracted_text = None
+        try:
+            extracted_text = extract_resume_text(generated_resume.path)
+        except Exception as parse_err:
+            current_app.logger.warning("Could not extract text from generated resume: %s", parse_err)
+
+        # Create Version Record in SQLite
+        db_path = current_app.config["DATABASE_PATH"]
+        version_record = create_resume_version(
+            db_path=db_path,
+            resume_id=resume_id,
+            resume_details=resume,
+            filename=generated_resume.filename,
+            file_path=generated_resume.path,
+            template_filename=form.template_filename.data,
+            api_key=current_app.config.get("OPENAI_API_KEY", ""),
+            model=current_app.config.get("OPENAI_MODEL", ""),
+            extracted_text=extracted_text,
+        )
+
+        current_app.logger.info("Generated resume %s (%s)", generated_resume.filename, version_record['version_name'])
+        flash(f"Completed resume ({version_record['version_name']}) generated successfully and stored in SQLite.", "success")
+        return redirect(url_for("main.version_history", resume_id=resume_id))
+
     except (FileNotFoundError, ValueError, ResumeBuilderError) as error:
         current_app.logger.warning("Resume generation failed: %s", error)
         flash(str(error), "danger")
         return redirect(url_for("main.resume_detail", resume_id=resume_id))
 
-    current_app.logger.info("Generated resume: %s", generated_resume.filename)
-    flash("Completed resume generated successfully.", "success")
-    return redirect(
-        url_for("main.download_generated_resume", filename=generated_resume.filename)
+
+@main_bp.get("/versions")
+@main_bp.get("/resume/<int:resume_id>/versions")
+def version_history(resume_id: int | None = None):
+    """View versions saved in SQLite for a specific resume or all resumes."""
+    db_path = current_app.config["DATABASE_PATH"]
+
+    if resume_id is not None:
+        resume = get_resume(resume_id)
+        versions = get_versions_for_resume(db_path, resume_id)
+    else:
+        resume = None
+        versions = get_all_versions(db_path)
+
+    compare_form = VersionCompareForm()
+    if versions:
+        choices = [(v["id"], f"{v['version_name']} - {v['filename']} ({v['created_at']})") for v in versions]
+        compare_form.version_a.choices = choices
+        compare_form.version_b.choices = choices
+        if len(choices) >= 2:
+            compare_form.version_a.data = choices[0][0]
+            compare_form.version_b.data = choices[-1][0]
+    else:
+        compare_form.version_a.choices = []
+        compare_form.version_b.choices = []
+
+    return render_template(
+        "versions.html",
+        versions=versions,
+        resume=resume,
+        resume_id=resume_id,
+        compare_form=compare_form,
     )
+
+
+@main_bp.route("/versions/compare", methods=["GET", "POST"])
+def compare_versions_route():
+    """Compare two resume versions stored in SQLite database side-by-side."""
+    db_path = current_app.config["DATABASE_PATH"]
+    all_versions = get_all_versions(db_path)
+
+    form = VersionCompareForm()
+    choices = [(v["id"], f"Resume #{v['resume_id']} - {v['version_name']} ({v['created_at']})") for v in all_versions]
+    form.version_a.choices = choices
+    form.version_b.choices = choices
+
+    version_a_id = None
+    version_b_id = None
+
+    if form.validate_on_submit():
+        version_a_id = form.version_a.data
+        version_b_id = form.version_b.data
+    else:
+        # Check GET query params ?a=1&b=2
+        from flask import request
+        a_param = request.args.get("version_a", type=int) or request.args.get("a", type=int)
+        b_param = request.args.get("version_b", type=int) or request.args.get("b", type=int)
+        if a_param and b_param:
+            version_a_id = a_param
+            version_b_id = b_param
+            form.version_a.data = a_param
+            form.version_b.data = b_param
+
+    comparison_results = None
+    if version_a_id and version_b_id:
+        comparison_results = compare_versions(db_path, version_a_id, version_b_id)
+        if comparison_results is None:
+            flash("Could not find one or both specified versions for comparison.", "danger")
+
+    return render_template(
+        "version_compare.html",
+        form=form,
+        comparison_results=comparison_results,
+        all_versions=all_versions,
+    )
+
 
 
 @main_bp.get("/generated/<path:filename>")

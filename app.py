@@ -11,6 +11,7 @@ from werkzeug.exceptions import HTTPException
 
 from config import Config
 from routes.main import main_bp
+from services.version_service import init_db
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
@@ -29,8 +30,12 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     register_blueprints(app)
     register_error_handlers(app)
 
+    # Initialize SQLite Database for Resume Versioning
+    init_db(app.config["DATABASE_PATH"])
+
     app.logger.info("AI Resume Builder & Tracker started")
     return app
+
 
 
 def configure_logging(app: Flask) -> None:
