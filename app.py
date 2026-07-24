@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import logging
-from logging.handlers import RotatingFileHandler
-from pathlib import Path
-
-from flask import Flask, render_template
+from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
 from werkzeug.exceptions import HTTPException
 
 from config import Config
+from logging_config import setup_logging
 from routes.main import main_bp
+from services.exceptions import AppBaseException
 from services.version_service import init_db
+
+logger = logging.getLogger(__name__)
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
@@ -21,83 +22,91 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     """
     app = Flask(__name__)
 
-    # Load settings from config.py. That file reads values from environment
-    # variables, so secrets do not need to be hard-coded in the app.
+    # Load settings from config.py.
     app.config.from_object(config_class)
 
-    # Keep setup steps small and named so new developers can follow the flow.
-    configure_logging(app)
+    # Centralized logging configuration
+    setup_logging(app)
     register_blueprints(app)
     register_error_handlers(app)
 
     # Initialize SQLite Database for Resume Versioning
-    init_db(app.config["DATABASE_PATH"])
+    try:
+        init_db(app.config["DATABASE_PATH"])
+    except Exception as exc:
+        app.logger.error("Failed to initialize database on startup: %s", exc, exc_info=True)
 
     app.logger.info("AI Resume Builder & Tracker started")
     return app
 
 
-
-def configure_logging(app: Flask) -> None:
-    """Configure console and file logging for the application."""
-    log_level = app.config["LOG_LEVEL"]
-    log_folder = Path(app.config["LOG_FOLDER"])
-
-    # Create the logs folder automatically when the app starts.
-    log_folder.mkdir(parents=True, exist_ok=True)
-
-    formatter = logging.Formatter(
-        "%(asctime)s %(levelname)s [%(name)s] %(message)s"
-    )
-
-    # RotatingFileHandler keeps log files from growing forever.
-    file_handler = RotatingFileHandler(
-        log_folder / "app.log",
-        maxBytes=1_000_000,
-        backupCount=3,
-    )
-    file_handler.setLevel(log_level)
-    file_handler.setFormatter(formatter)
-
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(log_level)
-    stream_handler.setFormatter(formatter)
-
-    app.logger.handlers.clear()
-    app.logger.setLevel(log_level)
-    app.logger.addHandler(file_handler)
-    app.logger.addHandler(stream_handler)
-
-
 def register_blueprints(app: Flask) -> None:
     """Register route groups for the app."""
-    # Blueprints let the project grow without putting every route in app.py.
     app.register_blueprint(main_bp)
 
 
 def register_error_handlers(app: Flask) -> None:
-    """Render simple user-friendly pages for common application errors."""
+    """Render user-friendly error pages and log detailed developer diagnostics."""
+
+    @app.errorhandler(AppBaseException)
+    def handle_app_base_exception(error: AppBaseException):
+        app.logger.error(
+            "Application domain error [%s]: %s (Details: %s)",
+            error.__class__.__name__,
+            error.message,
+            error.details,
+            exc_info=True,
+        )
+
+        if request.path.startswith("/api/") or request.is_json:
+            return jsonify({
+                "error": error.__class__.__name__,
+                "message": error.user_message,
+            }), error.status_code
+
+        return (
+            render_template(
+                "error.html",
+                error_code=error.status_code,
+                error_message=error.user_message,
+            ),
+            error.status_code,
+        )
 
     @app.errorhandler(HTTPException)
     def handle_http_exception(error: HTTPException):
         app.logger.warning("HTTP error %s: %s", error.code, error.description)
+
+        if request.path.startswith("/api/") or request.is_json:
+            return jsonify({
+                "error": error.name,
+                "message": error.description,
+            }), error.code or 400
+
         return (
             render_template(
                 "error.html",
-                error_code=error.code,
+                error_code=error.code or 400,
                 error_message=error.description,
             ),
-            error.code,
+            error.code or 400,
         )
 
     @app.errorhandler(Exception)
     def handle_unexpected_exception(error: Exception):
-        app.logger.exception("Unexpected application error: %s", error)
+        app.logger.exception("Unhandled unexpected application exception: %s", error)
+
+        if request.path.startswith("/api/") or request.is_json:
+            return jsonify({
+                "error": "InternalServerError",
+                "message": "An unexpected error occurred. Please try again later.",
+            }), 500
+
         return (
             render_template(
                 "error.html",
                 error_code=500,
-                error_message="Something went wrong. Please try again soon.",
+                error_message="Something went wrong on our end. Please try again soon.",
             ),
             500,
         )

@@ -7,6 +7,8 @@ from pathlib import Path
 from docx import Document
 from pypdf import PdfReader
 
+from services.exceptions import InvalidFileError
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,8 +29,11 @@ def extract_text_from_pdf(file_path: Path) -> str:
         logger.info("Extracted %d characters from PDF: %s", len(extracted), file_path)
         return extracted
     except Exception as e:
-        logger.exception("Failed to extract text from PDF file: %s", file_path)
-        raise ValueError(f"Error reading PDF file: {str(e)}") from e
+        logger.error("Failed to extract text from PDF file '%s': %s", file_path, e, exc_info=True)
+        raise InvalidFileError(
+            message=f"Error reading PDF file {file_path}: {e}",
+            user_message="Could not read text from the uploaded PDF file. The file may be damaged or password-protected.",
+        ) from e
 
 
 def extract_text_from_docx(file_path: Path) -> str:
@@ -59,8 +64,11 @@ def extract_text_from_docx(file_path: Path) -> str:
         logger.info("Extracted %d characters from DOCX: %s", len(extracted), file_path)
         return extracted
     except Exception as e:
-        logger.exception("Failed to extract text from DOCX file: %s", file_path)
-        raise ValueError(f"Error reading DOCX file: {str(e)}") from e
+        logger.error("Failed to extract text from DOCX file '%s': %s", file_path, e, exc_info=True)
+        raise InvalidFileError(
+            message=f"Error reading DOCX file {file_path}: {e}",
+            user_message="Could not read text from the uploaded DOCX file. The document may be corrupted.",
+        ) from e
 
 
 def extract_resume_text(file_path: Path) -> str:
@@ -69,7 +77,11 @@ def extract_resume_text(file_path: Path) -> str:
     Supported formats: PDF, DOCX.
     """
     if not file_path.exists():
-        raise FileNotFoundError(f"Resume file not found at: {file_path}")
+        logger.error("Resume file not found at path: %s", file_path)
+        raise InvalidFileError(
+            message=f"Resume file not found at: {file_path}",
+            user_message="The uploaded resume file could not be found on the server.",
+        )
 
     suffix = file_path.suffix.lower()
     if suffix == ".pdf":
@@ -77,4 +89,8 @@ def extract_resume_text(file_path: Path) -> str:
     elif suffix == ".docx":
         return extract_text_from_docx(file_path)
     else:
-        raise ValueError(f"Unsupported resume file type: {suffix}. Only PDF and DOCX are allowed.")
+        logger.warning("Unsupported file type '%s' requested for text extraction.", suffix)
+        raise InvalidFileError(
+            message=f"Unsupported resume file type: {suffix}",
+            user_message=f"Unsupported file format '{suffix}'. Only PDF and DOCX files are allowed.",
+        )
