@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import json
 import re
+from pathlib import Path
 
 from flask import (
     Blueprint,
@@ -21,48 +20,54 @@ from flask import (
 
 from forms import (
     GenerateResumeForm,
+    JobDescriptionUploadForm,
     ResumeDetailsForm,
+    ResumeImprovementForm,
+    ResumeJdCompareForm,
     ResumeTemplateUploadForm,
     ResumeUploadForm,
-    JobDescriptionUploadForm,
-    ResumeJdCompareForm,
-    ResumeImprovementForm,
     VersionCompareForm,
 )
-from services.resume_store import get_all_resumes, get_resume, save_resume
-from services.resume_builder import ResumeBuilderError, build_resume_from_template
-from services.upload_service import (
-    list_docx_templates,
-    resolve_uploaded_template,
-    save_template_upload,
-    save_resume_upload,
-)
-from services.resume_parser import extract_resume_text
-from services.proofreader import ProofreaderError, proofread_resume
 from services.ats_checker import AtsAnalysisError, analyze_resume_ats
-from services.job_description import save_jd_upload, extract_jd_text
-from services.jd_matcher import match_resume_to_jd, JdMatcherError
-from services.resume_improver import improve_resume, ResumeImproverError
-from services.version_service import (
-    create_resume_version,
-    get_all_versions,
-    get_versions_for_resume,
-    get_version,
-    compare_versions,
-)
+from services.exceptions import AppBaseException
 from services.export_service import (
     ExportServiceError,
-    export_resume_docx,
-    export_resume_pdf,
     export_ats_report_docx,
     export_ats_report_pdf,
     export_jd_match_report_docx,
     export_jd_match_report_pdf,
+    export_resume_docx,
+    export_resume_pdf,
 )
-
+from services.jd_matcher import JdMatcherError, match_resume_to_jd
+from services.job_description import extract_jd_text, save_jd_upload
+from services.proofreader import ProofreaderError, proofread_resume
+from services.resume_builder import ResumeBuilderError, build_resume_from_template
+from services.resume_improver import ResumeImproverError, improve_resume
+from services.resume_parser import extract_resume_text
+from services.resume_store import get_all_resumes, get_resume, save_resume
+from services.upload_service import (
+    list_docx_templates,
+    resolve_uploaded_template,
+    save_resume_upload,
+    save_template_upload,
+)
+from services.version_service import (
+    compare_versions,
+    create_resume_version,
+    get_all_versions,
+    get_version,
+    get_versions_for_resume,
+)
 
 main_bp = Blueprint("main", __name__)
 
+
+def get_friendly_error_message(error: Exception) -> str:
+    """Extract user_message from AppBaseException or fallback to str(error)."""
+    if isinstance(error, AppBaseException):
+        return error.user_message
+    return str(error) or "An unexpected error occurred."
 
 
 @main_bp.get("/")
@@ -78,44 +83,47 @@ def resume_form():
     form = ResumeDetailsForm()
 
     if form.validate_on_submit():
-        # Store only the fields we care about, not Flask-WTF internals.
-        resume = save_resume(
-            {
-                "personal": {
-                    "full_name": form.full_name.data,
-                    "email": form.email.data,
-                    "phone": form.phone.data,
-                    "linkedin": form.linkedin.data,
-                    "github": form.github.data,
-                    "portfolio": form.portfolio.data,
-                    "address": form.address.data,
-                },
-                "education": {
-                    "degree": form.degree.data,
-                    "college": form.college.data,
-                    "graduation_year": form.graduation_year.data,
-                    "gpa": form.gpa.data,
-                },
-                "skills": form.skills.data,
-                "experience": {
-                    "company": form.company.data,
-                    "role": form.role.data,
-                    "duration": form.duration.data,
-                    "responsibilities": form.responsibilities.data,
-                },
-                "projects": {
-                    "project_name": form.project_name.data,
-                    "description": form.project_description.data,
-                    "technologies": form.technologies.data,
-                },
-                "certifications": form.certifications.data,
-                "achievements": form.achievements.data,
-                "languages": form.languages.data,
-            }
-        )
-        current_app.logger.info("Resume details saved in memory: %s", resume["id"])
-        flash("Resume details saved temporarily in memory.", "success")
-        return redirect(url_for("main.resume_detail", resume_id=resume["id"]))
+        try:
+            resume = save_resume(
+                {
+                    "personal": {
+                        "full_name": form.full_name.data,
+                        "email": form.email.data,
+                        "phone": form.phone.data,
+                        "linkedin": form.linkedin.data,
+                        "github": form.github.data,
+                        "portfolio": form.portfolio.data,
+                        "address": form.address.data,
+                    },
+                    "education": {
+                        "degree": form.degree.data,
+                        "college": form.college.data,
+                        "graduation_year": form.graduation_year.data,
+                        "gpa": form.gpa.data,
+                    },
+                    "skills": form.skills.data,
+                    "experience": {
+                        "company": form.company.data,
+                        "role": form.role.data,
+                        "duration": form.duration.data,
+                        "responsibilities": form.responsibilities.data,
+                    },
+                    "projects": {
+                        "project_name": form.project_name.data,
+                        "description": form.project_description.data,
+                        "technologies": form.technologies.data,
+                    },
+                    "certifications": form.certifications.data,
+                    "achievements": form.achievements.data,
+                    "languages": form.languages.data,
+                }
+            )
+            current_app.logger.info("Resume details saved in memory: %s", resume["id"])
+            flash("Resume details saved temporarily in memory.", "success")
+            return redirect(url_for("main.resume_detail", resume_id=resume["id"]))
+        except Exception as error:
+            current_app.logger.exception("Failed to save resume details: %s", error)
+            flash(get_friendly_error_message(error), "danger")
 
     return render_template("resume_form.html", form=form)
 
@@ -151,9 +159,9 @@ def upload_template():
                 uploaded_template.stored_filename,
             )
             flash("Resume template uploaded successfully.", "success")
-        except ValueError as error:
-            current_app.logger.warning("Template upload rejected: %s", error)
-            flash(str(error), "danger")
+        except Exception as error:
+            current_app.logger.warning("Template upload rejected: %s", error, exc_info=True)
+            flash(get_friendly_error_message(error), "danger")
 
     return render_template(
         "template_upload.html",
@@ -195,9 +203,9 @@ def upload_resume():
                     api_key=api_key,
                     model=model,
                 )
-            except AtsAnalysisError as ats_err:
-                current_app.logger.warning("ATS Score Analysis failed: %s", ats_err)
-                flash(f"ATS Score Analysis could not be completed: {ats_err}", "warning")
+            except Exception as ats_err:
+                current_app.logger.warning("ATS Score Analysis failed: %s", ats_err, exc_info=True)
+                flash(f"ATS Score Analysis notice: {get_friendly_error_message(ats_err)}", "warning")
                 
             # Perform proofreading analysis
             try:
@@ -206,9 +214,9 @@ def upload_resume():
                     api_key=api_key,
                     model=model,
                 )
-            except ProofreaderError as pr_err:
-                current_app.logger.warning("Proofreading Analysis failed: %s", pr_err)
-                flash(f"Proofreading Analysis could not be completed: {pr_err}", "warning")
+            except Exception as pr_err:
+                current_app.logger.warning("Proofreading Analysis failed: %s", pr_err, exc_info=True)
+                flash(f"Proofreading Analysis notice: {get_friendly_error_message(pr_err)}", "warning")
                 
             current_app.logger.info(
                 "Resume uploaded and text extracted: %s",
@@ -217,7 +225,7 @@ def upload_resume():
             flash("Resume uploaded and parsed successfully.", "success")
         except Exception as error:
             current_app.logger.exception("Failed to upload/parse resume: %s", error)
-            flash(str(error), "danger")
+            flash(get_friendly_error_message(error), "danger")
 
     return render_template(
         "resume_upload.html",
@@ -262,7 +270,7 @@ def upload_job_description():
                 current_app.logger.info("Job description processed successfully")
             except Exception as error:
                 current_app.logger.exception("Failed to process job description: %s", error)
-                flash(str(error), "danger")
+                flash(get_friendly_error_message(error), "danger")
 
     return render_template(
         "job_description_upload.html",
@@ -335,7 +343,7 @@ def compare_resume_vs_jd():
                 current_app.logger.info("Resume vs JD comparison successful")
             except Exception as error:
                 current_app.logger.exception("Comparison failed: %s", error)
-                flash(str(error), "danger")
+                flash(get_friendly_error_message(error), "danger")
 
     return render_template(
         "compare.html",
@@ -389,7 +397,7 @@ def improve_resume_route():
                 current_app.logger.info("Resume improvement suggestions generated for: %s", source_name)
             except Exception as error:
                 current_app.logger.exception("Resume improvement failed: %s", error)
-                flash(str(error), "danger")
+                flash(get_friendly_error_message(error), "danger")
 
     return render_template(
         "resume_improvement.html",
@@ -397,9 +405,6 @@ def improve_resume_route():
         suggestions=suggestions,
         input_info=input_info,
     )
-
-
-
 
 
 @main_bp.post("/resume/<int:resume_id>/generate")
@@ -455,9 +460,9 @@ def generate_resume(resume_id: int):
         flash(f"Completed resume ({version_record['version_name']}) generated successfully and stored in SQLite.", "success")
         return redirect(url_for("main.version_history", resume_id=resume_id))
 
-    except (FileNotFoundError, ValueError, ResumeBuilderError) as error:
-        current_app.logger.warning("Resume generation failed: %s", error)
-        flash(str(error), "danger")
+    except Exception as error:
+        current_app.logger.exception("Resume generation failed: %s", error)
+        flash(get_friendly_error_message(error), "danger")
         return redirect(url_for("main.resume_detail", resume_id=resume_id))
 
 
@@ -467,12 +472,18 @@ def version_history(resume_id: int | None = None):
     """View versions saved in SQLite for a specific resume or all resumes."""
     db_path = current_app.config["DATABASE_PATH"]
 
-    if resume_id is not None:
-        resume = get_resume(resume_id)
-        versions = get_versions_for_resume(db_path, resume_id)
-    else:
+    try:
+        if resume_id is not None:
+            resume = get_resume(resume_id)
+            versions = get_versions_for_resume(db_path, resume_id)
+        else:
+            resume = None
+            versions = get_all_versions(db_path)
+    except Exception as error:
+        current_app.logger.exception("Failed to retrieve version history: %s", error)
+        flash(get_friendly_error_message(error), "danger")
         resume = None
-        versions = get_all_versions(db_path)
+        versions = []
 
     compare_form = VersionCompareForm()
     if versions:
@@ -499,7 +510,12 @@ def version_history(resume_id: int | None = None):
 def compare_versions_route():
     """Compare two resume versions stored in SQLite database side-by-side."""
     db_path = current_app.config["DATABASE_PATH"]
-    all_versions = get_all_versions(db_path)
+    try:
+        all_versions = get_all_versions(db_path)
+    except Exception as error:
+        current_app.logger.exception("Failed to fetch versions for comparison: %s", error)
+        flash(get_friendly_error_message(error), "danger")
+        all_versions = []
 
     form = VersionCompareForm()
     choices = [(v["id"], f"Resume #{v['resume_id']} - {v['version_name']} ({v['created_at']})") for v in all_versions]
@@ -513,8 +529,6 @@ def compare_versions_route():
         version_a_id = form.version_a.data
         version_b_id = form.version_b.data
     else:
-        # Check GET query params ?a=1&b=2
-        from flask import request
         a_param = request.args.get("version_a", type=int) or request.args.get("a", type=int)
         b_param = request.args.get("version_b", type=int) or request.args.get("b", type=int)
         if a_param and b_param:
@@ -525,9 +539,13 @@ def compare_versions_route():
 
     comparison_results = None
     if version_a_id and version_b_id:
-        comparison_results = compare_versions(db_path, version_a_id, version_b_id)
-        if comparison_results is None:
-            flash("Could not find one or both specified versions for comparison.", "danger")
+        try:
+            comparison_results = compare_versions(db_path, version_a_id, version_b_id)
+            if comparison_results is None:
+                flash("Could not find one or both specified versions for comparison.", "danger")
+        except Exception as error:
+            current_app.logger.exception("Version comparison failed: %s", error)
+            flash(get_friendly_error_message(error), "danger")
 
     return render_template(
         "version_compare.html",
@@ -535,7 +553,6 @@ def compare_versions_route():
         comparison_results=comparison_results,
         all_versions=all_versions,
     )
-
 
 
 @main_bp.get("/generated/<path:filename>")
@@ -565,7 +582,13 @@ def build_generate_form() -> GenerateResumeForm:
 def export_version_resume(version_id: int, fmt: str):
     """Export a saved resume version as DOCX or PDF."""
     db_path = current_app.config["DATABASE_PATH"]
-    version_record = get_version(db_path, version_id)
+    try:
+        version_record = get_version(db_path, version_id)
+    except Exception as error:
+        current_app.logger.exception("Failed to get version for export: %s", error)
+        flash(get_friendly_error_message(error), "danger")
+        return redirect(url_for("main.version_history"))
+
     if not version_record:
         flash("Resume version not found.", "warning")
         return redirect(url_for("main.version_history"))
@@ -599,7 +622,7 @@ def export_version_resume(version_id: int, fmt: str):
         )
     except Exception as error:
         current_app.logger.exception("Export failed: %s", error)
-        flash(f"Export failed: {error}", "danger")
+        flash(get_friendly_error_message(error), "danger")
         return redirect(url_for("main.version_history"))
 
 
@@ -633,7 +656,7 @@ def export_resume_details_route(resume_id: int, fmt: str):
         )
     except Exception as error:
         current_app.logger.exception("Resume export failed: %s", error)
-        flash(f"Resume export failed: {error}", "danger")
+        flash(get_friendly_error_message(error), "danger")
         return redirect(url_for("main.resume_detail", resume_id=resume_id))
 
 
@@ -666,7 +689,7 @@ def export_ats_report_route(fmt: str):
         )
     except Exception as error:
         current_app.logger.exception("ATS report export failed: %s", error)
-        flash(f"ATS report export failed: {error}", "danger")
+        flash(get_friendly_error_message(error), "danger")
         return redirect(url_for("main.upload_resume"))
 
 
@@ -699,6 +722,5 @@ def export_jd_match_report_route(fmt: str):
         )
     except Exception as error:
         current_app.logger.exception("JD match report export failed: %s", error)
-        flash(f"JD match report export failed: {error}", "danger")
+        flash(get_friendly_error_message(error), "danger")
         return redirect(url_for("main.compare_resume_vs_jd"))
-

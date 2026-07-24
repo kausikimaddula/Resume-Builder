@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
@@ -9,6 +10,9 @@ from uuid import uuid4
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
+from services.exceptions import InvalidFileError, UploadError
+
+logger = logging.getLogger(__name__)
 
 ALLOWED_TEMPLATE_EXTENSIONS = {"docx", "pdf"}
 
@@ -38,16 +42,28 @@ def save_template_upload(file: FileStorage, upload_folder: Path) -> UploadedTemp
     """Save an uploaded DOCX or PDF template inside the uploads folder."""
     original_filename = file.filename or ""
 
-    if not is_allowed_template(original_filename):
-        raise ValueError("Only DOCX and PDF files are allowed.")
+    if not original_filename or not is_allowed_template(original_filename):
+        logger.warning("Template upload rejected: invalid filename or extension '%s'", original_filename)
+        raise InvalidFileError(
+            message=f"Disallowed file extension for template: '{original_filename}'",
+            user_message="Only DOCX and PDF files are allowed.",
+        )
 
     extension = get_extension(original_filename)
-    safe_name = secure_filename(original_filename)
+    safe_name = secure_filename(original_filename) or f"template.{extension}"
     stored_filename = f"{Path(safe_name).stem}-{uuid4().hex[:8]}.{extension}"
 
-    upload_folder.mkdir(parents=True, exist_ok=True)
-    destination = upload_folder / stored_filename
-    file.save(destination)
+    try:
+        upload_folder.mkdir(parents=True, exist_ok=True)
+        destination = upload_folder / stored_filename
+        file.save(destination)
+        logger.info("Saved template upload '%s' to '%s'", original_filename, destination)
+    except Exception as error:
+        logger.error("Failed to save template upload '%s': %s", original_filename, error, exc_info=True)
+        raise UploadError(
+            message=f"Failed to write template upload to disk: {error}",
+            user_message="File upload failed. Unable to save file to server.",
+        ) from error
 
     return UploadedTemplate(
         original_filename=original_filename,
@@ -62,16 +78,28 @@ def save_resume_upload(file: FileStorage, upload_folder: Path) -> UploadedTempla
     """Save an uploaded DOCX or PDF resume inside the uploads folder."""
     original_filename = file.filename or ""
 
-    if not is_allowed_template(original_filename):
-        raise ValueError("Only DOCX and PDF files are allowed.")
+    if not original_filename or not is_allowed_template(original_filename):
+        logger.warning("Resume upload rejected: invalid filename or extension '%s'", original_filename)
+        raise InvalidFileError(
+            message=f"Disallowed file extension for resume: '{original_filename}'",
+            user_message="Only DOCX and PDF files are allowed.",
+        )
 
     extension = get_extension(original_filename)
-    safe_name = secure_filename(original_filename)
+    safe_name = secure_filename(original_filename) or f"resume.{extension}"
     stored_filename = f"{Path(safe_name).stem}-{uuid4().hex[:8]}.{extension}"
 
-    upload_folder.mkdir(parents=True, exist_ok=True)
-    destination = upload_folder / stored_filename
-    file.save(destination)
+    try:
+        upload_folder.mkdir(parents=True, exist_ok=True)
+        destination = upload_folder / stored_filename
+        file.save(destination)
+        logger.info("Saved resume upload '%s' to '%s'", original_filename, destination)
+    except Exception as error:
+        logger.error("Failed to save resume upload '%s': %s", original_filename, error, exc_info=True)
+        raise UploadError(
+            message=f"Failed to write resume upload to disk: {error}",
+            user_message="File upload failed. Unable to save file to server.",
+        ) from error
 
     return UploadedTemplate(
         original_filename=original_filename,
@@ -88,22 +116,25 @@ def list_uploaded_templates(upload_folder: Path) -> list[UploadedTemplate]:
         return []
 
     templates: list[UploadedTemplate] = []
-    for path in sorted(upload_folder.iterdir(), key=lambda item: item.name.lower()):
-        if not path.is_file() or not is_allowed_template(path.name):
-            continue
+    try:
+        for path in sorted(upload_folder.iterdir(), key=lambda item: item.name.lower()):
+            if not path.is_file() or not is_allowed_template(path.name):
+                continue
 
-        extension = get_extension(path.name)
-        templates.append(
-            UploadedTemplate(
-                original_filename=path.name,
-                stored_filename=path.name,
-                extension=extension,
-                file_type="DOCX template for editing"
-                if extension == "docx"
-                else "PDF for display only",
-                path=path,
+            extension = get_extension(path.name)
+            templates.append(
+                UploadedTemplate(
+                    original_filename=path.name,
+                    stored_filename=path.name,
+                    extension=extension,
+                    file_type="DOCX template for editing"
+                    if extension == "docx"
+                    else "PDF for display only",
+                    path=path,
+                )
             )
-        )
+    except Exception as error:
+        logger.error("Error listing uploaded templates from '%s': %s", upload_folder, error, exc_info=True)
     return templates
 
 
@@ -123,9 +154,17 @@ def resolve_uploaded_template(upload_folder: Path, stored_filename: str) -> Path
     upload_root = upload_folder.resolve()
 
     if upload_root not in template_path.parents or not template_path.is_file():
-        raise FileNotFoundError("Template file was not found.")
+        logger.warning("Template resolution failed for stored filename '%s'", stored_filename)
+        raise InvalidFileError(
+            message=f"Template file not found: {stored_filename}",
+            user_message="The selected template file was not found on the server.",
+        )
 
     if get_extension(template_path.name) != "docx":
-        raise ValueError("Only DOCX templates can be used for generation.")
+        logger.warning("Non-DOCX template attempted for generation: '%s'", stored_filename)
+        raise InvalidFileError(
+            message=f"Template is not DOCX: {stored_filename}",
+            user_message="Only DOCX templates can be used for document generation.",
+        )
 
     return template_path
