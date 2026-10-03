@@ -1,121 +1,201 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-50 antialiased">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}AI Resume Builder & Tracker{% endblock %}</title>
-  <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS v4 (Browser/CDN) -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+  <style type="text/tailwindcss">
+    @theme {
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --color-brand-50: #eff6ff;
+      --color-brand-100: #dbeafe;
+      --color-brand-500: #3b82f6;
+      --color-brand-600: #2563eb;
+      --color-brand-700: #1d4ed8;
+    }
+  </style>
 </head>
 
-<body class="d-flex flex-column min-vh-100 bg-light">
-  <!-- Skip to Main Content for Accessibility -->
-  <a class="visually-hidden-focusable btn btn-primary shadow-sm m-2" href="#main-content">Skip to main content</a>
+<body class="flex flex-col min-h-screen text-slate-800 bg-slate-50 font-sans selection:bg-blue-500 selection:text-white">
+  <!-- Accessibility Skip Link -->
+  <a class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus:shadow-lg" href="#main-content">
+    Skip to main content
+  </a>
 
-  <!-- Header & Sticky Navigation -->
-  <header>
-    <nav class="navbar navbar-expand-xl bg-white border-bottom shadow-sm sticky-top" aria-label="Main Navigation">
-      <div class="container">
-        <a class="navbar-brand fw-bold text-primary d-flex align-items-center gap-2" href="{{ url_for('main.index') }}">
-          <i class="bi bi-file-earmark-person-fill fs-4" aria-hidden="true"></i>
-          <span>AI Resume Builder</span>
-        </a>
-        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
-          aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle main navigation menu">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="mainNavbar">
-          <ul class="navbar-nav ms-auto gap-1">
-            <li class="nav-item">
-              <a class="nav-link px-3 d-flex align-items-center gap-2 {% if request.endpoint == 'main.index' %}active fw-semibold text-primary{% endif %}"
-                {% if request.endpoint == 'main.index' %}aria-current="page"{% endif %} href="{{ url_for('main.index') }}">
-                <i class="bi bi-house-door" aria-hidden="true"></i>
-                <span>Dashboard</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link px-3 d-flex align-items-center gap-2 {% if request.endpoint == 'main.resume_form' %}active fw-semibold text-primary{% endif %}"
-                {% if request.endpoint == 'main.resume_form' %}aria-current="page"{% endif %} href="{{ url_for('main.resume_form') }}">
-                <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                <span>Resume Form</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link px-3 d-flex align-items-center gap-2 {% if request.endpoint == 'main.upload_resume' %}active fw-semibold text-primary{% endif %}"
-                {% if request.endpoint == 'main.upload_resume' %}aria-current="page"{% endif %} href="{{ url_for('main.upload_resume') }}">
-                <i class="bi bi-file-earmark-arrow-up" aria-hidden="true"></i>
-                <span>Upload Resume</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link px-3 d-flex align-items-center gap-2 {% if request.endpoint == 'main.upload_job_description' %}active fw-semibold text-primary{% endif %}"
-                {% if request.endpoint == 'main.upload_job_description' %}aria-current="page"{% endif %} href="{{ url_for('main.upload_job_description') }}">
-                <i class="bi bi-briefcase" aria-hidden="true"></i>
-                <span>Upload JD</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link px-3 d-flex align-items-center gap-2 {% if request.endpoint == 'main.compare_resume_vs_jd' %}active fw-semibold text-primary{% endif %}"
-                {% if request.endpoint == 'main.compare_resume_vs_jd' %}aria-current="page"{% endif %} href="{{ url_for('main.compare_resume_vs_jd') }}">
-                <i class="bi bi-ui-checks-grid" aria-hidden="true"></i>
-                <span>Resume vs JD</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link px-3 d-flex align-items-center gap-2 {% if request.endpoint == 'main.improve_resume_route' %}active fw-semibold text-primary{% endif %}"
-                {% if request.endpoint == 'main.improve_resume_route' %}aria-current="page"{% endif %} href="{{ url_for('main.improve_resume_route') }}">
-                <i class="bi bi-stars text-warning" aria-hidden="true"></i>
-                <span>Improve</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link px-3 d-flex align-items-center gap-2 {% if request.endpoint == 'main.upload_template' %}active fw-semibold text-primary{% endif %}"
-                {% if request.endpoint == 'main.upload_template' %}aria-current="page"{% endif %} href="{{ url_for('main.upload_template') }}">
-                <i class="bi bi-journal-arrow-up" aria-hidden="true"></i>
-                <span>Template</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link px-3 d-flex align-items-center gap-2 {% if request.endpoint == 'main.version_history' %}active fw-semibold text-primary{% endif %}"
-                {% if request.endpoint == 'main.version_history' %}aria-current="page"{% endif %} href="{{ url_for('main.version_history') }}">
-                <i class="bi bi-clock-history" aria-hidden="true"></i>
-                <span>Versions</span>
-              </a>
-            </li>
-          </ul>
+  <!-- Header Navigation -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main Navigation">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Logo -->
+        <div class="flex items-center">
+          <a class="flex items-center gap-2.5 group text-decoration-none" href="{{ url_for('main.index') }}">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-200">
+              <i class="bi bi-file-earmark-person-fill text-lg"></i>
+            </div>
+            <span class="text-xl font-extrabold tracking-tight text-slate-900">
+              Resume<span class="text-blue-600">AI</span>
+            </span>
+          </a>
         </div>
+
+        <!-- Desktop Navigation Links -->
+        <div class="hidden md:flex items-center gap-1">
+          <a href="{{ url_for('main.index') }}" 
+             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.index' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
+            <i class="bi bi-grid-1x2 mr-1.5 text-xs opacity-70"></i> Dashboard
+          </a>
+
+          <a href="{{ url_for('main.resume_form') }}" 
+             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.resume_form' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
+            <i class="bi bi-pencil-square mr-1.5 text-xs opacity-70"></i> Build Resume
+          </a>
+
+          <a href="{{ url_for('main.upload_resume') }}" 
+             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.upload_resume' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
+            <i class="bi bi-shield-check mr-1.5 text-xs opacity-70"></i> ATS Scanner
+          </a>
+
+          <a href="{{ url_for('main.compare_resume_vs_jd') }}" 
+             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.compare_resume_vs_jd' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
+            <i class="bi bi-bullseye mr-1.5 text-xs opacity-70"></i> JD Matcher
+          </a>
+
+          <a href="{{ url_for('main.improve_resume_route') }}" 
+             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.improve_resume_route' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
+            <i class="bi bi-stars mr-1.5 text-xs text-blue-600"></i> AI Improver
+          </a>
+
+          <a href="{{ url_for('main.version_history') }}" 
+             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.version_history' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
+            <i class="bi bi-clock-history mr-1.5 text-xs opacity-70"></i> Versions
+          </a>
+        </div>
+
+        <!-- Right Action Button / User Profile -->
+        <div class="flex items-center gap-3">
+          {% if not session.get('user_name') %}
+            <a href="{{ url_for('main.login') }}" class="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">
+              Log In
+            </a>
+            <a href="{{ url_for('main.signup') }}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-sm shadow-blue-500/25 transition-all duration-150 hover:-translate-y-0.5">
+              Get Started <i class="bi bi-arrow-right ml-1.5"></i>
+            </a>
+          {% else %}
+            <!-- User Dropdown Menu -->
+            <div class="relative" id="userMenuDropdown">
+              <button type="button" 
+                      onclick="document.getElementById('userMenuContent').classList.toggle('hidden')" 
+                      class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition-all duration-150">
+                <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                  {{ session.get('user_name', 'U')[0] | upper }}
+                </div>
+                <span class="text-xs font-bold text-slate-800 hidden sm:inline-block max-w-[120px] truncate">
+                  {{ session.get('user_name', 'User') }}
+                </span>
+                <i class="bi bi-chevron-down text-slate-400 text-xs"></i>
+              </button>
+
+              <div id="userMenuContent" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl ring-1 ring-slate-900/5 py-2 z-50 divide-y divide-slate-100">
+                <div class="px-4 py-2.5">
+                  <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Signed in as</p>
+                  <p class="text-sm font-bold text-slate-900 truncate">{{ session.get('user_name') }}</p>
+                  {% if session.get('user_email') %}
+                    <p class="text-xs text-slate-500 truncate">{{ session['user_email'] }}</p>
+                  {% endif %}
+                </div>
+                <div class="py-1">
+                  <a href="{{ url_for('main.index') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600">
+                    <i class="bi bi-grid-1x2 mr-2.5 text-slate-400"></i> Dashboard
+                  </a>
+                  <a href="{{ url_for('main.resume_form') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600">
+                    <i class="bi bi-pencil-square mr-2.5 text-slate-400"></i> Build Resume
+                  </a>
+                  <a href="{{ url_for('main.upload_resume') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600">
+                    <i class="bi bi-shield-check mr-2.5 text-slate-400"></i> ATS Scanner
+                  </a>
+                  <a href="{{ url_for('main.version_history') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600">
+                    <i class="bi bi-clock-history mr-2.5 text-slate-400"></i> Saved Resumes
+                  </a>
+                </div>
+                <div class="py-1">
+                  <a href="{{ url_for('main.logout') }}" class="flex items-center px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50">
+                    <i class="bi bi-box-arrow-right mr-2.5"></i> Log Out
+                  </a>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Mobile Hamburger Toggle -->
+          <button type="button" 
+                  onclick="document.getElementById('mobileNavMenu').classList.toggle('hidden')"
+                  class="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+            <i class="bi bi-list text-2xl"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <div id="mobileNavMenu" class="hidden md:hidden border-t border-slate-100 py-3 space-y-1">
+        <a href="{{ url_for('main.index') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
+          <i class="bi bi-grid-1x2 mr-2"></i> Dashboard
+        </a>
+        <a href="{{ url_for('main.resume_form') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
+          <i class="bi bi-pencil-square mr-2"></i> Build Resume
+        </a>
+        <a href="{{ url_for('main.upload_resume') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
+          <i class="bi bi-shield-check mr-2"></i> ATS Scanner
+        </a>
+        <a href="{{ url_for('main.compare_resume_vs_jd') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
+          <i class="bi bi-bullseye mr-2"></i> JD Matcher
+        </a>
+        <a href="{{ url_for('main.improve_resume_route') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
+          <i class="bi bi-stars mr-2 text-blue-600"></i> AI Improver
+        </a>
+        <a href="{{ url_for('main.version_history') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
+          <i class="bi bi-clock-history mr-2"></i> Versions
+        </a>
       </div>
     </nav>
   </header>
 
-  <!-- Global Toast Notification Host Container -->
-  <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3 z-3" aria-live="polite" aria-atomic="true"></div>
-
-  <!-- Main Content Area -->
-  <main id="main-content" role="main" class="flex-grow-1">
+  <!-- Flash Messages Notifications -->
+  <main id="main-content" class="flex-grow">
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-    <div class="container pt-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
       {% for category, message in messages %}
-      <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show shadow-sm d-flex align-items-center gap-2" role="alert">
-        {% if category == 'success' %}
-          <i class="bi bi-check-circle-fill fs-5" aria-hidden="true"></i>
-        {% elif category == 'danger' or category == 'error' %}
-          <i class="bi bi-exclamation-triangle-fill fs-5" aria-hidden="true"></i>
-        {% elif category == 'warning' %}
-          <i class="bi bi-exclamation-circle-fill fs-5" aria-hidden="true"></i>
-        {% else %}
-          <i class="bi bi-info-circle-fill fs-5" aria-hidden="true"></i>
-        {% endif %}
-        <div>{{ message }}</div>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close alert message"></button>
+      <div class="flex items-center justify-between p-4 mb-3 text-sm rounded-xl border {% if category == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-200{% elif category == 'danger' or category == 'error' %}bg-rose-50 text-rose-800 border-rose-200{% elif category == 'warning' %}bg-amber-50 text-amber-800 border-amber-200{% else %}bg-blue-50 text-blue-800 border-blue-200{% endif %} shadow-xs" role="alert">
+        <div class="flex items-center gap-2.5">
+          {% if category == 'success' %}
+            <i class="bi bi-check-circle-fill text-emerald-600 text-base"></i>
+          {% elif category == 'danger' or category == 'error' %}
+            <i class="bi bi-exclamation-triangle-fill text-rose-600 text-base"></i>
+          {% elif category == 'warning' %}
+            <i class="bi bi-exclamation-circle-fill text-amber-600 text-base"></i>
+          {% else %}
+            <i class="bi bi-info-circle-fill text-blue-600 text-base"></i>
+          {% endif %}
+          <span class="font-medium">{{ message }}</span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="bi bi-x-lg text-xs"></i>
+        </button>
       </div>
       {% endfor %}
     </div>
@@ -125,151 +205,35 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-white border-top py-4 mt-auto">
-    <div class="container">
-      <div class="row align-items-center g-3">
-        <div class="col-md-6 text-center text-md-start text-secondary small">
-          &copy; 2026 <strong>AI Resume Builder & Tracker</strong>. Powered by modern Bootstrap & Flask.
+  <!-- Clean Tailwind Footer -->
+  <footer class="bg-white border-t border-slate-200 mt-auto py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-slate-700">ResumeAI</span>
+          <span>&copy; 2026. Clean, intelligent ATS resume optimization.</span>
         </div>
-        <div class="col-md-6 text-center text-md-end text-secondary small">
-          <span class="d-inline-flex align-items-center gap-1">
-            <i class="bi bi-shield-check text-success" aria-hidden="true"></i> Accessibility & Privacy First
+        <div class="flex items-center gap-4 text-slate-600">
+          <span class="inline-flex items-center gap-1.5 text-emerald-600 font-medium">
+            <i class="bi bi-shield-fill-check"></i> PostgreSQL Secure
+          </span>
+          <span>•</span>
+          <span class="inline-flex items-center gap-1.5">
+            <i class="bi bi-file-earmark-pdf"></i> PDF & DOCX Export
           </span>
         </div>
       </div>
     </div>
   </footer>
 
-  <!-- Bootstrap 5 JS Bundle -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous"></script>
-
-  <!-- Global Frontend JavaScript Helpers -->
   <script>
-    /**
-     * Show accessible Bootstrap Toast Notification
-     */
-    function showToast(title, message, type = 'info', duration = 4000) {
-      const container = document.getElementById('toast-container');
-      if (!container) return;
-
-      const toastId = 'toast-' + Date.now();
-      let iconClass = 'bi-info-circle-fill text-info';
-      if (type === 'success') iconClass = 'bi-check-circle-fill text-success';
-      if (type === 'danger' || type === 'error') iconClass = 'bi-exclamation-triangle-fill text-danger';
-      if (type === 'warning') iconClass = 'bi-exclamation-circle-fill text-warning';
-
-      const toastHtml = `
-        <div id="${toastId}" class="toast align-items-center border-0 shadow-lg mb-2 text-dark bg-white toast-custom toast-${type}" role="alert" aria-live="assertive" aria-atomic="true">
-          <div class="d-flex">
-            <div class="toast-body d-flex align-items-start gap-2">
-              <i class="bi ${iconClass} fs-5" aria-hidden="true"></i>
-              <div>
-                <strong class="d-block text-dark small fw-bold">${title}</strong>
-                <span class="small text-secondary">${message}</span>
-              </div>
-            </div>
-            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close notification"></button>
-          </div>
-        </div>
-      `;
-
-      container.insertAdjacentHTML('beforeend', toastHtml);
-      const toastEl = document.getElementById(toastId);
-      const bsToast = new bootstrap.Toast(toastEl, { delay: duration });
-      bsToast.show();
-
-      toastEl.addEventListener('hidden.bs.toast', () => {
-        toastEl.remove();
-      });
-    }
-
-    /**
-     * Accessible Copy to Clipboard with Toast feedback
-     */
-    function copyToClipboard(text, successMessage = 'Text copied to clipboard!') {
-      if (!text) return;
-      navigator.clipboard.writeText(text).then(() => {
-        showToast('Success', successMessage, 'success');
-      }).catch(err => {
-        console.error('Copy failed: ', err);
-        showToast('Copy Failed', 'Unable to copy text to clipboard', 'danger');
-      });
-    }
-
-    /**
-     * Button Loading Spinner state toggle
-     */
-    document.addEventListener('DOMContentLoaded', () => {
-      // Attach spinner state to form submissions
-      const forms = document.querySelectorAll('form');
-      forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-          const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
-          if (submitBtn && !submitBtn.disabled) {
-            // Check if form is valid if standard validation applies
-            if (form.checkValidity && !form.checkValidity()) {
-              return;
-            }
-            if (submitBtn.tagName.toLowerCase() === 'button') {
-              const originalHtml = submitBtn.innerHTML;
-              submitBtn.disabled = true;
-              submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...`;
-            } else if (submitBtn.tagName.toLowerCase() === 'input') {
-              submitBtn.disabled = true;
-              submitBtn.value = 'Processing...';
-            }
-          }
-        });
-      });
-
-      // Attach Drag & Drop handlers to dropzones
-      document.querySelectorAll('.drop-zone').forEach(dropZone => {
-        const input = dropZone.querySelector('.drop-zone__input');
-        const filenameDisplay = dropZone.querySelector('.drop-zone__file-name');
-
-        if (input) {
-          input.addEventListener('change', () => {
-            if (input.files.length) {
-              const file = input.files[0];
-              if (filenameDisplay) {
-                filenameDisplay.innerHTML = `<i class="bi bi-file-earmark-check text-success me-1" aria-hidden="true"></i> Selected: <strong>${file.name}</strong> (${(file.size / 1024).toFixed(1)} KB)`;
-              }
-              showToast('File Selected', file.name + ' ready for upload', 'info');
-              
-              // Trigger upload progress bar simulation if present
-              const progressBar = dropZone.closest('form').querySelector('.upload-progress-bar');
-              if (progressBar) {
-                progressBar.classList.remove('d-none');
-                let width = 0;
-                const interval = setInterval(() => {
-                  if (width >= 90) clearInterval(interval);
-                  else {
-                    width += 15;
-                    progressBar.querySelector('.progress-bar').style.width = width + '%';
-                    progressBar.querySelector('.progress-bar').setAttribute('aria-valuenow', width);
-                  }
-                }, 100);
-              }
-            }
-          });
-
-          ['dragover', 'dragenter'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-              e.preventDefault();
-              dropZone.classList.add('drop-zone--over');
-            });
-          });
-
-          ['dragleave', 'dragend', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => {
-              dropZone.classList.remove('drop-zone--over');
-            });
-          });
-        }
-      });
+    // Close user dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('userMenuContent');
+      const dropdown = document.getElementById('userMenuDropdown');
+      if (menu && dropdown && !dropdown.contains(e.target)) {
+        menu.classList.add('hidden');
+      }
     });
   </script>
 </body>

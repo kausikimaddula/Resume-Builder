@@ -8,7 +8,7 @@ from werkzeug.exceptions import HTTPException
 
 from config import Config
 from logging_config import setup_logging
-from routes.main import main_bp
+from routes.main import main_bp, oauth
 from services.exceptions import AppBaseException
 from services.version_service import init_db
 
@@ -27,17 +27,32 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     # Centralized logging configuration
     setup_logging(app)
+    init_oauth(app)
     register_blueprints(app)
     register_error_handlers(app)
 
-    # Initialize SQLite Database for Resume Versioning
+    # Initialize PostgreSQL / SQLite Database for Users, Resumes, and Versions
     try:
-        init_db(app.config["DATABASE_PATH"])
+        init_db(app.config.get("DATABASE_URL") or app.config.get("DATABASE_PATH"))
     except Exception as exc:
         app.logger.error("Failed to initialize database on startup: %s", exc, exc_info=True)
 
     app.logger.info("AI Resume Builder & Tracker started")
     return app
+
+
+def init_oauth(app: Flask) -> None:
+    """Initialize OAuth extensions."""
+    oauth.init_app(app)
+    if "google" not in oauth._registry:
+        oauth.register(
+            name="google",
+            server_metadata_url=app.config.get(
+                "GOOGLE_DISCOVERY_URL",
+                "https://accounts.google.com/.well-known/openid-configuration",
+            ),
+            client_kwargs={"scope": "openid email profile"},
+        )
 
 
 def register_blueprints(app: Flask) -> None:

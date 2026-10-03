@@ -4,16 +4,67 @@ from __future__ import annotations
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileRequired
-from wtforms import EmailField, SelectField, StringField, SubmitField, TextAreaField
-from wtforms.validators import Email, Length, Optional, Regexp, DataRequired
+from wtforms import (
+    BooleanField,
+    EmailField,
+    PasswordField,
+    SelectField,
+    StringField,
+    SubmitField,
+    TextAreaField,
+)
+from wtforms.validators import DataRequired, Email, EqualTo, Length, Optional, Regexp
+
+
+class LoginForm(FlaskForm):
+    """Collect user login credentials."""
+
+    email = EmailField(
+        "Email Address",
+        validators=[DataRequired(), Email(), Length(max=120)],
+    )
+    password = PasswordField(
+        "Password",
+        validators=[DataRequired(), Length(min=6, max=100)],
+    )
+    remember_me = BooleanField("Remember me")
+    submit = SubmitField("Log In")
+
+
+class SignupForm(FlaskForm):
+    """Collect new user registration details."""
+
+    full_name = StringField(
+        "Full Name",
+        validators=[DataRequired(), Length(min=2, max=120)],
+    )
+    email = EmailField(
+        "Email Address",
+        validators=[DataRequired(), Email(), Length(max=120)],
+    )
+    password = PasswordField(
+        "Password",
+        validators=[
+            DataRequired(),
+            Length(min=6, message="Password must be at least 6 characters long."),
+        ],
+    )
+    confirm_password = PasswordField(
+        "Confirm Password",
+        validators=[
+            DataRequired(),
+            EqualTo("password", message="Passwords must match."),
+        ],
+    )
+    terms_agree = BooleanField(
+        "I agree to the Terms of Service and Privacy Policy",
+        validators=[DataRequired(message="You must agree to the terms to sign up.")],
+    )
+    submit = SubmitField("Create Account")
 
 
 class ResumeDetailsForm(FlaskForm):
-    """Collect resume details before any AI features are added.
-
-    Flask-WTF gives us CSRF protection and validation in one beginner-friendly
-    place, so route functions can stay focused on request handling.
-    """
+    """Collect resume details before any AI features are added."""
 
     full_name = StringField(
         "Full Name",
@@ -50,105 +101,103 @@ class ResumeDetailsForm(FlaskForm):
     )
     gpa = StringField("GPA", validators=[Optional(), Length(max=20)])
 
-    skills = TextAreaField("Skills", validators=[DataRequired(), Length(max=2000)])
+    skills = TextAreaField(
+        "Skills",
+        validators=[
+            DataRequired(),
+            Length(max=1000, message="Keep skills under 1,000 characters."),
+        ],
+    )
 
     company = StringField("Company", validators=[DataRequired(), Length(max=160)])
-    role = StringField("Role", validators=[DataRequired(), Length(max=120)])
-    duration = StringField("Duration", validators=[DataRequired(), Length(max=80)])
+    role = StringField("Role / Job Title", validators=[DataRequired(), Length(max=160)])
+    duration = StringField(
+        "Duration",
+        validators=[
+            DataRequired(),
+            Length(max=60),
+        ],
+    )
     responsibilities = TextAreaField(
-        "Responsibilities",
-        validators=[DataRequired(), Length(max=2500)],
+        "Key Responsibilities & Achievements",
+        validators=[
+            DataRequired(),
+            Length(max=2000, message="Keep responsibilities under 2,000 characters."),
+        ],
     )
 
-    project_name = StringField(
-        "Project Name",
-        validators=[DataRequired(), Length(max=160)],
-    )
+    project_name = StringField("Project Name", validators=[Optional(), Length(max=160)])
     project_description = TextAreaField(
-        "Description",
-        validators=[DataRequired(), Length(max=2000)],
+        "Project Description",
+        validators=[Optional(), Length(max=1000)],
     )
     technologies = StringField(
-        "Technologies",
-        validators=[DataRequired(), Length(max=250)],
+        "Technologies Used",
+        validators=[Optional(), Length(max=200)],
     )
 
-    certifications = TextAreaField(
-        "Certifications",
-        validators=[Optional(), Length(max=2000)],
-    )
-    achievements = TextAreaField(
-        "Achievements",
-        validators=[Optional(), Length(max=2000)],
-    )
-    languages = TextAreaField("Languages", validators=[Optional(), Length(max=1000)])
+    certifications = TextAreaField("Certifications", validators=[Optional(), Length(max=1000)])
+    achievements = TextAreaField("Achievements", validators=[Optional(), Length(max=1000)])
+    languages = StringField("Languages", validators=[Optional(), Length(max=200)])
 
     submit = SubmitField("Save Resume Details")
 
 
 class ResumeTemplateUploadForm(FlaskForm):
-    """Validate resume template uploads.
-
-    DOCX files can be edited later, while PDF files are accepted for display
-    only. The app does not populate either file type yet.
-    """
+    """Validate uploaded DOCX or PDF resume templates."""
 
     template_file = FileField(
-        "Resume Template",
+        "Resume Template (DOCX or PDF)",
         validators=[
-            FileRequired(message="Choose a DOCX or PDF file."),
-            FileAllowed(["docx", "pdf"], "Only DOCX and PDF files are allowed."),
+            FileRequired("Select a file to upload."),
+            FileAllowed(["docx", "pdf"], "Only DOCX and PDF templates are allowed."),
         ],
     )
     submit = SubmitField("Upload Template")
 
 
 class ResumeUploadForm(FlaskForm):
-    """Validate uploaded resume files for text extraction."""
+    """Validate uploaded resume DOCX or PDF file for parsing."""
 
     resume_file = FileField(
-        "Upload Resume",
+        "Upload Existing Resume (DOCX or PDF)",
         validators=[
-            FileRequired(message="Choose a DOCX or PDF file to extract text from."),
+            FileRequired("Select a resume file to parse."),
             FileAllowed(["docx", "pdf"], "Only DOCX and PDF files are allowed."),
         ],
     )
-    submit = SubmitField("Extract Text")
+    submit = SubmitField("Upload & Parse Resume")
+
+
+class GenerateResumeForm(FlaskForm):
+    """Validate template choice when generating a finished DOCX resume."""
+
+    template_filename = SelectField("Resume Template", validators=[DataRequired()])
+    submit = SubmitField("Generate Completed Resume")
 
 
 class JobDescriptionUploadForm(FlaskForm):
-    """Validate uploaded job description files and text for text extraction."""
+    """Validate job description upload (file or text)."""
 
     jd_file = FileField(
-        "Upload Job Description File",
+        "Upload Job Description File (DOCX/PDF/TXT)",
         validators=[
             Optional(),
             FileAllowed(["docx", "pdf", "txt"], "Only PDF, DOCX, and TXT files are allowed."),
         ],
     )
     jd_text = TextAreaField(
-        "Or Paste Job Description",
+        "Or Paste Job Description Text",
         validators=[Optional(), Length(max=10000)],
     )
-    submit = SubmitField("Extract Text")
-
-
-
-class GenerateResumeForm(FlaskForm):
-    """Choose a saved DOCX template for AI resume generation."""
-
-    template_filename = SelectField(
-        "DOCX Template",
-        validators=[DataRequired(message="Choose a DOCX template.")],
-    )
-    submit = SubmitField("Generate Resume")
+    submit = SubmitField("Process Job Description")
 
 
 class ResumeJdCompareForm(FlaskForm):
-    """Validate inputs for comparing a Resume against a Job Description."""
+    """Validate inputs for comparing a resume against a job description."""
 
     resume_file = FileField(
-        "Upload Resume File",
+        "Upload Resume File (DOCX/PDF)",
         validators=[
             Optional(),
             FileAllowed(["docx", "pdf"], "Only DOCX and PDF resume files are allowed."),
@@ -162,7 +211,7 @@ class ResumeJdCompareForm(FlaskForm):
         "Upload Job Description File",
         validators=[
             Optional(),
-            FileAllowed(["docx", "pdf", "txt"], "Only PDF, DOCX, and TXT job description files are allowed."),
+            FileAllowed(["docx", "pdf", "txt"], "Only PDF, DOCX, and TXT files are allowed."),
         ],
     )
     jd_text = TextAreaField(
@@ -199,6 +248,3 @@ class VersionCompareForm(FlaskForm):
     version_a = SelectField("Base Version (Version A)", coerce=int, validators=[DataRequired()])
     version_b = SelectField("Comparison Version (Version B)", coerce=int, validators=[DataRequired()])
     submit = SubmitField("Compare Versions")
-
-
-

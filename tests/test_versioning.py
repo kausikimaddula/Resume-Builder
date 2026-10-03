@@ -36,6 +36,9 @@ class TestVersioning(unittest.TestCase):
 
         self.app = create_app(TestConfig)
         self.client = self.app.test_client()
+        with self.client.session_transaction() as session:
+            session["user_name"] = "Test User"
+            session["user_email"] = "testuser@example.com"
 
         self.sample_details_v1 = {
             "personal": {"full_name": "Alice Smith", "email": "alice@example.com", "phone": "1234567890"},

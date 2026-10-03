@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+from functools import wraps
 from pathlib import Path
 
+from dotenv import load_dotenv
 from flask import (
     Blueprint,
     Response,
@@ -15,20 +18,24 @@ from flask import (
     render_template,
     request,
     send_from_directory,
+    session,
     url_for,
 )
+from authlib.integrations.flask_client import OAuth
 
 from forms import (
     GenerateResumeForm,
     JobDescriptionUploadForm,
+    LoginForm,
     ResumeDetailsForm,
     ResumeImprovementForm,
     ResumeJdCompareForm,
     ResumeTemplateUploadForm,
     ResumeUploadForm,
+    SignupForm,
     VersionCompareForm,
 )
-from services.ats_checker import AtsAnalysisError, analyze_resume_ats
+from services.database import create_user, get_user_by_email, verify_user
 from services.exceptions import AppBaseException
 from services.export_service import (
     ExportServiceError,
@@ -61,6 +68,7 @@ from services.version_service import (
 )
 
 main_bp = Blueprint("main", __name__)
+oauth = OAuth()
 
 
 def get_friendly_error_message(error: Exception) -> str:
@@ -70,14 +78,178 @@ def get_friendly_error_message(error: Exception) -> str:
     return str(error) or "An unexpected error occurred."
 
 
+def login_required(f):
+    """Ensure user is logged in before accessing protected tool routes."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get("user_name"):
+            flash("Please log in or sign up to access this feature.", "warning")
+            next_url = request.url if request.method == "GET" else url_for("main.index")
+            return redirect(url_for("main.login", next=next_url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 @main_bp.get("/")
 def index():
     """Show the landing page."""
     current_app.logger.info("Home page requested")
-    return render_template("index.html", resume_count=len(get_all_resumes()))
+    user_email = session.get("user_email")
+    return render_template("index.html", resume_count=len(get_all_resumes(user_email=user_email)))
+
+
+@main_bp.get("/ui")
+def ui_design():
+    """Show the dedicated UI design system showcase."""
+    return render_template("ui.html")
+
+
+@main_bp.route("/login", methods=["GET", "POST"])
+def login():
+    """Handle user login with database verification."""
+    form = LoginForm()
+    if form.validate_on_submit():
+        email = form.email.data.strip().lower()
+        password = form.password.data
+        
+        user = verify_user(email, password)
+        if user:
+            user_name = user.get("full_name") or email.split("@")[0].replace(".", " ").title()
+            session["user_name"] = user_name
+            session["user_email"] = email
+            flash(f"Welcome back, {user_name}! You have successfully logged in.", "success")
+            next_page = request.args.get("next")
+            return redirect(next_page or url_for("main.index"))
+        else:
+            existing = get_user_by_email(email)
+            if existing and existing.get("password_hash"):
+                flash("Invalid email or password. Please check your credentials.", "danger")
+                return render_template("login.html", form=form)
+            else:
+                # First time user login fallback
+                new_user = create_user(full_name=email.split("@")[0].replace(".", " ").title(), email=email, password=password)
+                user_name = new_user.get("full_name") or email.split("@")[0].title()
+                session["user_name"] = user_name
+                session["user_email"] = email
+                flash(f"Welcome, {user_name}! Your account has been initialized.", "success")
+                next_page = request.args.get("next")
+                return redirect(next_page or url_for("main.index"))
+    return render_template("login.html", form=form)
+
+
+@main_bp.route("/signup", methods=["GET", "POST"])
+def signup():
+    """Handle new user registration with PostgreSQL persistence."""
+    form = SignupForm()
+    if form.validate_on_submit():
+        email = form.email.data.strip().lower()
+        full_name = form.full_name.data.strip()
+        password = form.password.data
+
+        user = create_user(full_name=full_name, email=email, password=password)
+        session["user_name"] = user.get("full_name") or full_name
+        session["user_email"] = email
+        flash(f"Account created successfully for {full_name}! Welcome to AI Resume Builder.", "success")
+        return redirect(url_for("main.index"))
+    return render_template("signup.html", form=form)
+
+
+
+def sync_google_credentials() -> tuple[str, str]:
+    """Ensure latest GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET from .env are synced into config and OAuth client."""
+    try:
+        load_dotenv(override=True)
+    except Exception:
+        pass
+
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip() or current_app.config.get("GOOGLE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "").strip() or current_app.config.get("GOOGLE_CLIENT_SECRET", "").strip()
+
+    if client_id:
+        current_app.config["GOOGLE_CLIENT_ID"] = client_id
+    if client_secret:
+        current_app.config["GOOGLE_CLIENT_SECRET"] = client_secret
+
+    if client_id and client_secret and "google" in oauth._registry:
+        oauth.google.client_id = client_id
+        oauth.google.client_secret = client_secret
+
+    return client_id, client_secret
+
+
+@main_bp.get("/login/google")
+def google_login():
+    """Redirect to Google OAuth 2.0 consent page or mock login in development mode."""
+    client_id, client_secret = sync_google_credentials()
+
+    if not client_id or not client_secret:
+        # In development/debug mode without API keys, allow fallback demo login
+        if current_app.config.get("DEBUG") or current_app.config.get("TESTING"):
+            session["user_name"] = "Google User (Demo)"
+            session["user_email"] = "user@gmail.com"
+            session["user_picture"] = "https://lh3.googleusercontent.com/a/default-user"
+            flash(
+                "Logged in via Demo Google Account. (To test live Google OAuth, add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env)",
+                "info",
+            )
+            return redirect(url_for("main.index"))
+
+        current_app.logger.warning("Google OAuth initiated without credentials configured.")
+        flash(
+            "Google Authentication is not configured. Please set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in your environment configuration.",
+            "warning",
+        )
+        return redirect(url_for("main.login"))
+
+    redirect_uri = url_for("main.google_callback", _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@main_bp.get("/login/google/callback")
+def google_callback():
+    """Handle Google OAuth 2.0 authorization response."""
+    client_id, client_secret = sync_google_credentials()
+    if not client_id or not client_secret:
+        flash("Google Authentication is not configured.", "warning")
+        return redirect(url_for("main.login"))
+
+    try:
+        token = oauth.google.authorize_access_token()
+        user_info = token.get("userinfo")
+        if not user_info:
+            resp = oauth.google.get("https://www.googleapis.com/oauth2/v3/userinfo")
+            user_info = resp.json()
+
+        email = user_info.get("email", "")
+        name = user_info.get("name") or (email.split("@")[0].replace(".", " ").title() if email else "Google User")
+        picture = user_info.get("picture", "")
+
+        session["user_name"] = name
+        session["user_email"] = email
+        if picture:
+            session["user_picture"] = picture
+
+        flash(f"Welcome back, {name}! Successfully logged in with Google.", "success")
+        return redirect(url_for("main.index"))
+
+    except Exception as error:
+        current_app.logger.exception("Google OAuth callback failed: %s", error)
+        flash(f"Google authentication failed: {get_friendly_error_message(error)}", "danger")
+        return redirect(url_for("main.login"))
+
+
+@main_bp.get("/logout")
+def logout():
+    """Handle user logout."""
+    session.pop("user_name", None)
+    session.pop("user_email", None)
+    session.pop("user_picture", None)
+    flash("You have been logged out successfully.", "info")
+    return redirect(url_for("main.login"))
 
 
 @main_bp.route("/resume/new", methods=["GET", "POST"])
+@login_required
 def resume_form():
     """Show and process the resume details form."""
     form = ResumeDetailsForm()
@@ -145,6 +317,7 @@ def resume_detail(resume_id: int):
 
 
 @main_bp.route("/templates/upload", methods=["GET", "POST"])
+@login_required
 def upload_template():
     """Upload a DOCX or PDF resume template to the uploads folder."""
     form = ResumeTemplateUploadForm()
@@ -171,6 +344,7 @@ def upload_template():
 
 
 @main_bp.route("/resume/upload", methods=["GET", "POST"])
+@login_required
 def upload_resume():
     """Upload an existing resume to parse and display its content."""
     form = ResumeUploadForm()
@@ -238,6 +412,7 @@ def upload_resume():
 
 
 @main_bp.route("/job-description/upload", methods=["GET", "POST"])
+@login_required
 def upload_job_description():
     """Upload an existing job description or paste text to extract and display."""
     form = JobDescriptionUploadForm()
@@ -281,6 +456,7 @@ def upload_job_description():
 
 
 @main_bp.route("/compare", methods=["GET", "POST"])
+@login_required
 def compare_resume_vs_jd():
     """Compare a resume (PDF/DOCX) against a job description (PDF/DOCX/TXT) or paste text."""
     form = ResumeJdCompareForm()
@@ -354,6 +530,7 @@ def compare_resume_vs_jd():
 
 
 @main_bp.route("/resume/improve", methods=["GET", "POST"])
+@login_required
 def improve_resume_route():
     """Analyze a resume (file or text) and generate AI-driven section-wise improvement suggestions."""
     form = ResumeImprovementForm()
@@ -408,6 +585,7 @@ def improve_resume_route():
 
 
 @main_bp.post("/resume/<int:resume_id>/generate")
+@login_required
 def generate_resume(resume_id: int):
     """Generate a completed DOCX resume from saved details and a DOCX template."""
     resume = get_resume(resume_id)
@@ -468,6 +646,7 @@ def generate_resume(resume_id: int):
 
 @main_bp.get("/versions")
 @main_bp.get("/resume/<int:resume_id>/versions")
+@login_required
 def version_history(resume_id: int | None = None):
     """View versions saved in SQLite for a specific resume or all resumes."""
     db_path = current_app.config["DATABASE_PATH"]
