@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}UI Design System & Component Library - ResumeAI{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  
+  <!-- Header -->
+  <div class="mb-10 pb-6 border-b border-slate-200">
+    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-3 border border-blue-200">
+      <i class="bi bi-palette-fill"></i> ResumeAI Design System
+    </span>
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">UI Design & Components</h1>
+    <p class="text-sm text-slate-500 mt-1">Design tokens, buttons, forms, tool cards, metrics, and interactive widgets built with Tailwind CSS v4.</p>
+  </div>
+
+  <!-- 1. Color Palette & Typography Tokens -->
+  <section class="mb-12">
+    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+      <i class="bi bi-circle-half text-blue-600"></i> Color System & Tokens
+    </h2>
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div class="p-4 rounded-2xl bg-blue-600 text-white shadow-xs">
+        <p class="text-xs font-bold">Primary Blue</p>
+        <p class="text-[11px] opacity-80">#2563eb (600)</p>
+      </div>
+      <div class="p-4 rounded-2xl bg-indigo-600 text-white shadow-xs">
+        <p class="text-xs font-bold">Accent Indigo</p>
+        <p class="text-[11px] opacity-80">#4f46e5 (600)</p>
+      </div>
+      <div class="p-4 rounded-2xl bg-emerald-600 text-white shadow-xs">
+        <p class="text-xs font-bold">Success Green</p>
+        <p class="text-[11px] opacity-80">#16a34a (600)</p>
+      </div>
+      <div class="p-4 rounded-2xl bg-cyan-600 text-white shadow-xs">
+        <p class="text-xs font-bold">Teal / Cyan</p>
+        <p class="text-[11px] opacity-80">#0891b2 (600)</p>
+      </div>
+      <div class="p-4 rounded-2xl bg-amber-500 text-white shadow-xs">
+        <p class="text-xs font-bold">Warning Amber</p>
+        <p class="text-[11px] opacity-80">#f59e0b (500)</p>
+      </div>
+      <div class="p-4 rounded-2xl bg-rose-600 text-white shadow-xs">
+        <p class="text-xs font-bold">Danger Rose</p>
+        <p class="text-[11px] opacity-80">#e11d48 (600)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Action Buttons -->
+  <section class="mb-12">
+    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+      <i class="bi bi-hand-index-thumb text-blue-600"></i> Action Buttons
+    </h2>
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center gap-3">
+      <button class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/25 transition-all hover:-translate-y-0.5">
+        Primary Action &rarr;
+      </button>
+
+      <button class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs transition-all hover:-translate-y-0.5">
+        Dark Action
+      </button>
+
+      <button class="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold shadow-xs transition-all hover:border-slate-300">
+        Secondary Outline
+      </button>
+
+      <button class="px-5 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs font-bold transition-colors">
+        Success Soft
+      </button>
+
+      <button class="px-5 py-2.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white text-xs font-bold transition-colors">
+        Danger Soft
+      </button>
+
+      <button class="px-5 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all">
+        Pill Rounded Button
+      </button>
+    </div>
+  </section>
+
+  <!-- 3. Tool Cards & Interactive Elements -->
+  <section class="mb-12">
+    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+      <i class="bi bi-grid text-blue-600"></i> Workspace Feature Cards
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Card 1 -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-200 flex flex-col">
+        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl mb-4">
+          <i class="bi bi-pencil-square"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900 mb-2">Resume Builder</h3>
+        <p class="text-xs text-slate-500 leading-relaxed mb-6 flex-grow">
+          Fill in our guided step-by-step form to build a structured, ATS-compliant resume.
+        </p>
+        <button class="w-full py-2.5 rounded-xl text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white transition-colors">
+          Start Building &rarr;
+        </button>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:border-emerald-300 hover:-translate-y-1 transition-all duration-200 flex flex-col">
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-4">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900 mb-2">ATS Score Scanner</h3>
+        <p class="text-xs text-slate-500 leading-relaxed mb-6 flex-grow">
+          Analyze keyword distribution, formatting compatibility, and bullet point strengths.
+        </p>
+        <button class="w-full py-2.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white transition-colors">
+          Scan File &rarr;
+        </button>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:border-purple-300 hover:-translate-y-1 transition-all duration-200 flex flex-col">
+        <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl mb-4">
+          <i class="bi bi-stars"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900 mb-2">AI Bullet Improver</h3>
+        <p class="text-xs text-slate-500 leading-relaxed mb-6 flex-grow">
+          Transform passive experience statements into high-impact, quantified achievement points.
+        </p>
+        <button class="w-full py-2.5 rounded-xl text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-600 hover:text-white transition-colors">
+          Enhance Now &rarr;
+        </button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 4. Form Controls & Inputs -->
+  <section class="mb-12">
+    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+      <i class="bi bi-input-cursor-text text-blue-600"></i> Form Inputs & Dropzone
+    </h2>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      
+      <!-- Input Group Showcase -->
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Standard Input</label>
+          <input type="text" placeholder="e.g. John Doe" class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Input with Icon</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
+              <i class="bi bi-envelope"></i>
+            </div>
+            <input type="email" placeholder="name@example.com" class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Dropdown Select</label>
+          <select class="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
+            <option>Modern Clean Template (DOCX)</option>
+            <option>Minimalist Tech Template (PDF)</option>
+            <option>Executive Professional Template</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Dropzone Preview -->
+      <div class="bg-white p-6 rounded-2xl border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/20 text-center transition-all cursor-pointer flex flex-col items-center justify-center">
+        <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mb-3">
+          <i class="bi bi-cloud-arrow-up"></i>
+        </div>
+        <p class="text-sm font-bold text-slate-900 mb-1">Drag and drop your resume file here</p>
+        <p class="text-xs text-slate-500 mb-3">or click to browse from your computer</p>
+        <span class="inline-block px-3 py-1 bg-slate-100 rounded-full text-[11px] font-medium text-slate-600 border border-slate-200">
+          Supports .docx, .pdf (Max size: 5MB)
+        </span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 5. Metrics & Status Badges -->
+  <section>
+    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+      <i class="bi bi-bar-chart-line text-blue-600"></i> Metrics & Status Badges
+    </h2>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
+        <p class="text-xs font-semibold text-slate-500">Overall ATS Score</p>
+        <p class="text-2xl font-extrabold text-blue-600 mt-1">94%</p>
+      </div>
+
+      <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
+        <p class="text-xs font-semibold text-slate-500">Keyword Match</p>
+        <p class="text-2xl font-extrabold text-emerald-600 mt-1">88%</p>
+      </div>
+
+      <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
+        <p class="text-xs font-semibold text-slate-500">Saved Versions</p>
+        <p class="text-2xl font-extrabold text-indigo-600 mt-1">12</p>
+      </div>
+
+      <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs">
+        <p class="text-xs font-semibold text-slate-500">Database Status</p>
+        <p class="text-sm font-bold text-emerald-600 mt-2 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Connected
+        </p>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

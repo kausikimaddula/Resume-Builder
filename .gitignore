@@ -19,3 +19,8 @@ logs/
 
 # Uploads
 uploads/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3

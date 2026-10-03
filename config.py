@@ -31,12 +31,18 @@ class Config:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
     OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
+    # Google OAuth 2.0 Credentials
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+    GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
+
     # Uploaded resumes will live here in a future feature.
     UPLOAD_FOLDER = BASE_DIR / "uploads"
     GENERATED_FOLDER = UPLOAD_FOLDER / "generated"
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
     DATABASE_PATH = BASE_DIR / "resume_builder.db"
+    DATABASE_URL = os.getenv("DATABASE_URL", "").strip() or f"sqlite:///{BASE_DIR / 'resume_builder.db'}"
 
     LOG_FOLDER = BASE_DIR / "logs"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
