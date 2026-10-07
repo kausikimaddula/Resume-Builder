@@ -131,7 +131,7 @@ def login():
                 user_name = new_user.get("full_name") or email.split("@")[0].title()
                 session["user_name"] = user_name
                 session["user_email"] = email
-                flash(f"Welcome, {user_name}! Your account has been initialized.", "success")
+                flash(f"Welcome, {user_name}! You have successfully logged in.", "success")
                 next_page = request.args.get("next")
                 return redirect(next_page or url_for("main.index"))
     return render_template("login.html", form=form)

@@ -34,40 +34,7 @@ def get_db_connection(db_path: Path | str) -> sqlite3.Connection:
 
 def init_db(db_path: Path | str | None = None) -> None:
     """Initialize database tables."""
-    if is_postgres(db_path):
-        init_all_tables(db_path)
-    else:
-        path = Path(str(db_path or "resume_builder.db").replace("sqlite:///", ""))
-        try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            with get_db_connection(path) as conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS resume_versions (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        resume_id INTEGER NOT NULL,
-                        version_number INTEGER NOT NULL,
-                        version_name TEXT NOT NULL,
-                        created_at TEXT NOT NULL,
-                        filename TEXT,
-                        file_path TEXT,
-                        ats_score INTEGER,
-                        match_score INTEGER,
-                        changes TEXT,
-                        resume_details_json TEXT,
-                        resume_text TEXT,
-                        template_filename TEXT
-                    );
-                    """
-                )
-                conn.commit()
-        except sqlite3.Error as error:
-            logger.error("Database schema initialization failed for '%s': %s", db_path, error, exc_info=True)
-            raise DatabaseError(
-                message=f"Database initialization error: {error}",
-                user_message="Failed to initialize database tables.",
-            ) from error
+    init_all_tables(db_path)
 
 
 def get_next_version_number(db_path: Path | str | None, resume_id: int) -> int:
