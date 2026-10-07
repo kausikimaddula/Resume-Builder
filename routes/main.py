@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from copy import deepcopy
 from functools import wraps
 from pathlib import Path
 
@@ -27,6 +28,7 @@ from forms import (
     GenerateResumeForm,
     JobDescriptionUploadForm,
     LoginForm,
+    ResetPasswordForm,
     ResumeDetailsForm,
     ResumeImprovementForm,
     ResumeJdCompareForm,
@@ -35,7 +37,14 @@ from forms import (
     SignupForm,
     VersionCompareForm,
 )
-from services.database import create_user, get_user_by_email, verify_user
+from services.ats_checker import AtsAnalysisError, analyze_resume_ats
+from services.database import (
+    create_user,
+    get_user_by_email,
+    save_resume_db,
+    update_user_password,
+    verify_user,
+)
 from services.exceptions import AppBaseException
 from services.export_service import (
     ExportServiceError,
@@ -51,7 +60,7 @@ from services.job_description import extract_jd_text, save_jd_upload
 from services.proofreader import ProofreaderError, proofread_resume
 from services.resume_builder import ResumeBuilderError, build_resume_from_template
 from services.resume_improver import ResumeImproverError, improve_resume
-from services.resume_parser import extract_resume_text
+from services.resume_parser import extract_resume_text, parse_resume_to_structured_data
 from services.resume_store import get_all_resumes, get_resume, save_resume
 from services.upload_service import (
     list_docx_templates,
@@ -62,6 +71,7 @@ from services.upload_service import (
 from services.version_service import (
     compare_versions,
     create_resume_version,
+    format_details_to_text,
     get_all_versions,
     get_version,
     get_versions_for_resume,
@@ -139,19 +149,39 @@ def login():
 
 @main_bp.route("/signup", methods=["GET", "POST"])
 def signup():
-    """Handle new user registration with PostgreSQL persistence."""
+    """Handle new user registration with database persistence."""
     form = SignupForm()
     if form.validate_on_submit():
         email = form.email.data.strip().lower()
         full_name = form.full_name.data.strip()
         password = form.password.data
 
-        user = create_user(full_name=full_name, email=email, password=password)
-        session["user_name"] = user.get("full_name") or full_name
-        session["user_email"] = email
-        flash(f"Account created successfully for {full_name}! Welcome to AI Resume Builder.", "success")
-        return redirect(url_for("main.index"))
+        create_user(full_name=full_name, email=email, password=password)
+        flash(f"Account created successfully for {full_name}! Please sign in with your credentials to verify and continue.", "success")
+        return redirect(url_for("main.login"))
     return render_template("signup.html", form=form)
+
+
+@main_bp.route("/forgot-password", methods=["GET", "POST"])
+@main_bp.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
+    """Directly reset password without email verification."""
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        email = form.email.data.strip().lower()
+        new_password = form.new_password.data
+        user = get_user_by_email(email)
+        if not user:
+            flash("No account found with this email address. Please check your email or sign up.", "danger")
+            return render_template("reset_password.html", form=form)
+
+        success = update_user_password(email, new_password)
+        if success:
+            flash("Your password has been reset successfully! Please log in with your new password.", "success")
+            return redirect(url_for("main.login"))
+        else:
+            flash("Failed to update password. Please try again.", "danger")
+    return render_template("reset_password.html", form=form)
 
 
 
@@ -529,6 +559,7 @@ def compare_resume_vs_jd():
     )
 
 
+@main_bp.route("/improve", methods=["GET", "POST"])
 @main_bp.route("/resume/improve", methods=["GET", "POST"])
 @login_required
 def improve_resume_route():

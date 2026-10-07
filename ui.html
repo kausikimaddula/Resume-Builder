@@ -1,153 +1,137 @@
 <!doctype html>
-<html lang="en" class="h-full bg-slate-50 antialiased">
+<html lang="en" class="h-full bg-[#f4f0e6] antialiased">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ResumeAI - Complete UI Design System (Tailwind CSS v4)</title>
+  <title>UI Design System | ResumeAI</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Tailwind CSS v4 Browser -->
+  <!-- Tailwind CSS v4 (CDN) -->
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-  <style type="text/tailwindcss">
-    @theme {
-      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-  </style>
 </head>
 
-<body class="flex flex-col min-h-screen text-slate-800 bg-slate-50 font-sans">
-
-  <!-- Navigation Bar -->
-  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-xs">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-            <i class="bi bi-file-earmark-person-fill text-lg"></i>
-          </div>
-          <span class="text-xl font-extrabold tracking-tight text-slate-900">
-            Resume<span class="text-blue-600">AI</span>
-          </span>
-        </div>
-
-        <div class="hidden md:flex items-center gap-1">
-          <a href="#" class="px-3.5 py-2 rounded-lg text-sm font-bold bg-blue-50 text-blue-700">Dashboard</a>
-          <a href="#" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100">Build Resume</a>
-          <a href="#" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100">ATS Scanner</a>
-          <a href="#" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100">JD Matcher</a>
-          <a href="#" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100">AI Improver</a>
-          <a href="#" class="px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100">Versions</a>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <a href="#" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm shadow-blue-500/25">
-            Get Started &rarr;
-          </a>
-        </div>
+<body class="bg-[#f4f0e6] text-[#231f16] font-sans antialiased min-h-screen py-10">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    
+    <!-- Title & Brand Header -->
+    <div class="text-center space-y-2.5">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#edf1e4] border border-[#d8decb] text-[#393e27] text-xs font-bold shadow-xs">
+        <i class="bi bi-palette2 text-[#5f6842]"></i> Luxury Flat Design System
       </div>
-    </nav>
-  </header>
-
-  <!-- Hero Section -->
-  <section class="bg-gradient-to-b from-white via-slate-50 to-slate-100/60 border-b border-slate-200 py-16 text-center">
-    <div class="max-w-5xl mx-auto px-4">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold mb-6">
-        <i class="bi bi-stars"></i> Complete UI Design Reference
-      </div>
-      <h1 class="text-4xl sm:text-6xl font-extrabold text-slate-900 tracking-tight mb-6">
-        Craft, Optimize & Track Your Resume
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-[#0d1b30] tracking-tight">
+        Resume<span class="text-[#5f6842]">AI</span> Navy, Olive & Bone Palette
       </h1>
-      <p class="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto mb-8 leading-relaxed">
-        Boost your interview chances with ATS-friendly formatting, job description keyword matching, and AI-driven bullet point enhancements.
+      <p class="text-xs sm:text-sm text-[#5c543e] max-w-xl mx-auto">
+        A bespoke solid color system crafted for modern resume building, ATS scoring, and career intelligence.
       </p>
-      <div class="flex flex-wrap items-center justify-center gap-3">
-        <button class="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold text-sm shadow-md shadow-blue-500/20 hover:bg-blue-700">
-          Build New Resume
-        </button>
-        <button class="px-6 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-sm shadow-xs hover:bg-slate-50">
-          Scan Existing Resume
-        </button>
-        <button class="px-6 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-sm shadow-xs hover:bg-slate-50">
-          Match Job Description
-        </button>
-      </div>
     </div>
-  </section>
 
-  <!-- Main Tools Grid -->
-  <section class="py-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+    <!-- 1. Color Swatches Grid -->
+    <div class="bg-white rounded-lg border border-[#eae4d3] shadow-xs p-6 sm:p-7 space-y-5">
+      <h2 class="text-lg font-extrabold text-[#0d1b30]">1. Color Palette Tokens</h2>
       
-      <!-- Card 1 -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col">
-        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl mb-4">
-          <i class="bi bi-pencil-square"></i>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        
+        <!-- NAVY Swatch -->
+        <div class="space-y-2.5">
+          <div class="h-28 rounded-md bg-[#0d1b30] border border-[#070e1a] shadow-xs flex items-end p-3.5 text-white">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wider text-[#d6b774]">Midnight Navy</p>
+              <p class="text-base font-black">#0D1B30</p>
+            </div>
+          </div>
+          <div class="p-3 bg-[#faf8f3] border border-[#eae4d3] rounded-md text-xs space-y-1">
+            <p class="font-bold text-[#0d1b30]">Primary Brand</p>
+            <p class="text-[#5c543e]">Headers, primary CTA buttons, dark navigation bars.</p>
+          </div>
         </div>
-        <h3 class="text-base font-bold text-slate-900 mb-2">Resume Builder</h3>
-        <p class="text-xs text-slate-500 leading-relaxed mb-6 flex-grow">
-          Fill in our guided step-by-step form to build a structured, ATS-compliant resume and export to DOCX or PDF.
-        </p>
-        <button class="w-full py-2.5 rounded-xl text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white transition-colors">
-          Start Building &rarr;
-        </button>
-      </div>
 
-      <!-- Card 2 -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col">
-        <div class="w-12 h-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-xl mb-4">
-          <i class="bi bi-shield-check"></i>
+        <!-- OLIVE Swatch -->
+        <div class="space-y-2.5">
+          <div class="h-28 rounded-md bg-[#5f6842] border border-[#4c5435] shadow-xs flex items-end p-3.5 text-white">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wider text-[#faf5e8]">Antique Olive</p>
+              <p class="text-base font-black">#5F6842</p>
+            </div>
+          </div>
+          <div class="p-3 bg-[#faf8f3] border border-[#eae4d3] rounded-md text-xs space-y-1">
+            <p class="font-bold text-[#393e27]">Secondary Accent</p>
+            <p class="text-[#5c543e]">Success indicators, badges, matched skills, icons.</p>
+          </div>
         </div>
-        <h3 class="text-base font-bold text-slate-900 mb-2">ATS Scanner</h3>
-        <p class="text-xs text-slate-500 leading-relaxed mb-6 flex-grow">
-          Upload your resume (PDF or DOCX) to get an instant ATS score, section breakdown, and proofreading check.
-        </p>
-        <button class="w-full py-2.5 rounded-xl text-xs font-bold text-cyan-700 bg-cyan-50 hover:bg-cyan-600 hover:text-white transition-colors">
-          Scan Resume &rarr;
-        </button>
-      </div>
 
-      <!-- Card 3 -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col">
-        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-4">
-          <i class="bi bi-bullseye"></i>
+        <!-- BONE Swatch -->
+        <div class="space-y-2.5">
+          <div class="h-28 rounded-md bg-[#f4f0e6] border border-[#dfd8c4] shadow-xs flex items-end p-3.5 text-[#0d1b30]">
+            <div>
+              <p class="text-[11px] font-bold uppercase tracking-wider text-[#5c543e]">Linen Bone</p>
+              <p class="text-base font-black">#F4F0E6</p>
+            </div>
+          </div>
+          <div class="p-3 bg-[#faf8f3] border border-[#eae4d3] rounded-md text-xs space-y-1">
+            <p class="font-bold text-[#0d1b30]">Warm Canvas</p>
+            <p class="text-[#5c543e]">Main page background, cards border, subtle accents.</p>
+          </div>
         </div>
-        <h3 class="text-base font-bold text-slate-900 mb-2">JD Matcher</h3>
-        <p class="text-xs text-slate-500 leading-relaxed mb-6 flex-grow">
-          Compare your resume against target job descriptions to identify missing skills and match percentage.
-        </p>
-        <button class="w-full py-2.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white transition-colors">
-          Match Job &rarr;
-        </button>
-      </div>
 
-      <!-- Card 4 -->
-      <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col">
-        <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl mb-4">
-          <i class="bi bi-stars"></i>
-        </div>
-        <h3 class="text-base font-bold text-slate-900 mb-2">AI Improver</h3>
-        <p class="text-xs text-slate-500 leading-relaxed mb-6 flex-grow">
-          Enhance weak experience bullet points into impactful, action-verb driven statements with quantifiable results.
-        </p>
-        <button class="w-full py-2.5 rounded-xl text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-600 hover:text-white transition-colors">
-          Enhance Bullets &rarr;
-        </button>
       </div>
-
     </div>
-  </section>
 
-  <!-- Footer -->
-  <footer class="bg-white border-t border-slate-200 mt-auto py-8 text-center text-xs text-slate-500">
-    ResumeAI &copy; 2026. Complete Tailwind CSS v4 UI Design Reference.
-  </footer>
+    <!-- 2. Interactive Components Showcase -->
+    <div class="bg-white rounded-lg border border-[#eae4d3] shadow-xs p-6 sm:p-7 space-y-5">
+      <h2 class="text-lg font-extrabold text-[#0d1b30]">2. Component Gallery</h2>
 
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        
+        <!-- Action Buttons -->
+        <div class="p-4 rounded-md bg-[#faf8f3] border border-[#eae4d3] space-y-2.5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-[#857a5f]">Buttons</h3>
+          <button class="w-full py-2.5 px-4 rounded-md text-xs font-bold text-white bg-[#0d1b30] hover:bg-[#142847] shadow-sm border border-[#c5a35d]/30 transition-all">
+            Primary Action &rarr;
+          </button>
+          <button class="w-full py-2 px-4 rounded-md text-xs font-bold text-[#393e27] bg-[#edf1e4] border border-[#d8decb] hover:bg-[#5f6842] hover:text-white transition-all">
+            Olive Secondary
+          </button>
+          <button class="w-full py-2 px-4 rounded-md text-xs font-bold text-[#3e3829] bg-white border border-[#cfc5ad] hover:bg-[#faf8f3] shadow-xs transition-all">
+            Bone Outline
+          </button>
+        </div>
+
+        <!-- Badges -->
+        <div class="p-4 rounded-md bg-[#faf8f3] border border-[#eae4d3] space-y-2.5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-[#857a5f]">Badges & Status</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="px-2.5 py-0.5 rounded bg-[#e8f0fa] border border-[#c8dcf5] text-[#142847] text-xs font-bold">
+              Navy Badge
+            </span>
+            <span class="px-2.5 py-0.5 rounded bg-[#edf1e4] border border-[#d8decb] text-[#393e27] text-xs font-bold">
+              Olive Active
+            </span>
+            <span class="px-2.5 py-0.5 rounded bg-[#faf5e8] border border-[#dfd8c4] text-[#c5a35d] text-xs font-bold">
+              Gold Accent
+            </span>
+          </div>
+        </div>
+
+        <!-- Input Fields -->
+        <div class="p-4 rounded-md bg-[#faf8f3] border border-[#eae4d3] space-y-2.5">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-[#857a5f]">Form Controls</h3>
+          <input type="text" placeholder="Enter full name..." value="Jane Doe" class="w-full px-3.5 py-2 bg-white border border-[#cfc5ad] rounded-md text-xs font-semibold text-[#0d1b30] focus:outline-none focus:ring-2 focus:ring-[#142847]">
+          <input type="email" placeholder="name@example.com" class="w-full px-3.5 py-2 bg-white border border-[#cfc5ad] rounded-md text-xs font-semibold text-[#0d1b30] focus:outline-none focus:ring-2 focus:ring-[#142847]">
+        </div>
+
+      </div>
+    </div>
+
+  </div>
 </body>
+
 </html>

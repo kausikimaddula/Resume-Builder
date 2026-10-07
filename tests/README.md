@@ -1,6 +1,6 @@
 # Test Suite Documentation
 
-This directory contains the automated test suite for the **AI Resume Builder & Tracker** application, built using [`pytest`](https://docs.pytest.org/).
+This directory contains the automated test suite for the **Resume Studio** application, built using [`pytest`](https://docs.pytest.org/).
 
 ## Directory Structure
 

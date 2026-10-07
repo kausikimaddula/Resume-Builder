@@ -36,14 +36,16 @@ class Config:
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
     GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
-    # Uploaded resumes will live here in a future feature.
+    # Uploaded resumes & templates
     UPLOAD_FOLDER = BASE_DIR / "uploads"
     GENERATED_FOLDER = UPLOAD_FOLDER / "generated"
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
+    # MongoDB Database Settings
+    MONGO_URI = (os.getenv("MONGO_URI") or os.getenv("MONGODB_URI") or "mongodb://localhost:27017/").strip()
+    MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "ResumeDB").strip()
     DATABASE_PATH = BASE_DIR / "resume_builder.db"
-    DATABASE_URL = os.getenv("DATABASE_URL", "").strip() or f"sqlite:///{BASE_DIR / 'resume_builder.db'}"
+    DATABASE_URL = MONGO_URI
 
     LOG_FOLDER = BASE_DIR / "logs"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
-

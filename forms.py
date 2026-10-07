@@ -1,4 +1,4 @@
-"""Web forms used by the AI Resume Builder & Tracker."""
+"""Web forms used by Resume Studio."""
 
 from __future__ import annotations
 
@@ -29,6 +29,30 @@ class LoginForm(FlaskForm):
     )
     remember_me = BooleanField("Remember me")
     submit = SubmitField("Log In")
+
+
+class ResetPasswordForm(FlaskForm):
+    """Collect email and new password to directly reset password."""
+
+    email = EmailField(
+        "Email Address",
+        validators=[DataRequired(), Email(), Length(max=120)],
+    )
+    new_password = PasswordField(
+        "New Password",
+        validators=[
+            DataRequired(),
+            Length(min=6, message="Password must be at least 6 characters long."),
+        ],
+    )
+    confirm_password = PasswordField(
+        "Confirm New Password",
+        validators=[
+            DataRequired(),
+            EqualTo("new_password", message="Passwords must match."),
+        ],
+    )
+    submit = SubmitField("Reset Password")
 
 
 class SignupForm(FlaskForm):

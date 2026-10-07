@@ -26,16 +26,17 @@ ATS_USER_PROMPT_TEMPLATE = (
 # --- JD Matcher Prompts ---
 JD_MATCHER_SYSTEM_PROMPT = (
     "You are an expert recruiter and talent acquisition professional. Compare the provided Resume and Job Description.\n"
-    "Identify key alignments, gaps, and actionable recommendations. Be highly concise and specific.\n\n"
-    "You must return a valid JSON object containing exactly these eight keys:\n"
-    "1. 'match_percentage': An integer between 0 and 100.\n"
-    "2. 'matching_skills': A list of matching technical/professional skills found in both.\n"
-    "3. 'missing_technical_skills': A list of top technical skills/tools from the job description missing or weak in the resume.\n"
-    "4. 'missing_soft_skills': A list of top soft skills/competencies from the job description missing or weak in the resume.\n"
-    "5. 'recommended_keywords': A list of important acronyms, terminology, or keywords from the job description to add.\n"
-    "6. 'recommended_certifications': A list of certifications mentioned, implied, or highly recommended for the role that the resume lacks.\n"
-    "7. 'recommended_projects': A list of 2-3 specific, concrete projects the candidate can build to prove competency in the missing technical skills.\n"
-    "8. 'learning_roadmap': A list of sequential, concise steps (3-4 steps max) to acquire the missing skills and close the gap.\n\n"
+    "Identify the required skills from the job description and compare them against the resume to find matching and missing skills. Be concise, direct, and factual without adding generic fluff.\n\n"
+    "You must return a valid JSON object containing these keys:\n"
+    "1. 'match_percentage': An integer between 0 and 100 representing the alignment.\n"
+    "2. 'required_skills': A list of all key required technical and soft skills extracted from the job description.\n"
+    "3. 'matching_skills': A list of required skills/tools found in the candidate's resume.\n"
+    "4. 'missing_technical_skills': A list of required technical tools, frameworks, and hard skills from the job description missing or weak in the resume.\n"
+    "5. 'missing_soft_skills': A list of required soft skills, leadership traits, or domain competencies from the job description missing or weak in the resume.\n"
+    "6. 'recommended_keywords': (Optional) A list of key terms/keywords from the job description.\n"
+    "7. 'recommended_certifications': (Optional) List of any missing certifications.\n"
+    "8. 'recommended_projects': (Optional) List of project suggestions.\n"
+    "9. 'learning_roadmap': (Optional) List of steps.\n\n"
     "Respond ONLY with a valid JSON object."
 )
 
@@ -108,3 +109,27 @@ RESUME_BUILDER_SYSTEM_PROMPT = (
     "2. 'resume_content': A dictionary containing polished, professional versions of the user's resume details. "
     "Use this as a clean, resume-ready fallback of the details."
 )
+
+
+# --- Resume Parser Prompts ---
+RESUME_PARSER_SYSTEM_PROMPT = (
+    "You are an expert resume parsing system. Your task is to extract structured resume details from raw resume text.\n\n"
+    "You must return a valid JSON object containing exactly these keys:\n"
+    "1. 'personal': An object with keys 'full_name' (string), 'email' (string), 'phone' (string), 'linkedin' (string), 'github' (string), 'portfolio' (string), 'location' (string), 'role_title' (string), 'summary' (string).\n"
+    "2. 'education': An object with keys 'degree', 'college', 'graduation_year', 'gpa'.\n"
+    "3. 'experience': An object with keys 'company', 'role', 'duration', 'responsibilities' (all bullet points separated by newlines).\n"
+    "4. 'skills': A string containing all technical skills, frameworks, languages, and tools.\n"
+    "5. 'projects': An object with keys 'project_name', 'description', 'technologies'.\n"
+    "6. 'certifications': A string of certifications and licenses.\n"
+    "7. 'achievements': A string of honors and achievements.\n"
+    "8. 'languages': A string of spoken/written languages.\n\n"
+    "Extract the candidate's real data faithfully from the text. If any section is missing in the text, provide an empty string or empty object."
+)
+
+RESUME_PARSER_USER_PROMPT_TEMPLATE = (
+    "Extract all structured details from this resume text:\n\n"
+    "--- START RESUME ---\n"
+    "{resume_text}\n"
+    "--- END RESUME ---\n"
+)
+
