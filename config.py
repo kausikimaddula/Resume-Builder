@@ -15,6 +15,10 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
 
 
+IS_SERVERLESS = os.getenv("VERCEL") == "1" or "AWS_LAMBDA_FUNCTION_NAME" in os.environ
+WRITABLE_DIR = Path("/tmp") if IS_SERVERLESS else BASE_DIR
+
+
 class Config:
     """Base Flask configuration.
 
@@ -37,15 +41,15 @@ class Config:
     GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
     # Uploaded resumes & templates
-    UPLOAD_FOLDER = BASE_DIR / "uploads"
+    UPLOAD_FOLDER = WRITABLE_DIR / "uploads"
     GENERATED_FOLDER = UPLOAD_FOLDER / "generated"
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
     # MongoDB Database Settings
     MONGO_URI = (os.getenv("MONGO_URI") or os.getenv("MONGODB_URI") or "mongodb://localhost:27017/").strip()
     MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "ResumeDB").strip()
-    DATABASE_PATH = BASE_DIR / "resume_builder.db"
+    DATABASE_PATH = WRITABLE_DIR / "resume_builder.db"
     DATABASE_URL = MONGO_URI
 
-    LOG_FOLDER = BASE_DIR / "logs"
+    LOG_FOLDER = WRITABLE_DIR / "logs"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()

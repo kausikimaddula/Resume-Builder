@@ -57,6 +57,21 @@ class TestLoggingConfig(unittest.TestCase):
         self.assertIn("Test error message", error_log_content)
         self.assertNotIn("Test info message", error_log_content)
 
+    def test_mongodb_log_storage(self) -> None:
+        """Verify that log records are stored in MongoDB logs collection."""
+        from services.database import clear_test_database, get_recent_logs
+
+        clear_test_database()
+
+        self.app.logger.info("MongoDB test log entry")
+        self.app.logger.error("MongoDB test error entry")
+
+        logs = get_recent_logs(limit=10)
+        messages = [l.get("message") for l in logs]
+
+        self.assertIn("MongoDB test log entry", messages)
+        self.assertIn("MongoDB test error entry", messages)
+
 
 if __name__ == "__main__":
     unittest.main()

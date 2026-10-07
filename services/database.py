@@ -35,7 +35,7 @@ def get_mongo_db(mongo_uri: str | None = None, db_name: str | None = None) -> An
     try:
         import pymongo
 
-        client = pymongo.MongoClient(uri, serverSelectionTimeoutMS=5000)
+        client = pymongo.MongoClient(uri, serverSelectionTimeoutMS=500)
         # Verify connection
         client.admin.command("ping")
         _mongo_client = client
@@ -100,6 +100,9 @@ def init_all_tables(db_target: Any = None) -> None:
         # Resume versions indexes
         db.resume_versions.create_index("id", unique=True)
         db.resume_versions.create_index("resume_id")
+        # Logs indexes
+        db.logs.create_index("created")
+        db.logs.create_index("level")
         logger.info("Successfully initialized MongoDB collections and indexes.")
     except Exception as exc:
         logger.warning("Index creation notice: %s", exc)
@@ -108,11 +111,21 @@ def init_all_tables(db_target: Any = None) -> None:
 def clear_test_database() -> None:
     """Clear MongoDB collections for clean testing."""
     db = get_mongo_db()
-    for col in ["users", "resumes", "resume_versions", "counters"]:
+    for col in ["users", "resumes", "resume_versions", "counters", "logs"]:
         try:
             db[col].delete_many({})
         except Exception:
             pass
+
+
+def get_recent_logs(limit: int = 100, level: str | None = None) -> list[dict[str, Any]]:
+    """Retrieve recent application logs stored in MongoDB."""
+    db = get_mongo_db()
+    query = {}
+    if level:
+        query["level"] = level.upper()
+    cursor = db.logs.find(query).sort("created", -1).limit(limit)
+    return list(cursor)
 
 
 # ---------------------------------------------------------------------------

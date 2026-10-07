@@ -26,11 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def init_db(db_path: Path | str | None = None) -> None:
-<<<<<<< HEAD
-    """Initialize database tables."""
-=======
     """Initialize database tables and indexes."""
->>>>>>> a71c92b46a51e4eb1df6b0a25e8d5ed1ed4c67db
     init_all_tables(db_path)
 
 
