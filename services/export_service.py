@@ -83,6 +83,13 @@ def export_resume_docx(resume_details: dict[str, Any]) -> bytes:
             run.font.bold = True
             run.font.color.rgb = RGBColor(0x1F, 0x29, 0x37)
 
+        # Professional Summary
+        summary_text = personal.get("summary") or resume_details.get("summary")
+        if summary_text:
+            _add_section_heading("Professional Summary")
+            sp = doc.add_paragraph(str(summary_text))
+            sp.paragraph_format.space_after = Pt(6)
+
         # Education
         edu = resume_details.get("education", {})
         if isinstance(edu, dict) and any(edu.values()):
@@ -102,33 +109,53 @@ def export_resume_docx(resume_details: dict[str, Any]) -> bytes:
                 edu_p.add_run(f" ({yr})")
             if gpa:
                 edu_p.add_run(f" | GPA: {gpa}")
+        elif isinstance(edu, list) and len(edu) > 0:
+            _add_section_heading("Education")
+            for item in edu:
+                if isinstance(item, dict):
+                    edu_p = doc.add_paragraph()
+                    edu_p.paragraph_format.space_after = Pt(4)
+                    r_deg = edu_p.add_run(item.get("degree", ""))
+                    r_deg.font.bold = True
+                    if item.get("college"):
+                        edu_p.add_run(f" — {item['college']}")
+                    if item.get("graduation_year"):
+                        edu_p.add_run(f" ({item['graduation_year']})")
 
         # Experience
         exp = resume_details.get("experience", {})
-        if isinstance(exp, dict) and any(exp.values()):
+        if exp:
             _add_section_heading("Experience")
-            role = exp.get("role", "")
-            comp = exp.get("company", "")
-            dur = exp.get("duration", "")
-            resp = exp.get("responsibilities", "")
+            exp_list = exp if isinstance(exp, list) else [exp]
+            for item in exp_list:
+                if isinstance(item, dict):
+                    role = item.get("role", "")
+                    comp = item.get("company", "")
+                    dur = item.get("duration", "")
+                    resp = item.get("responsibilities", "")
 
-            exp_p = doc.add_paragraph()
-            exp_p.paragraph_format.space_after = Pt(2)
-            r_role = exp_p.add_run(role)
-            r_role.font.bold = True
-            if comp:
-                exp_p.add_run(f" at {comp}")
-            if dur:
-                exp_p.add_run(f" ({dur})")
+                    title_parts = []
+                    if role:
+                        title_parts.append(role)
+                    if comp:
+                        title_parts.append(f"at {comp}" if role else comp)
+                    if dur:
+                        title_parts.append(f"({dur})")
 
-            if resp:
-                for line in resp.splitlines():
-                    line_str = line.strip()
-                    if line_str:
-                        if line_str.startswith("-") or line_str.startswith("•"):
-                            line_str = line_str.lstrip("-• ").strip()
-                        bp = doc.add_paragraph(line_str, style="List Bullet")
-                        bp.paragraph_format.space_after = Pt(2)
+                    if title_parts:
+                        exp_p = doc.add_paragraph()
+                        exp_p.paragraph_format.space_after = Pt(2)
+                        r_role = exp_p.add_run(" ".join(title_parts))
+                        r_role.font.bold = True
+
+                    if resp:
+                        for line in resp.splitlines():
+                            line_str = line.strip()
+                            if line_str:
+                                if line_str.startswith("-") or line_str.startswith("•"):
+                                    line_str = line_str.lstrip("-• ").strip()
+                                bp = doc.add_paragraph(line_str, style="List Bullet")
+                                bp.paragraph_format.space_after = Pt(2)
 
         # Projects
         proj = resume_details.get("projects", {})
@@ -275,6 +302,12 @@ def export_resume_pdf(resume_details: dict[str, Any]) -> bytes:
 
         story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#E5E7EB"), spaceAfter=10))
 
+        # Professional Summary
+        summary_text = personal.get("summary") or resume_details.get("summary")
+        if summary_text:
+            story.append(Paragraph("PROFESSIONAL SUMMARY", heading_style))
+            story.append(Paragraph(str(summary_text), body_style))
+
         # Education
         edu = resume_details.get("education", {})
         if isinstance(edu, dict) and any(edu.values()):
@@ -292,30 +325,47 @@ def export_resume_pdf(resume_details: dict[str, Any]) -> bytes:
             if gpa:
                 edu_line += f" | GPA: {gpa}"
             story.append(Paragraph(edu_line, body_style))
+        elif isinstance(edu, list) and len(edu) > 0:
+            story.append(Paragraph("EDUCATION", heading_style))
+            for item in edu:
+                if isinstance(item, dict):
+                    edu_line = f"<b>{item.get('degree', '')}</b>"
+                    if item.get("college"):
+                        edu_line += f" — {item['college']}"
+                    if item.get("graduation_year"):
+                        edu_line += f" ({item['graduation_year']})"
+                    story.append(Paragraph(edu_line, body_style))
 
         # Experience
         exp = resume_details.get("experience", {})
-        if isinstance(exp, dict) and any(exp.values()):
+        if exp:
             story.append(Paragraph("EXPERIENCE", heading_style))
-            role = exp.get("role", "")
-            comp = exp.get("company", "")
-            dur = exp.get("duration", "")
-            resp = exp.get("responsibilities", "")
+            exp_list = exp if isinstance(exp, list) else [exp]
+            for item in exp_list:
+                if isinstance(item, dict):
+                    role = item.get("role", "")
+                    comp = item.get("company", "")
+                    dur = item.get("duration", "")
+                    resp = item.get("responsibilities", "")
 
-            exp_line = f"<b>{role}</b>"
-            if comp:
-                exp_line += f" at {comp}"
-            if dur:
-                exp_line += f" ({dur})"
-            story.append(Paragraph(exp_line, body_style))
+                    title_parts = []
+                    if role:
+                        title_parts.append(f"<b>{role}</b>")
+                    if comp:
+                        title_parts.append(f"at {comp}" if role else f"<b>{comp}</b>")
+                    if dur:
+                        title_parts.append(f"({dur})")
 
-            if resp:
-                for line in resp.splitlines():
-                    line_str = line.strip()
-                    if line_str:
-                        if line_str.startswith("-") or line_str.startswith("•"):
-                            line_str = line_str.lstrip("-• ").strip()
-                        story.append(Paragraph(f"• {line_str}", bullet_style))
+                    if title_parts:
+                        story.append(Paragraph(" ".join(title_parts), body_style))
+
+                    if resp:
+                        for line in resp.splitlines():
+                            line_str = line.strip()
+                            if line_str:
+                                if line_str.startswith("-") or line_str.startswith("•"):
+                                    line_str = line_str.lstrip("-• ").strip()
+                                story.append(Paragraph(f"• {line_str}", bullet_style))
 
         # Projects
         proj = resume_details.get("projects", {})
@@ -594,13 +644,10 @@ def export_jd_match_report_docx(match_data: dict[str, Any]) -> bytes:
             else:
                 doc.add_paragraph("None identified.")
 
+        _add_section("Required Skills (from Job Description)", match_data.get("required_skills", []), RGBColor(0x0F, 0x17, 0x2A))
         _add_section("Matching Skills & Qualifications", match_data.get("matching_skills", []), RGBColor(0x16, 0x65, 0x34))
         _add_section("Missing Technical Skills", match_data.get("missing_technical_skills", []), RGBColor(0xDC, 0x26, 0x26))
         _add_section("Missing Soft Skills", match_data.get("missing_soft_skills", []), RGBColor(0xD9, 0x77, 0x06))
-        _add_section("Recommended Keywords to Add", match_data.get("recommended_keywords", []), RGBColor(0x25, 0x63, 0xEB))
-        _add_section("Recommended Certifications", match_data.get("recommended_certifications", []), RGBColor(0x7C, 0x3A, 0xED))
-        _add_section("Suggested Projects to Prove Skills", match_data.get("recommended_projects", []), RGBColor(0x0D, 0x94, 0x88))
-        _add_section("Step-by-Step Action Roadmap", match_data.get("learning_roadmap", []), RGBColor(0x0F, 0x17, 0x2A))
 
         buffer = io.BytesIO()
         doc.save(buffer)
@@ -686,13 +733,10 @@ def export_jd_match_report_pdf(match_data: dict[str, Any]) -> bytes:
             else:
                 story.append(Paragraph("None identified.", bullet_style))
 
+        _add_pdf_section("Required Skills (from Job Description)", match_data.get("required_skills", []), "#0F172A")
         _add_pdf_section("Matching Skills & Qualifications", match_data.get("matching_skills", []), "#166534")
         _add_pdf_section("Missing Technical Skills", match_data.get("missing_technical_skills", []), "#DC2626")
         _add_pdf_section("Missing Soft Skills", match_data.get("missing_soft_skills", []), "#D97706")
-        _add_pdf_section("Recommended Keywords to Add", match_data.get("recommended_keywords", []), "#2563EB")
-        _add_pdf_section("Recommended Certifications", match_data.get("recommended_certifications", []), "#7C3AED")
-        _add_pdf_section("Suggested Projects to Prove Skills", match_data.get("recommended_projects", []), "#0D9488")
-        _add_pdf_section("Step-by-Step Action Roadmap", match_data.get("learning_roadmap", []), "#0F172A")
 
         doc.build(story)
         return buffer.getvalue()

@@ -6,6 +6,7 @@ __pycache__/
 # Flask environment config
 .env
 .env.local
+.env.*.local
 
 # Virtual environments
 .venv/

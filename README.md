@@ -1,6 +1,6 @@
-# AI Resume Builder & Tracker
+# Resume Studio
 
-AI Resume Builder & Tracker application built with Flask, OpenAI, SQLite, and Python.
+Resume Studio application built with Flask, OpenAI, MongoDB, and Python.
 
 ## Tech Stack
 
@@ -9,7 +9,7 @@ AI Resume Builder & Tracker application built with Flask, OpenAI, SQLite, and Py
 - OpenAI Python SDK
 - python-docx & pypdf
 - reportlab & Pillow
-- SQLite (Resume Versioning & Tracking)
+- MongoDB & PyMongo (Resume Storage & Version Tracking)
 - pytest & pytest-flask (Testing)
 - Bootstrap 5
 

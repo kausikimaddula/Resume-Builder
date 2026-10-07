@@ -1,138 +1,140 @@
 <!doctype html>
-<html lang="en" class="h-full bg-slate-50 antialiased">
+<html lang="en" class="h-full bg-[#EDEBE7] antialiased">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}AI Resume Builder & Tracker{% endblock %}</title>
+  <title>{% block title %}Resume Studio — Build, Scan & Match Resumes{% endblock %}</title>
 
-  <!-- Google Fonts: Plus Jakarta Sans -->
+  <!-- Google Fonts: Plus Jakarta Sans & Outfit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS v4 (Browser/CDN) -->
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
 
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-  <style type="text/tailwindcss">
-    @theme {
-      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      --color-brand-50: #eff6ff;
-      --color-brand-100: #dbeafe;
-      --color-brand-500: #3b82f6;
-      --color-brand-600: #2563eb;
-      --color-brand-700: #1d4ed8;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 
-<body class="flex flex-col min-h-screen text-slate-800 bg-slate-50 font-sans selection:bg-blue-500 selection:text-white">
+<body class="flex flex-col min-h-screen text-[#25262E] bg-[#EDEBE7] font-sans selection:bg-[#434451] selection:text-[#EDEBE7]">
   <!-- Accessibility Skip Link -->
-  <a class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg focus:shadow-lg" href="#main-content">
+  <a class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#434451] focus:text-[#EDEBE7] focus:rounded-lg focus:shadow-md" href="#main-content">
     Skip to main content
   </a>
 
-  <!-- Header Navigation -->
-  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+  <!-- Header Navigation (Ivory & Juicy Blackberries) -->
+  <header class="sticky top-0 z-40 bg-[#EDEBE7] border-b border-[#434451]/40 shadow-xs">
     <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main Navigation">
       <div class="flex items-center justify-between h-16">
         
         <!-- Logo -->
         <div class="flex items-center">
           <a class="flex items-center gap-2.5 group text-decoration-none" href="{{ url_for('main.index') }}">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform duration-200">
-              <i class="bi bi-file-earmark-person-fill text-lg"></i>
+            <div class="w-9 h-9 rounded-lg bg-[#434451] flex items-center justify-center text-[#EDEBE7] font-bold shadow-xs">
+              <i class="bi bi-file-earmark-person text-lg"></i>
             </div>
-            <span class="text-xl font-extrabold tracking-tight text-slate-900">
-              Resume<span class="text-blue-600">AI</span>
+            <span class="text-xl font-bold tracking-tight text-[#25262E]">
+              Resume<span class="text-[#434451] font-semibold">Studio</span>
             </span>
           </a>
         </div>
 
-        <!-- Desktop Navigation Links -->
+        <!-- Desktop Navigation Links (Hidden on Auth Pages) -->
+        {% if request.endpoint not in ['main.login', 'main.signup', 'main.reset_password'] %}
         <div class="hidden md:flex items-center gap-1">
           <a href="{{ url_for('main.index') }}" 
-             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.index' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
-            <i class="bi bi-grid-1x2 mr-1.5 text-xs opacity-70"></i> Dashboard
+             class="px-3 py-2 rounded-lg text-xs font-bold transition-colors {% if request.endpoint == 'main.index' %}bg-[#434451] text-[#EDEBE7]{% else %}text-[#25262E] hover:bg-[#DFDCD5]{% endif %}">
+            <i class="bi bi-grid-1x2 mr-1.5"></i> Dashboard
           </a>
 
           <a href="{{ url_for('main.resume_form') }}" 
-             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.resume_form' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
-            <i class="bi bi-pencil-square mr-1.5 text-xs opacity-70"></i> Build Resume
+             class="px-3 py-2 rounded-lg text-xs font-bold transition-colors {% if request.endpoint == 'main.resume_form' %}bg-[#434451] text-[#EDEBE7]{% else %}text-[#25262E] hover:bg-[#DFDCD5]{% endif %}">
+            <i class="bi bi-pencil-square mr-1.5"></i> Builder
           </a>
 
           <a href="{{ url_for('main.upload_resume') }}" 
-             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.upload_resume' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
-            <i class="bi bi-shield-check mr-1.5 text-xs opacity-70"></i> ATS Scanner
+             class="px-3 py-2 rounded-lg text-xs font-bold transition-colors {% if request.endpoint == 'main.upload_resume' %}bg-[#434451] text-[#EDEBE7]{% else %}text-[#25262E] hover:bg-[#DFDCD5]{% endif %}">
+            <i class="bi bi-shield-check mr-1.5"></i> ATS Scanner
           </a>
 
           <a href="{{ url_for('main.compare_resume_vs_jd') }}" 
-             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.compare_resume_vs_jd' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
-            <i class="bi bi-bullseye mr-1.5 text-xs opacity-70"></i> JD Matcher
+             class="px-3 py-2 rounded-lg text-xs font-bold transition-colors {% if request.endpoint == 'main.compare_resume_vs_jd' %}bg-[#434451] text-[#EDEBE7]{% else %}text-[#25262E] hover:bg-[#DFDCD5]{% endif %}">
+            <i class="bi bi-briefcase mr-1.5"></i> Job Matcher
           </a>
 
           <a href="{{ url_for('main.improve_resume_route') }}" 
-             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.improve_resume_route' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
-            <i class="bi bi-stars mr-1.5 text-xs text-blue-600"></i> AI Improver
+             class="px-3 py-2 rounded-lg text-xs font-bold transition-colors {% if request.endpoint == 'main.improve_resume_route' %}bg-[#434451] text-[#EDEBE7]{% else %}text-[#25262E] hover:bg-[#DFDCD5]{% endif %}">
+            <i class="bi bi-pencil mr-1.5"></i> Bullet Enhancer
           </a>
 
           <a href="{{ url_for('main.version_history') }}" 
-             class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 {% if request.endpoint == 'main.version_history' %}bg-blue-50 text-blue-700 font-bold{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70{% endif %}">
-            <i class="bi bi-clock-history mr-1.5 text-xs opacity-70"></i> Versions
+             class="px-3 py-2 rounded-lg text-xs font-bold transition-colors {% if request.endpoint == 'main.version_history' or request.endpoint == 'main.compare_versions_route' %}bg-[#434451] text-[#EDEBE7]{% else %}text-[#25262E] hover:bg-[#DFDCD5]{% endif %}">
+            <i class="bi bi-clock-history mr-1.5"></i> History
           </a>
         </div>
+        {% endif %}
 
         <!-- Right Action Button / User Profile -->
         <div class="flex items-center gap-3">
-          {% if not session.get('user_name') %}
-            <a href="{{ url_for('main.login') }}" class="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">
+          {% if request.endpoint in ['main.login', 'main.signup', 'main.reset_password'] %}
+            {% if request.endpoint == 'main.login' %}
+              <a href="{{ url_for('main.signup') }}" class="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-[#EDEBE7] bg-[#434451] hover:bg-[#25262E] rounded-lg shadow-xs transition-colors">
+                Sign Up
+              </a>
+            {% else %}
+              <a href="{{ url_for('main.login') }}" class="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-[#25262E] hover:bg-[#DFDCD5] rounded-lg border border-[#434451] transition-colors">
+                Log In
+              </a>
+            {% endif %}
+          {% elif not session.get('user_name') %}
+            <a href="{{ url_for('main.login') }}" class="hidden sm:inline-flex px-3.5 py-2 text-xs font-bold text-[#25262E] hover:text-[#434451] transition-colors">
               Log In
             </a>
-            <a href="{{ url_for('main.signup') }}" class="inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-xl shadow-sm shadow-blue-500/25 transition-all duration-150 hover:-translate-y-0.5">
-              Get Started <i class="bi bi-arrow-right ml-1.5"></i>
+            <a href="{{ url_for('main.signup') }}" class="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-[#EDEBE7] bg-[#434451] hover:bg-[#25262E] rounded-lg shadow-xs transition-colors">
+              Get Started
             </a>
           {% else %}
             <!-- User Dropdown Menu -->
             <div class="relative" id="userMenuDropdown">
               <button type="button" 
                       onclick="document.getElementById('userMenuContent').classList.toggle('hidden')" 
-                      class="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/70 border border-slate-200 transition-all duration-150">
-                <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                      class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#EDEBE7] hover:bg-[#DFDCD5] border border-[#434451] text-[#25262E] transition-colors shadow-xs">
+                <div class="w-6 h-6 rounded-md bg-[#434451] text-[#EDEBE7] flex items-center justify-center text-xs font-bold">
                   {{ session.get('user_name', 'U')[0] | upper }}
                 </div>
-                <span class="text-xs font-bold text-slate-800 hidden sm:inline-block max-w-[120px] truncate">
+                <span class="text-xs font-bold text-[#25262E] hidden sm:inline-block max-w-[120px] truncate">
                   {{ session.get('user_name', 'User') }}
                 </span>
-                <i class="bi bi-chevron-down text-slate-400 text-xs"></i>
+                <i class="bi bi-chevron-down text-[#626372] text-xs"></i>
               </button>
 
-              <div id="userMenuContent" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl ring-1 ring-slate-900/5 py-2 z-50 divide-y divide-slate-100">
+              <div id="userMenuContent" class="hidden absolute right-0 mt-2 w-52 bg-[#EDEBE7] rounded-lg shadow-md ring-1 ring-black/5 py-1 z-50 divide-y divide-[#434451]/30 border border-[#434451]">
                 <div class="px-4 py-2.5">
-                  <p class="text-[10px] font-bold tracking-wider text-slate-400 uppercase">Signed in as</p>
-                  <p class="text-sm font-bold text-slate-900 truncate">{{ session.get('user_name') }}</p>
+                  <p class="text-[10px] font-bold text-[#626372] uppercase tracking-wider">Signed in as</p>
+                  <p class="text-sm font-bold text-[#25262E] truncate">{{ session.get('user_name') }}</p>
                   {% if session.get('user_email') %}
-                    <p class="text-xs text-slate-500 truncate">{{ session['user_email'] }}</p>
+                    <p class="text-xs text-[#626372] truncate">{{ session['user_email'] }}</p>
                   {% endif %}
                 </div>
                 <div class="py-1">
-                  <a href="{{ url_for('main.index') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600">
-                    <i class="bi bi-grid-1x2 mr-2.5 text-slate-400"></i> Dashboard
+                  <a href="{{ url_for('main.index') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-[#25262E] hover:bg-[#DFDCD5]">
+                    <i class="bi bi-grid-1x2 mr-2.5 text-[#434451]"></i> Dashboard
                   </a>
-                  <a href="{{ url_for('main.resume_form') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600">
-                    <i class="bi bi-pencil-square mr-2.5 text-slate-400"></i> Build Resume
+                  <a href="{{ url_for('main.resume_form') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-[#25262E] hover:bg-[#DFDCD5]">
+                    <i class="bi bi-pencil-square mr-2.5 text-[#434451]"></i> Builder
                   </a>
-                  <a href="{{ url_for('main.upload_resume') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600">
-                    <i class="bi bi-shield-check mr-2.5 text-slate-400"></i> ATS Scanner
+                  <a href="{{ url_for('main.version_history') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-[#25262E] hover:bg-[#DFDCD5]">
+                    <i class="bi bi-clock-history mr-2.5 text-[#434451]"></i> Saved Resumes
                   </a>
-                  <a href="{{ url_for('main.version_history') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-blue-600">
-                    <i class="bi bi-clock-history mr-2.5 text-slate-400"></i> Saved Resumes
+                  <a href="{{ url_for('main.upload_template') }}" class="flex items-center px-4 py-2 text-xs font-semibold text-[#25262E] hover:bg-[#DFDCD5]">
+                    <i class="bi bi-file-earmark-code mr-2.5 text-[#434451]"></i> Templates
                   </a>
                 </div>
                 <div class="py-1">
-                  <a href="{{ url_for('main.logout') }}" class="flex items-center px-4 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50">
+                  <a href="{{ url_for('main.logout') }}" class="flex items-center px-4 py-2 text-xs font-bold text-rose-800 hover:bg-[#DFDCD5]">
                     <i class="bi bi-box-arrow-right mr-2.5"></i> Log Out
                   </a>
                 </div>
@@ -140,37 +142,41 @@
             </div>
           {% endif %}
 
-          <!-- Mobile Hamburger Toggle -->
+          <!-- Mobile Hamburger Toggle (Hidden on Auth Pages) -->
+          {% if request.endpoint not in ['main.login', 'main.signup', 'main.reset_password'] %}
           <button type="button" 
-                  onclick="document.getElementById('mobileNavMenu').classList.toggle('hidden')"
-                  class="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                  onclick="document.getElementById('mobileNavMenu').classList.toggle('hidden')" 
+                  class="md:hidden p-2 rounded-lg text-[#25262E] hover:bg-[#DFDCD5]">
             <i class="bi bi-list text-2xl"></i>
           </button>
+          {% endif %}
         </div>
 
       </div>
 
-      <!-- Mobile Navigation Drawer -->
-      <div id="mobileNavMenu" class="hidden md:hidden border-t border-slate-100 py-3 space-y-1">
-        <a href="{{ url_for('main.index') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
+      <!-- Mobile Navigation Drawer (Hidden on Auth Pages) -->
+      {% if request.endpoint not in ['main.login', 'main.signup', 'main.reset_password'] %}
+      <div id="mobileNavMenu" class="hidden md:hidden border-t border-[#434451]/30 py-3 space-y-1">
+        <a href="{{ url_for('main.index') }}" class="block px-3 py-2 rounded-lg text-sm font-semibold text-[#25262E] hover:bg-[#DFDCD5]">
           <i class="bi bi-grid-1x2 mr-2"></i> Dashboard
         </a>
-        <a href="{{ url_for('main.resume_form') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
-          <i class="bi bi-pencil-square mr-2"></i> Build Resume
+        <a href="{{ url_for('main.resume_form') }}" class="block px-3 py-2 rounded-lg text-sm font-semibold text-[#25262E] hover:bg-[#DFDCD5]">
+          <i class="bi bi-pencil-square mr-2"></i> Resume Builder
         </a>
-        <a href="{{ url_for('main.upload_resume') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
+        <a href="{{ url_for('main.upload_resume') }}" class="block px-3 py-2 rounded-lg text-sm font-semibold text-[#25262E] hover:bg-[#DFDCD5]">
           <i class="bi bi-shield-check mr-2"></i> ATS Scanner
         </a>
-        <a href="{{ url_for('main.compare_resume_vs_jd') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
-          <i class="bi bi-bullseye mr-2"></i> JD Matcher
+        <a href="{{ url_for('main.compare_resume_vs_jd') }}" class="block px-3 py-2 rounded-lg text-sm font-semibold text-[#25262E] hover:bg-[#DFDCD5]">
+          <i class="bi bi-briefcase mr-2"></i> Job Matcher
         </a>
-        <a href="{{ url_for('main.improve_resume_route') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
-          <i class="bi bi-stars mr-2 text-blue-600"></i> AI Improver
+        <a href="{{ url_for('main.improve_resume_route') }}" class="block px-3 py-2 rounded-lg text-sm font-semibold text-[#25262E] hover:bg-[#DFDCD5]">
+          <i class="bi bi-pencil mr-2"></i> Bullet Enhancer
         </a>
-        <a href="{{ url_for('main.version_history') }}" class="block px-3 py-2 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-100">
-          <i class="bi bi-clock-history mr-2"></i> Versions
+        <a href="{{ url_for('main.version_history') }}" class="block px-3 py-2 rounded-lg text-sm font-semibold text-[#25262E] hover:bg-[#DFDCD5]">
+          <i class="bi bi-clock-history mr-2"></i> Saved Resumes
         </a>
       </div>
+      {% endif %}
     </nav>
   </header>
 
@@ -180,20 +186,12 @@
     {% if messages %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
       {% for category, message in messages %}
-      <div class="flex items-center justify-between p-4 mb-3 text-sm rounded-xl border {% if category == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-200{% elif category == 'danger' or category == 'error' %}bg-rose-50 text-rose-800 border-rose-200{% elif category == 'warning' %}bg-amber-50 text-amber-800 border-amber-200{% else %}bg-blue-50 text-blue-800 border-blue-200{% endif %} shadow-xs" role="alert">
+      <div class="flex items-center justify-between p-4 mb-3 text-sm rounded-lg border border-[#434451] bg-[#EDEBE7] text-[#25262E] shadow-xs" role="alert">
         <div class="flex items-center gap-2.5">
-          {% if category == 'success' %}
-            <i class="bi bi-check-circle-fill text-emerald-600 text-base"></i>
-          {% elif category == 'danger' or category == 'error' %}
-            <i class="bi bi-exclamation-triangle-fill text-rose-600 text-base"></i>
-          {% elif category == 'warning' %}
-            <i class="bi bi-exclamation-circle-fill text-amber-600 text-base"></i>
-          {% else %}
-            <i class="bi bi-info-circle-fill text-blue-600 text-base"></i>
-          {% endif %}
-          <span class="font-medium">{{ message }}</span>
+          <i class="bi bi-info-circle-fill text-[#434451] text-base"></i>
+          <span class="font-semibold">{{ message }}</span>
         </div>
-        <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-700 p-1">
+        <button type="button" onclick="this.parentElement.remove()" class="text-[#626372] hover:text-[#25262E] p-1">
           <i class="bi bi-x-lg text-xs"></i>
         </button>
       </div>
@@ -205,21 +203,17 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Clean Tailwind Footer -->
-  <footer class="bg-white border-t border-slate-200 mt-auto py-8">
+  <!-- Solid Minimalist Footer -->
+  <footer class="bg-[#EDEBE7] border-t border-[#434451]/40 text-[#626372] mt-auto py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
         <div class="flex items-center gap-2">
-          <span class="font-bold text-slate-700">ResumeAI</span>
-          <span>&copy; 2026. Clean, intelligent ATS resume optimization.</span>
+          <span class="font-bold text-[#25262E]">ResumeStudio</span>
+          <span class="text-[#626372]">&copy; 2026. Practical ATS resume tools.</span>
         </div>
-        <div class="flex items-center gap-4 text-slate-600">
-          <span class="inline-flex items-center gap-1.5 text-emerald-600 font-medium">
-            <i class="bi bi-shield-fill-check"></i> PostgreSQL Secure
-          </span>
-          <span>•</span>
-          <span class="inline-flex items-center gap-1.5">
-            <i class="bi bi-file-earmark-pdf"></i> PDF & DOCX Export
+        <div class="flex items-center gap-4">
+          <span class="inline-flex items-center gap-1.5 text-[#25262E] font-semibold">
+            <i class="bi bi-check2-circle text-[#434451]"></i> DOCX & PDF Export Ready
           </span>
         </div>
       </div>
@@ -235,7 +229,34 @@
         menu.classList.add('hidden');
       }
     });
+
+    // Helper for clipboard copies
+    function copyToClipboard(text, message) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(message || 'Copied to clipboard!');
+        });
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(message || 'Copied to clipboard!');
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed bottom-6 right-6 bg-[#25262E] text-[#EDEBE7] border border-[#434451] px-4 py-2.5 rounded-lg text-xs font-semibold shadow-lg z-50 transition-all transform duration-200';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 2000);
+    }
   </script>
 </body>
-
 </html>

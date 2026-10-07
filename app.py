@@ -1,4 +1,4 @@
-"""Application entry point for the AI Resume Builder & Tracker."""
+"""Application entry point for Resume Studio."""
 
 from __future__ import annotations
 
@@ -31,13 +31,13 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     register_blueprints(app)
     register_error_handlers(app)
 
-    # Initialize PostgreSQL / SQLite Database for Users, Resumes, and Versions
+    # Initialize MongoDB Database for Users, Resumes, and Versions
     try:
-        init_db(app.config.get("DATABASE_URL") or app.config.get("DATABASE_PATH"))
+        init_db(app.config.get("MONGO_URI"))
     except Exception as exc:
-        app.logger.error("Failed to initialize database on startup: %s", exc, exc_info=True)
+        app.logger.error("Failed to initialize MongoDB database on startup: %s", exc, exc_info=True)
 
-    app.logger.info("AI Resume Builder & Tracker started")
+    app.logger.info("Resume Studio application started")
     return app
 
 

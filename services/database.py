@@ -1,267 +1,173 @@
-"""Unified Database Service supporting PostgreSQL and SQLite."""
+"""MongoDB Database Service for User Authentication, Resumes, and Version Tracking."""
 
 from __future__ import annotations
 
-import json
 import logging
 import os
-import sqlite3
-from contextlib import contextmanager
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Generator
-from urllib.parse import urlparse
+from typing import Any
 
+from dotenv import load_dotenv
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from services.exceptions import DatabaseError
 
+load_dotenv()
+
 logger = logging.getLogger(__name__)
 
-try:
-    import psycopg2
-    import psycopg2.extras
-    PSYCOPG2_AVAILABLE = True
-except ImportError:
-    PSYCOPG2_AVAILABLE = False
+# Global client cache
+_mongo_client: Any = None
+_mongo_db: Any = None
+_use_mock: bool = False
 
 
-def is_postgres(db_target: str | Path | None = None) -> bool:
-    """Check if the target database is PostgreSQL."""
-    url = str(db_target or os.getenv("DATABASE_URL", ""))
-    return url.startswith("postgresql://") or url.startswith("postgres://")
+def get_mongo_db(mongo_uri: str | None = None, db_name: str | None = None) -> Any:
+    """Return an active MongoDB database instance, using mongomock if server is unreachable."""
+    global _mongo_client, _mongo_db, _use_mock
 
+    uri = mongo_uri or os.getenv("MONGO_URI") or os.getenv("MONGODB_URI") or "mongodb://localhost:27017/"
+    database_name = db_name or os.getenv("MONGO_DB_NAME", "ResumeDB")
 
-@contextmanager
-def get_db_cursor(db_target: str | Path | None = None) -> Generator[Any, None, None]:
-    """Provide a database connection and cursor supporting both PostgreSQL and SQLite."""
-    target = str(db_target or os.getenv("DATABASE_URL", "resume_builder.db"))
-    
-    if is_postgres(target):
-        if not PSYCOPG2_AVAILABLE:
-            raise DatabaseError(
-                message="psycopg2 is not installed but a PostgreSQL DATABASE_URL was provided.",
-                user_message="PostgreSQL driver is missing. Please run pip install psycopg2-binary.",
-            )
+    if _mongo_db is not None:
+        return _mongo_db
+
+    try:
+        import pymongo
+
+        client = pymongo.MongoClient(uri, serverSelectionTimeoutMS=5000)
+        # Verify connection
+        client.admin.command("ping")
+        _mongo_client = client
+        _mongo_db = client[database_name]
+        _use_mock = False
+        logger.info("Connected to MongoDB at '%s' (Database: %s)", uri, database_name)
+    except Exception as exc:
+        logger.warning(
+            "Could not connect to live MongoDB server (%s). Initializing in-memory MongoMock engine.",
+            exc,
+        )
         try:
-            conn = psycopg2.connect(target)
-            cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            try:
-                yield cursor
-                conn.commit()
-            except Exception as e:
-                conn.rollback()
-                raise e
-            finally:
-                cursor.close()
-                conn.close()
-        except Exception as error:
-            logger.error("PostgreSQL connection/query error: %s", error, exc_info=True)
+            import mongomock
+
+            _mongo_client = mongomock.MongoClient()
+            _mongo_db = _mongo_client[database_name]
+            _use_mock = True
+            logger.info("In-memory MongoMock database initialized for database: %s", database_name)
+        except Exception as mock_exc:
+            logger.error("Failed to initialize database: %s", mock_exc, exc_info=True)
             raise DatabaseError(
-                message=f"PostgreSQL Error: {error}",
-                user_message="Database connection error. Please verify PostgreSQL credentials.",
-            ) from error
-    else:
-        # SQLite Connection
-        db_path = target.replace("sqlite:///", "") if target.startswith("sqlite:///") else target
+                message=f"MongoDB Error: {mock_exc}",
+                user_message="Database connection error. Please ensure MongoDB is running or pymongo/mongomock is installed.",
+            ) from mock_exc
+
+    return _mongo_db
+
+
+def get_next_sequence_value(sequence_name: str, db: Any = None) -> int:
+    """Generate sequential auto-incrementing integer IDs using counters collection."""
+    database = db if db is not None else get_mongo_db()
+    counters = database["counters"]
+    try:
+        from pymongo import ReturnDocument
+        doc = counters.find_one_and_update(
+            {"_id": sequence_name},
+            {"$inc": {"seq": 1}},
+            upsert=True,
+            return_document=ReturnDocument.AFTER,
+        )
+        if doc and "seq" in doc:
+            return int(doc["seq"])
+    except Exception:
+        pass
+
+    # Fallback for mock engines or alternative drivers
+    existing = counters.find_one({"_id": sequence_name})
+    if existing and "seq" in existing:
+        return int(existing["seq"])
+    return 1
+
+
+def init_all_tables(db_target: Any = None) -> None:
+    """Initialize MongoDB indexes for users, resumes, and resume_versions."""
+    db = get_mongo_db()
+    try:
+        # Users indexes
+        db.users.create_index("email", unique=True)
+        # Resumes indexes
+        db.resumes.create_index("id", unique=True)
+        db.resumes.create_index("user_email")
+        # Resume versions indexes
+        db.resume_versions.create_index("id", unique=True)
+        db.resume_versions.create_index("resume_id")
+        logger.info("Successfully initialized MongoDB collections and indexes.")
+    except Exception as exc:
+        logger.warning("Index creation notice: %s", exc)
+
+
+def clear_test_database() -> None:
+    """Clear MongoDB collections for clean testing."""
+    db = get_mongo_db()
+    for col in ["users", "resumes", "resume_versions", "counters"]:
         try:
-            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-            conn = sqlite3.connect(db_path)
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-            try:
-                yield cursor
-                conn.commit()
-            except Exception as e:
-                conn.rollback()
-                raise e
-            finally:
-                cursor.close()
-                conn.close()
-        except Exception as error:
-            logger.error("SQLite connection/query error on '%s': %s", db_path, error, exc_info=True)
-            raise DatabaseError(
-                message=f"SQLite Error: {error}",
-                user_message="Database error occurred.",
-            ) from error
-
-
-def init_all_tables(db_target: str | Path | None = None) -> None:
-    """Initialize all tables (users, resumes, resume_versions) in PostgreSQL or SQLite."""
-    with get_db_cursor(db_target) as cursor:
-        if is_postgres(db_target):
-            # PostgreSQL Schema
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
-                    full_name VARCHAR(255) NOT NULL,
-                    email VARCHAR(255) UNIQUE NOT NULL,
-                    password_hash TEXT,
-                    oauth_provider VARCHAR(50),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-                """
-            )
-
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS resumes (
-                    id SERIAL PRIMARY KEY,
-                    user_email VARCHAR(255),
-                    full_name VARCHAR(255),
-                    role_title VARCHAR(255),
-                    email VARCHAR(255),
-                    phone VARCHAR(50),
-                    location VARCHAR(255),
-                    summary TEXT,
-                    experience_json TEXT,
-                    education_json TEXT,
-                    skills_json TEXT,
-                    projects_json TEXT,
-                    certifications_json TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                );
-                """
-            )
-
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS resume_versions (
-                    id SERIAL PRIMARY KEY,
-                    resume_id INTEGER NOT NULL,
-                    version_number INTEGER NOT NULL,
-                    version_name VARCHAR(255) NOT NULL,
-                    created_at VARCHAR(100) NOT NULL,
-                    filename VARCHAR(255),
-                    file_path TEXT,
-                    ats_score INTEGER,
-                    match_score INTEGER,
-                    changes TEXT,
-                    resume_details_json TEXT,
-                    resume_text TEXT,
-                    template_filename VARCHAR(255)
-                );
-                """
-            )
-        else:
-            # SQLite Schema
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    full_name TEXT NOT NULL,
-                    email TEXT UNIQUE NOT NULL,
-                    password_hash TEXT,
-                    oauth_provider TEXT,
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-                );
-                """
-            )
-
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS resumes (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_email TEXT,
-                    full_name TEXT,
-                    role_title TEXT,
-                    email TEXT,
-                    phone TEXT,
-                    location TEXT,
-                    summary TEXT,
-                    experience_json TEXT,
-                    education_json TEXT,
-                    skills_json TEXT,
-                    projects_json TEXT,
-                    certifications_json TEXT,
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-                );
-                """
-            )
-
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS resume_versions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    resume_id INTEGER NOT NULL,
-                    version_number INTEGER NOT NULL,
-                    version_name TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    filename TEXT,
-                    file_path TEXT,
-                    ats_score INTEGER,
-                    match_score INTEGER,
-                    changes TEXT,
-                    resume_details_json TEXT,
-                    resume_text TEXT,
-                    template_filename TEXT
-                );
-                """
-            )
-
-    logger.info("Successfully initialized all database tables in %s", "PostgreSQL" if is_postgres(db_target) else "SQLite")
+            db[col].delete_many({})
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------
 # User Authentication Helpers
 # ---------------------------------------------------------------------------
 
-def create_user(full_name: str, email: str, password: str | None = None, oauth_provider: str | None = None, db_target: str | Path | None = None) -> dict[str, Any]:
-    """Register and save a new user with hashed password."""
+def create_user(
+    full_name: str,
+    email: str,
+    password: str | None = None,
+    oauth_provider: str | None = None,
+    db_target: Any = None,
+) -> dict[str, Any]:
+    """Register and save a new user in MongoDB."""
+    db = get_mongo_db()
     email_clean = email.strip().lower()
     pw_hash = generate_password_hash(password) if password else None
-    
-    with get_db_cursor(db_target) as cursor:
-        placeholder = "%s" if is_postgres(db_target) else "?"
-        
-        # Check existing
-        cursor.execute(f"SELECT * FROM users WHERE LOWER(email) = {placeholder}", (email_clean,))
-        existing = cursor.fetchone()
-        if existing:
-            return dict(existing)
 
-        if is_postgres(db_target):
-            cursor.execute(
-                """
-                INSERT INTO users (full_name, email, password_hash, oauth_provider)
-                VALUES (%s, %s, %s, %s)
-                RETURNING id, full_name, email, oauth_provider, created_at;
-                """,
-                (full_name.strip(), email_clean, pw_hash, oauth_provider),
-            )
-            row = cursor.fetchone()
-            return dict(row)
-        else:
-            cursor.execute(
-                """
-                INSERT INTO users (full_name, email, password_hash, oauth_provider)
-                VALUES (?, ?, ?, ?);
-                """,
-                (full_name.strip(), email_clean, pw_hash, oauth_provider),
-            )
-            user_id = cursor.lastrowid
-            return {
-                "id": user_id,
-                "full_name": full_name.strip(),
-                "email": email_clean,
-                "oauth_provider": oauth_provider,
-            }
+    existing = db.users.find_one({"email": email_clean})
+    if existing:
+        user_doc = dict(existing)
+        user_doc.pop("_id", None)
+        return user_doc
+
+    user_id = get_next_sequence_value("users", db)
+    created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+    user_record = {
+        "id": user_id,
+        "full_name": full_name.strip(),
+        "email": email_clean,
+        "password_hash": pw_hash,
+        "oauth_provider": oauth_provider,
+        "created_at": created_at,
+    }
+
+    db.users.insert_one(user_record)
+    result = dict(user_record)
+    result.pop("_id", None)
+    return result
 
 
-def get_user_by_email(email: str, db_target: str | Path | None = None) -> dict[str, Any] | None:
-    """Retrieve user record by email."""
-    with get_db_cursor(db_target) as cursor:
-        placeholder = "%s" if is_postgres(db_target) else "?"
-        cursor.execute(f"SELECT * FROM users WHERE LOWER(email) = {placeholder}", (email.strip().lower(),))
-        row = cursor.fetchone()
-        return dict(row) if row else None
+def get_user_by_email(email: str, db_target: Any = None) -> dict[str, Any] | None:
+    """Retrieve user record from MongoDB by email."""
+    db = get_mongo_db()
+    user = db.users.find_one({"email": email.strip().lower()})
+    if not user:
+        return None
+    user_doc = dict(user)
+    user_doc.pop("_id", None)
+    return user_doc
 
 
-def verify_user(email: str, password: str, db_target: str | Path | None = None) -> dict[str, Any] | None:
-    """Verify email and password hash."""
+def verify_user(email: str, password: str, db_target: Any = None) -> dict[str, Any] | None:
+    """Verify email and password hash from MongoDB."""
     user = get_user_by_email(email, db_target)
     if not user or not user.get("password_hash"):
         return None
@@ -270,116 +176,203 @@ def verify_user(email: str, password: str, db_target: str | Path | None = None) 
     return None
 
 
+def update_user_password(email: str, new_password: str, db_target: Any = None) -> bool:
+    """Update user password directly in MongoDB."""
+    db = get_mongo_db()
+    email_clean = email.strip().lower()
+    pw_hash = generate_password_hash(new_password)
+    result = db.users.update_one(
+        {"email": email_clean},
+        {"$set": {"password_hash": pw_hash, "updated_at": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")}}
+    )
+    return bool(result.matched_count > 0)
+
+
 # ---------------------------------------------------------------------------
 # Resume Persistence Helpers
 # ---------------------------------------------------------------------------
 
-def save_resume_db(data: dict[str, Any], user_email: str | None = None, db_target: str | Path | None = None) -> dict[str, Any]:
-    """Save structured resume into the database."""
+def save_resume_db(
+    data: dict[str, Any],
+    user_email: str | None = None,
+    db_target: Any = None,
+) -> dict[str, Any]:
+    """Save structured resume into MongoDB."""
+    db = get_mongo_db()
+    resume_id = get_next_sequence_value("resumes", db)
+
     personal = data.get("personal", {})
-    full_name = personal.get("full_name", "")
-    email = personal.get("email", "") or user_email or ""
-    role_title = personal.get("role_title", "")
-    phone = personal.get("phone", "")
-    location = personal.get("location", "")
-    summary = personal.get("summary", "")
+    full_name = personal.get("full_name", "") if isinstance(personal, dict) else ""
+    email = (personal.get("email") if isinstance(personal, dict) else "") or user_email or ""
+    role_title = personal.get("role_title", "") if isinstance(personal, dict) else ""
+    phone = personal.get("phone", "") if isinstance(personal, dict) else ""
+    location = personal.get("location", "") or personal.get("address", "") if isinstance(personal, dict) else ""
+    summary = personal.get("summary", "") if isinstance(personal, dict) else ""
 
-    exp_json = json.dumps(data.get("experience", []))
-    edu_json = json.dumps(data.get("education", []))
-    skills_json = json.dumps(data.get("skills", []))
-    proj_json = json.dumps(data.get("projects", []))
-    cert_json = json.dumps(data.get("certifications", []))
+    experience = data.get("experience", [])
+    education = data.get("education", [])
+    skills = data.get("skills", "")
+    projects = data.get("projects", {})
+    certifications = data.get("certifications", "")
+    achievements = data.get("achievements", "")
+    languages = data.get("languages", "")
 
-    with get_db_cursor(db_target) as cursor:
-        if is_postgres(db_target):
-            cursor.execute(
-                """
-                INSERT INTO resumes (
-                    user_email, full_name, role_title, email, phone, location, summary,
-                    experience_json, education_json, skills_json, projects_json, certifications_json
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id;
-                """,
-                (user_email, full_name, role_title, email, phone, location, summary,
-                 exp_json, edu_json, skills_json, proj_json, cert_json),
-            )
-            resume_id = cursor.fetchone()["id"]
-        else:
-            cursor.execute(
-                """
-                INSERT INTO resumes (
-                    user_email, full_name, role_title, email, phone, location, summary,
-                    experience_json, education_json, skills_json, projects_json, certifications_json
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                """,
-                (user_email, full_name, role_title, email, phone, location, summary,
-                 exp_json, edu_json, skills_json, proj_json, cert_json),
-            )
-            resume_id = cursor.lastrowid
+    created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
-    record = dict(data)
-    record["id"] = resume_id
+    doc = {
+        "id": resume_id,
+        "user_email": (user_email or email or "").lower(),
+        "personal": {
+            "full_name": full_name,
+            "email": email,
+            "phone": phone,
+            "location": location,
+            "address": location,
+            "role_title": role_title,
+            "summary": summary,
+            "linkedin": personal.get("linkedin", "") if isinstance(personal, dict) else "",
+            "github": personal.get("github", "") if isinstance(personal, dict) else "",
+            "portfolio": personal.get("portfolio", "") if isinstance(personal, dict) else "",
+        },
+        "experience": experience,
+        "education": education,
+        "skills": skills,
+        "projects": projects,
+        "certifications": certifications,
+        "achievements": achievements,
+        "languages": languages,
+        "created_at": created_at,
+        "updated_at": created_at,
+    }
+
+    db.resumes.insert_one(doc)
+    saved_record = dict(doc)
+    saved_record.pop("_id", None)
+    return saved_record
+
+
+def get_all_resumes_db(
+    user_email: str | None = None,
+    db_target: Any = None,
+) -> list[dict[str, Any]]:
+    """Retrieve all resumes from MongoDB, optionally filtered by user_email."""
+    db = get_mongo_db()
+    query = {"user_email": user_email.lower()} if user_email else {}
+    cursor = db.resumes.find(query).sort("id", -1)
+
+    results = []
+    for r in cursor:
+        doc = dict(r)
+        doc.pop("_id", None)
+        results.append(doc)
+    return results
+
+
+def get_resume_db(resume_id: int, db_target: Any = None) -> dict[str, Any] | None:
+    """Retrieve a single resume by its ID from MongoDB."""
+    db = get_mongo_db()
+    doc = db.resumes.find_one({"id": int(resume_id)})
+    if not doc:
+        return None
+    record = dict(doc)
+    record.pop("_id", None)
     return record
 
 
-def get_all_resumes_db(user_email: str | None = None, db_target: str | Path | None = None) -> list[dict[str, Any]]:
-    """Retrieve all resumes, optionally filtered by user_email."""
-    with get_db_cursor(db_target) as cursor:
-        placeholder = "%s" if is_postgres(db_target) else "?"
-        if user_email:
-            cursor.execute(f"SELECT * FROM resumes WHERE LOWER(user_email) = {placeholder} ORDER BY id DESC", (user_email.lower(),))
-        else:
-            cursor.execute("SELECT * FROM resumes ORDER BY id DESC")
-        
-        rows = cursor.fetchall()
-        results = []
-        for r in rows:
-            row_dict = dict(r)
-            results.append({
-                "id": row_dict["id"],
-                "personal": {
-                    "full_name": row_dict.get("full_name", ""),
-                    "email": row_dict.get("email", ""),
-                    "phone": row_dict.get("phone", ""),
-                    "location": row_dict.get("location", ""),
-                    "role_title": row_dict.get("role_title", ""),
-                    "summary": row_dict.get("summary", ""),
-                },
-                "experience": json.loads(row_dict.get("experience_json") or "[]"),
-                "education": json.loads(row_dict.get("education_json") or "[]"),
-                "skills": json.loads(row_dict.get("skills_json") or "[]"),
-                "projects": json.loads(row_dict.get("projects_json") or "[]"),
-                "certifications": json.loads(row_dict.get("certifications_json") or "[]"),
-                "created_at": str(row_dict.get("created_at", "")),
-            })
-        return results
+# ---------------------------------------------------------------------------
+# Resume Version History Helpers
+# ---------------------------------------------------------------------------
+
+def create_resume_version_db(
+    *,
+    resume_id: int,
+    version_number: int,
+    version_name: str,
+    created_at: str,
+    filename: str,
+    file_path: str,
+    ats_score: int | None,
+    match_score: int | None,
+    changes: str,
+    resume_details_json: str,
+    resume_text: str,
+    template_filename: str,
+    db_target: Any = None,
+) -> int:
+    """Insert a new resume version into MongoDB."""
+    db = get_mongo_db()
+    version_id = get_next_sequence_value("resume_versions", db)
+
+    doc = {
+        "id": version_id,
+        "resume_id": int(resume_id),
+        "version_number": int(version_number),
+        "version_name": version_name,
+        "created_at": created_at,
+        "filename": filename,
+        "file_path": str(file_path),
+        "ats_score": ats_score,
+        "match_score": match_score,
+        "changes": changes,
+        "resume_details_json": resume_details_json,
+        "resume_text": resume_text,
+        "template_filename": template_filename,
+    }
+
+    db.resume_versions.insert_one(doc)
+    return version_id
 
 
-def get_resume_db(resume_id: int, db_target: str | Path | None = None) -> dict[str, Any] | None:
-    """Retrieve a single resume by its ID."""
-    with get_db_cursor(db_target) as cursor:
-        placeholder = "%s" if is_postgres(db_target) else "?"
-        cursor.execute(f"SELECT * FROM resumes WHERE id = {placeholder}", (resume_id,))
-        row = cursor.fetchone()
-        if not row:
-            return None
-        row_dict = dict(row)
-        return {
-            "id": row_dict["id"],
-            "personal": {
-                "full_name": row_dict.get("full_name", ""),
-                "email": row_dict.get("email", ""),
-                "phone": row_dict.get("phone", ""),
-                "location": row_dict.get("location", ""),
-                "role_title": row_dict.get("role_title", ""),
-                "summary": row_dict.get("summary", ""),
-            },
-            "experience": json.loads(row_dict.get("experience_json") or "[]"),
-            "education": json.loads(row_dict.get("education_json") or "[]"),
-            "skills": json.loads(row_dict.get("skills_json") or "[]"),
-            "projects": json.loads(row_dict.get("projects_json") or "[]"),
-            "certifications": json.loads(row_dict.get("certifications_json") or "[]"),
-            "created_at": str(row_dict.get("created_at", "")),
-        }
+def get_next_version_number_db(resume_id: int, db_target: Any = None) -> int:
+    """Get the next version number for a given resume_id from MongoDB."""
+    db = get_mongo_db()
+    cursor = db.resume_versions.find({"resume_id": int(resume_id)}).sort("version_number", -1).limit(1)
+    for doc in cursor:
+        return int(doc.get("version_number", 0)) + 1
+    return 1
+
+
+def get_latest_version_for_resume_db(resume_id: int, db_target: Any = None) -> dict[str, Any] | None:
+    """Retrieve the latest version for a given resume_id from MongoDB."""
+    db = get_mongo_db()
+    cursor = db.resume_versions.find({"resume_id": int(resume_id)}).sort("version_number", -1).limit(1)
+    for doc in cursor:
+        record = dict(doc)
+        record.pop("_id", None)
+        return record
+    return None
+
+
+def get_version_db(version_id: int, db_target: Any = None) -> dict[str, Any] | None:
+    """Retrieve one version by its database ID from MongoDB."""
+    db = get_mongo_db()
+    doc = db.resume_versions.find_one({"id": int(version_id)})
+    if not doc:
+        return None
+    record = dict(doc)
+    record.pop("_id", None)
+    return record
+
+
+def get_versions_for_resume_db(resume_id: int, db_target: Any = None) -> list[dict[str, Any]]:
+    """Retrieve all versions for a specific resume_id from MongoDB."""
+    db = get_mongo_db()
+    cursor = db.resume_versions.find({"resume_id": int(resume_id)}).sort("version_number", 1)
+    results = []
+    for doc in cursor:
+        record = dict(doc)
+        record.pop("_id", None)
+        results.append(record)
+    return results
+
+
+def get_all_versions_db(db_target: Any = None) -> list[dict[str, Any]]:
+    """Retrieve all resume versions across all resumes from MongoDB."""
+    db = get_mongo_db()
+    cursor = db.resume_versions.find().sort([("resume_id", 1), ("version_number", 1)])
+    results = []
+    for doc in cursor:
+        record = dict(doc)
+        record.pop("_id", None)
+        results.append(record)
+    return results

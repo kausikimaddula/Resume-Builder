@@ -1,362 +1,253 @@
 {% extends "base.html" %}
 
-{% block title %}Resume Improvement | AI Resume Builder & Tracker{% endblock %}
+{% block title %}Resume Bullet Enhancer | Resume Studio{% endblock %}
 
 {% block content %}
 <!-- Header Banner -->
-<section class="py-4 bg-white border-bottom shadow-xs">
-  <div class="container">
-    <div class="row align-items-center g-3">
-      <div class="col-lg-8">
-        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-semibold mb-2">
-          <i class="bi bi-stars me-1 text-warning" aria-hidden="true"></i> AI Enhancement Engine
-        </span>
-        <h1 class="h2 fw-bold text-dark mb-1">Resume Improvement & AI Recommendations</h1>
-        <p class="text-secondary mb-0">
-          Get section-wise AI suggestions to enhance project descriptions, experience bullet points, executive summaries, skill ordering, power verbs, and ATS optimization.
+<section class="bg-[#EDEBE7] border-b border-[#434451]/30 py-8 sm:py-10 text-[#25262E]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-[#25262E]">
+          Bullet Point Enhancer
+        </h1>
+        <p class="text-xs sm:text-sm text-[#626372] mt-1 max-w-2xl font-medium">
+          Transform weak experience bullets into high-impact, metrics-driven statements tailored for your target role.
         </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('main.resume_form') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#EDEBE7] hover:bg-[#DFDCD5] border border-[#434451] text-[#25262E] text-xs font-bold transition-colors">
+          <i class="bi bi-pencil-square text-[#434451]"></i> Manual Builder
+        </a>
       </div>
     </div>
   </div>
 </section>
 
-<div class="container py-5">
-  <div class="row g-4">
-    <!-- Form Input Column -->
-    <div class="col-lg-5">
-      <div class="card border-0 shadow-sm rounded-3 bg-white p-4">
-        <h2 class="h5 fw-bold text-dark mb-3 border-bottom pb-2 d-flex align-items-center gap-2">
-          <i class="bi bi-cloud-arrow-up text-primary" aria-hidden="true"></i> Upload or Paste Resume
-        </h2>
+<!-- Main Workspace -->
+<section class="py-8 sm:py-10 bg-[#EDEBE7]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      
+      <!-- LEFT: Input Form (5 cols on lg) -->
+      <div class="lg:col-span-5 bg-[#EDEBE7] text-[#25262E] rounded-lg border border-[#434451] p-6 shadow-xs space-y-5 sticky top-24">
+        <div class="flex items-center gap-2.5 pb-3 border-b border-[#434451]/30">
+          <div class="w-8 h-8 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center font-bold border border-[#434451]">
+            <i class="bi bi-pencil text-base"></i>
+          </div>
+          <div>
+            <h2 class="text-base font-bold text-[#25262E]">Input Content</h2>
+            <p class="text-xs text-[#626372]">Upload resume or paste bullets</p>
+          </div>
+        </div>
 
-        <form method="POST" enctype="multipart/form-data" novalidate>
+        <form method="POST" enctype="multipart/form-data" novalidate class="space-y-4">
           {{ form.hidden_tag() }}
 
-          <div class="mb-4">
-            <label for="{{ form.resume_file.id }}" class="form-label fw-bold text-dark small">
-              {{ form.resume_file.label.text }}
-            </label>
-            <div class="drop-zone shadow-xs">
-              <i class="bi bi-file-earmark-arrow-up display-5 text-primary mb-2 d-block" aria-hidden="true"></i>
-              <span class="d-block fw-semibold text-dark mb-1">Drag & Drop resume file</span>
-              <span class="badge bg-light text-secondary border px-3 py-1">Formats: .docx, .pdf</span>
-              {{ form.resume_file(class="drop-zone__input" ~ (" is-invalid" if form.resume_file.errors else "")) }}
-              <div class="drop-zone__file-name mt-2 small text-primary"></div>
+          <!-- Dropzone -->
+          <div>
+            <div class="drop-zone hover:bg-[#DFDCD5] hover:border-[#25262E] transition-all bg-[#EDEBE7] p-4 rounded-lg border-2 border-dashed border-[#434451] text-center relative cursor-pointer">
+              <i class="bi bi-cloud-arrow-up text-xl text-[#434451] mb-1 block"></i>
+              <span class="block font-bold text-xs text-[#25262E]">Upload Resume File (.docx, .pdf)</span>
+              {{ form.resume_file(class="drop-zone__input absolute inset-0 opacity-0 cursor-pointer w-full h-full", id=form.resume_file.id) }}
+              <div class="drop-zone__file-name mt-1.5 text-xs font-bold text-[#434451]"></div>
             </div>
             {% for error in form.resume_file.errors %}
-              <div class="text-danger small mt-1" role="alert">{{ error }}</div>
+              <p class="text-xs text-rose-700 font-semibold mt-1">{{ error }}</p>
             {% endfor %}
           </div>
 
-          <div class="mb-3 text-center text-muted fw-bold small">-- OR PASTE TEXT --</div>
+          <div class="relative text-center">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-[#434451]/30"></div>
+            </div>
+            <div class="relative flex justify-center text-[10px]">
+              <span class="px-2 bg-[#EDEBE7] text-[#626372] font-bold uppercase">or paste bullet text</span>
+            </div>
+          </div>
 
-          <div class="mb-4">
-            <label for="{{ form.resume_text.id }}" class="form-label fw-bold text-dark small">
+          <!-- Textarea -->
+          <div>
+            <label for="{{ form.resume_text.id }}" class="block text-xs font-bold text-[#25262E] mb-1">
               {{ form.resume_text.label.text }}
             </label>
-            {{ form.resume_text(class="form-control" ~ (" is-invalid" if form.resume_text.errors else ""), rows=6, placeholder="Paste your work experience, projects, or summary text here...") }}
+            {{ form.resume_text(class="w-full px-3.5 py-2.5 bg-[#EDEBE7] border border-[#434451] rounded-lg text-[#25262E] placeholder-[#626372]/60 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#434451] transition-all resize-y", rows=5, placeholder="Paste your work experience bullets or summary here...") }}
             {% for error in form.resume_text.errors %}
-              <div class="text-danger small mt-1" role="alert">{{ error }}</div>
+              <p class="text-xs text-rose-700 font-semibold mt-1">{{ error }}</p>
             {% endfor %}
           </div>
 
-          <hr class="my-4">
-
-          <div class="mb-4">
-            <label for="{{ form.target_role.id }}" class="form-label fw-bold text-dark small d-flex align-items-center gap-1">
-              <i class="bi bi-bullseye text-warning-emphasis" aria-hidden="true"></i> {{ form.target_role.label.text }}
+          <!-- Target Role Input -->
+          <div>
+            <label for="{{ form.target_role.id }}" class="block text-xs font-bold text-[#25262E] mb-1">
+              {{ form.target_role.label.text }} (Optional)
             </label>
-            {{ form.target_role(class="form-control" ~ (" is-invalid" if form.target_role.errors else ""), placeholder="e.g. Senior Software Engineer, Data Scientist") }}
+            {{ form.target_role(class="w-full px-3.5 py-2 bg-[#EDEBE7] border border-[#434451] rounded-lg text-[#25262E] placeholder-[#626372]/60 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#434451] transition-all", placeholder="e.g. Senior Software Engineer") }}
             {% for error in form.target_role.errors %}
-              <div class="text-danger small mt-1" role="alert">{{ error }}</div>
+              <p class="text-xs text-rose-700 font-semibold mt-1">{{ error }}</p>
             {% endfor %}
           </div>
 
-          <!-- Progress Bar Container -->
-          <div class="upload-progress-bar mb-3 d-none">
-            <div class="d-flex justify-content-between align-items-center mb-1 small text-secondary">
-              <span>Generating AI Recommendations...</span>
-              <span class="fw-bold text-warning-emphasis">Processing</span>
-            </div>
-            <div class="progress" style="height: 10px;">
-              <div class="progress-bar progress-bar-amber progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-          </div>
-
-          <div class="d-grid">
-            <button type="submit" class="btn btn-warning text-dark btn-lg shadow-sm fw-bold">
-              <i class="bi bi-stars me-1" aria-hidden="true"></i> Generate AI Improvements
-            </button>
-          </div>
+          <button type="submit" class="w-full py-2.5 px-4 rounded-lg font-bold text-xs sm:text-sm text-[#EDEBE7] bg-[#434451] hover:bg-[#25262E] shadow-xs transition-colors flex items-center justify-center gap-2">
+            <i class="bi bi-pencil"></i> Generate Improvements
+          </button>
         </form>
       </div>
-    </div>
 
-    <!-- Output Suggestions Section -->
-    <div class="col-lg-7">
-      {% if suggestions %}
-        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2 border-bottom pb-3">
-          <div>
-            <h2 class="h4 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
-              <i class="bi bi-magic text-warning-emphasis" aria-hidden="true"></i> AI Improvement Suggestions
-            </h2>
-            <p class="text-secondary small mb-0">
-              Source: <span class="badge bg-secondary">{{ input_info.source_name }}</span>
-              {% if input_info.target_role %}
-                | Role: <span class="badge bg-info text-dark">{{ input_info.target_role }}</span>
-              {% endif %}
-              | Engine: <span class="badge bg-success">{{ suggestions.analysis_type }}</span>
-            </p>
+      <!-- RIGHT: Output Suggestions (7 cols on lg) -->
+      <div class="lg:col-span-7 space-y-6">
+        
+        {% if suggestions %}
+          <!-- Output Header -->
+          <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg border border-[#434451] p-5 shadow-xs flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-bold text-[#25262E]">Improved Bullet Points & Insights</h2>
+              <p class="text-xs text-[#626372] mt-0.5 font-medium">
+                Target Role: <span class="font-bold text-[#25262E]">{{ input_info.target_role if input_info.target_role else "General Industry" }}</span>
+              </p>
+            </div>
+            <button type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#434451] bg-[#EDEBE7] hover:bg-[#DFDCD5] text-xs font-bold text-[#25262E] shadow-xs transition-colors" onclick="copyAllSuggestions()">
+              <i class="bi bi-clipboard-check text-[#434451]"></i> Copy All
+            </button>
           </div>
-          <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 d-flex align-items-center gap-1" onclick="copyAllSuggestions()">
-            <i class="bi bi-clipboard-check me-1" aria-hidden="true"></i> Copy All Suggestions
-          </button>
-        </div>
 
-        <!-- 1. Better Summaries -->
-        {% if suggestions.summaries %}
-          <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
-              <h3 class="h6 mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-                <i class="bi bi-card-text text-primary" aria-hidden="true"></i> Better Summaries
+          <!-- 1. Improved Experience Bullets -->
+          {% if suggestions.experience_wording %}
+            <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg border border-[#434451] p-6 shadow-xs space-y-4">
+              <h3 class="text-sm font-bold text-[#25262E] flex items-center gap-2 border-b border-[#434451]/30 pb-3">
+                <i class="bi bi-briefcase text-[#434451]"></i> Enhanced Experience Bullets
               </h3>
-              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copySectionText('section-summaries')">
-                Copy Summaries
-              </button>
-            </div>
-            <div class="card-body p-4" id="section-summaries">
-              {% for item in suggestions.summaries %}
-                <div class="p-3 bg-light border rounded mb-3">
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="badge bg-primary">{{ item.title }}</span>
-                    <button type="button" class="btn btn-sm btn-light border text-primary" onclick="copyToClipboard('{{ item.text | replace("'", "\\'") | replace("\n", " ") }}', 'Summary copied!')">
-                      <i class="bi bi-clipboard me-1" aria-hidden="true"></i> Copy
-                    </button>
-                  </div>
-                  <p class="mb-0 text-dark small">{{ item.text }}</p>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
 
-        <!-- 2. Better Experience Wording -->
-        {% if suggestions.experience_wording %}
-          <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
-              <h3 class="h6 mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-                <i class="bi bi-briefcase text-primary" aria-hidden="true"></i> Better Experience Wording
-              </h3>
-              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copySectionText('section-experience')">
-                Copy Experience Points
-              </button>
-            </div>
-            <div class="card-body p-4" id="section-experience">
-              {% for item in suggestions.experience_wording %}
-                <div class="border rounded p-3 mb-3 bg-white">
-                  <div class="row g-2">
-                    <div class="col-12 text-muted small">
-                      <strong>Original:</strong> <em>"{{ item.original }}"</em>
-                    </div>
-                    <div class="col-12 my-2">
-                      <div class="p-3 bg-success-subtle text-success-emphasis border border-success-subtle rounded d-flex justify-content-between align-items-start gap-2">
-                        <div>
-                          <strong class="d-block mb-1">Improved Bullet Point:</strong>
-                          <span>• {{ item.improved }}</span>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-success flex-shrink-0" onclick="copyToClipboard('{{ item.improved | replace("'", "\\'") | replace("\n", " ") }}', 'Bullet point copied!')">
-                          <i class="bi bi-clipboard me-1" aria-hidden="true"></i> Copy
-                        </button>
+              <div class="space-y-3" id="section-experience">
+                {% for item in suggestions.experience_wording %}
+                  <div class="p-4 rounded-lg bg-[#DFDCD5] border border-[#434451] space-y-2 text-xs">
+                    <p class="text-[#626372]">
+                      <span class="font-bold text-[#25262E]">Before:</span> "{{ item.original }}"
+                    </p>
+                    <div class="p-3 rounded-lg bg-[#EDEBE7] border border-emerald-400 text-[#25262E] flex items-start justify-between gap-3">
+                      <div>
+                        <span class="block text-[10px] font-bold uppercase text-emerald-800 mb-0.5">Improved Impact Bullet:</span>
+                        <p class="font-semibold text-emerald-950">• {{ item.improved }}</p>
                       </div>
+                      <button type="button" class="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-950 border border-emerald-300 text-[11px] font-bold hover:bg-emerald-200 flex-shrink-0" onclick="copyToClipboard('{{ item.improved | replace("'", "\\'") | replace("\n", " ") }}', 'Bullet copied!')">
+                        Copy
+                      </button>
                     </div>
                     {% if item.impact %}
-                      <div class="col-12 small text-secondary">
-                        <i class="bi bi-lightbulb text-warning me-1" aria-hidden="true"></i> <strong>Why it's better:</strong> {{ item.impact }}
-                      </div>
+                      <p class="text-[11px] text-[#626372]"><i class="bi bi-info-circle text-[#434451] mr-1"></i> {{ item.impact }}</p>
                     {% endif %}
                   </div>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-
-        <!-- 3. Better Project Descriptions -->
-        {% if suggestions.project_descriptions %}
-          <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
-              <h3 class="h6 mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-                <i class="bi bi-rocket-takeoff text-primary" aria-hidden="true"></i> Better Project Descriptions
-              </h3>
-              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copySectionText('section-projects')">
-                Copy Projects
-              </button>
-            </div>
-            <div class="card-body p-4" id="section-projects">
-              {% for item in suggestions.project_descriptions %}
-                <div class="border rounded p-3 mb-3 bg-white">
-                  <div class="row g-2">
-                    <div class="col-12 text-muted small">
-                      <strong>Original:</strong> <em>"{{ item.original }}"</em>
-                    </div>
-                    <div class="col-12 my-2">
-                      <div class="p-3 bg-primary-subtle text-primary-emphasis border border-primary-subtle rounded d-flex justify-content-between align-items-start gap-2">
-                        <div>
-                          <strong class="d-block mb-1">Improved Description:</strong>
-                          <span>{{ item.improved }}</span>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-primary flex-shrink-0" onclick="copyToClipboard('{{ item.improved | replace("'", "\\'") | replace("\n", " ") }}', 'Project description copied!')">
-                          <i class="bi bi-clipboard me-1" aria-hidden="true"></i> Copy
-                        </button>
-                      </div>
-                    </div>
-                    {% if item.reason %}
-                      <div class="col-12 small text-secondary">
-                        <i class="bi bi-info-circle text-info me-1" aria-hidden="true"></i> <strong>Key Enhancement:</strong> {{ item.reason }}
-                      </div>
-                    {% endif %}
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-
-        <!-- 4. Skills Ordering -->
-        {% if suggestions.skills_ordering %}
-          <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
-              <h3 class="h6 mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-                <i class="bi bi-tools text-primary" aria-hidden="true"></i> Skills Ordering
-              </h3>
-              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copySectionText('section-skills')">
-                Copy Skills
-              </button>
-            </div>
-            <div class="card-body p-4" id="section-skills">
-              {% for item in suggestions.skills_ordering %}
-                <div class="border rounded p-3 mb-3 bg-light">
-                  <div class="d-flex justify-content-between align-items-center mb-2">
-                    <strong class="text-dark">{{ item.category }}</strong>
-                    <button type="button" class="btn btn-sm btn-outline-dark" onclick="copyToClipboard('{{ item.category }}: {{ item.ordered_skills | replace("'", "\\'") }}', 'Skills category copied!')">
-                      <i class="bi bi-clipboard me-1" aria-hidden="true"></i> Copy Category
-                    </button>
-                  </div>
-                  <p class="mb-2 font-monospace text-primary bg-white p-2 border rounded small">{{ item.ordered_skills }}</p>
-                  <p class="mb-0 small text-secondary"><i class="bi bi-bullseye text-danger me-1" aria-hidden="true"></i> <strong>Rationale:</strong> {{ item.rationale }}</p>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-
-        <!-- 5. Action Verbs Table -->
-        {% if suggestions.action_verbs %}
-          <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
-              <h3 class="h6 mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-                <i class="bi bi-lightning-charge text-warning-emphasis" aria-hidden="true"></i> Power Action Verbs
-              </h3>
-              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copySectionText('section-verbs')">
-                Copy Verbs
-              </button>
-            </div>
-            <div class="card-body p-4" id="section-verbs">
-              <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0 small">
-                  <thead class="table-light">
-                    <tr>
-                      <th>Weak Verb</th>
-                      <th>Power Verb</th>
-                      <th>Example Usage</th>
-                      <th class="text-end">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for item in suggestions.action_verbs %}
-                      <tr>
-                        <td class="text-danger fw-semibold">{{ item.weak_verb }}</td>
-                        <td class="text-success fw-bold">{{ item.power_verb }}</td>
-                        <td class="text-secondary">{{ item.example }}</td>
-                        <td class="text-end">
-                          <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('Replace \'{{ item.weak_verb }}\' with \'{{ item.power_verb }}\': {{ item.example | replace("'", "\\'") }}', 'Verb copied!')">
-                            <i class="bi bi-clipboard" aria-hidden="true"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
+                {% endfor %}
               </div>
             </div>
-          </div>
-        {% endif %}
+          {% endif %}
 
-        <!-- 6. ATS Optimization Tips -->
-        {% if suggestions.ats_optimization %}
-          <div class="card border-0 shadow-sm rounded-3 mb-4 bg-white">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
-              <h3 class="h6 mb-0 fw-bold text-dark d-flex align-items-center gap-2">
-                <i class="bi bi-shield-check text-success" aria-hidden="true"></i> ATS Optimization Tips
+          <!-- 2. Executive Summary Variations -->
+          {% if suggestions.summaries %}
+            <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg border border-[#434451] p-6 shadow-xs space-y-4">
+              <h3 class="text-sm font-bold text-[#25262E] flex items-center gap-2 border-b border-[#434451]/30 pb-3">
+                <i class="bi bi-card-text text-[#434451]"></i> Suggested Professional Summaries
               </h3>
-              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copySectionText('section-ats')">
-                Copy Tips
-              </button>
-            </div>
-            <div class="card-body p-4" id="section-ats">
-              {% for item in suggestions.ats_optimization %}
-                <div class="d-flex align-items-start border rounded p-3 mb-3 bg-white gap-3">
-                  <div>
-                    {% if item.importance == 'High' %}
-                      <span class="badge bg-danger">High Priority</span>
-                    {% else %}
-                      <span class="badge bg-warning text-dark">Medium</span>
-                    {% endif %}
-                  </div>
-                  <div class="flex-grow-1">
-                    <h4 class="h6 fw-bold mb-1">{{ item.area }}</h4>
-                    <p class="mb-0 text-secondary small">{{ item.suggestion }}</p>
-                  </div>
-                  <button type="button" class="btn btn-sm btn-outline-dark flex-shrink-0" onclick="copyToClipboard('{{ item.area }}: {{ item.suggestion | replace("'", "\\'") }}', 'ATS tip copied!')">
-                    <i class="bi bi-clipboard" aria-hidden="true"></i>
-                  </button>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
 
-      {% else %}
-        <!-- Default Empty State -->
-        <div class="card border-0 shadow-sm rounded-3 text-center p-5 bg-white">
-          <div class="card-body py-5">
-            <i class="bi bi-stars display-3 text-warning-emphasis mb-3 d-block" aria-hidden="true"></i>
-            <h3 class="fw-bold mb-2">Ready to Elevate Your Resume</h3>
-            <p class="text-secondary max-w-md mx-auto mb-4">
-              Upload your DOCX/PDF resume or paste text on the left to receive section-by-section AI suggestions for summaries, projects, experience, skill ordering, power verbs, and ATS optimization.
+              <div class="space-y-3" id="section-summaries">
+                {% for item in suggestions.summaries %}
+                  <div class="p-4 rounded-lg bg-[#DFDCD5] border border-[#434451] space-y-2 text-xs">
+                    <div class="flex items-center justify-between">
+                      <span class="font-bold text-[#25262E]">{{ item.title }}</span>
+                      <button type="button" class="px-2.5 py-1 rounded-md bg-[#EDEBE7] border border-[#434451] text-[#25262E] text-[11px] font-bold hover:bg-[#DFDCD5]" onclick="copyToClipboard('{{ item.text | replace("'", "\\'") | replace("\n", " ") }}', 'Summary copied!')">
+                        Copy
+                      </button>
+                    </div>
+                    <p class="text-[#626372] leading-relaxed font-medium">{{ item.text }}</p>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- 3. High Impact Action Verbs -->
+          {% if suggestions.action_verbs %}
+            <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg border border-[#434451] p-6 shadow-xs space-y-4">
+              <h3 class="text-sm font-bold text-[#25262E] flex items-center gap-2 border-b border-[#434451]/30 pb-3">
+                <i class="bi bi-lightning-charge text-[#434451]"></i> Stronger Action Verb Swaps
+              </h3>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="section-verbs">
+                {% for item in suggestions.action_verbs %}
+                  <div class="p-3 rounded-lg bg-[#DFDCD5] border border-[#434451] text-xs flex items-center justify-between">
+                    <div>
+                      <span class="line-through text-[#626372] font-medium mr-1.5">{{ item.weak_verb }}</span>
+                      <i class="bi bi-arrow-right text-[#626372] text-[10px] mr-1.5"></i>
+                      <span class="font-bold text-emerald-800">{{ item.power_verb }}</span>
+                    </div>
+                    <button type="button" class="text-[#434451] hover:text-[#25262E] p-1" onclick="copyToClipboard('{{ item.power_verb }}', 'Verb copied!')" title="Copy Power Verb">
+                      <i class="bi bi-clipboard"></i>
+                    </button>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+
+        {% else %}
+          <!-- Empty State -->
+          <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg border border-[#434451] p-10 sm:p-12 text-center">
+            <div class="w-12 h-12 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center text-2xl mx-auto mb-3 border border-[#434451]">
+              <i class="bi bi-pencil"></i>
+            </div>
+            <h3 class="text-base font-bold text-[#25262E] mb-1">Ready to enhance your bullets</h3>
+            <p class="text-xs text-[#626372] max-w-sm mx-auto font-medium">
+              Paste experience bullet points on the left to receive measurable, action-oriented improvements.
             </p>
           </div>
-        </div>
-      {% endif %}
-    </div>
-  </div>
-</div>
+        {% endif %}
 
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- Dropzone JS & Copy All -->
 <script>
-  function copySectionText(sectionId) {
-    const section = document.getElementById(sectionId);
-    if (!section) return;
-    copyToClipboard(section.innerText, 'Copied section text!');
-  }
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    const input = zone.querySelector('.drop-zone__input');
+    const nameDisplay = zone.querySelector('.drop-zone__file-name');
+
+    if (!input) return;
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      zone.addEventListener(eventName, e => {
+        e.preventDefault();
+        zone.classList.add('bg-[#DFDCD5]', 'border-[#25262E]');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      zone.addEventListener(eventName, e => {
+        e.preventDefault();
+        zone.classList.remove('bg-[#DFDCD5]', 'border-[#25262E]');
+      });
+    });
+
+    input.addEventListener('change', () => {
+      if (input.files && input.files[0] && nameDisplay) {
+        nameDisplay.textContent = 'Selected: ' + input.files[0].name;
+      }
+    });
+  });
 
   function copyAllSuggestions() {
-    const contentAreas = document.querySelectorAll('#section-summaries, #section-experience, #section-projects, #section-skills, #section-verbs, #section-ats');
+    const sections = document.querySelectorAll('#section-experience, #section-summaries, #section-verbs');
     let fullText = '';
-    contentAreas.forEach(area => {
-      fullText += area.innerText + '\n\n---\n\n';
+    sections.forEach(sec => {
+      fullText += sec.innerText + '\n\n';
     });
     if (fullText.trim()) {
-      copyToClipboard(fullText, 'Copied all AI recommendations!');
+      copyToClipboard(fullText, 'Copied all improvements to clipboard!');
     }
   }
 </script>

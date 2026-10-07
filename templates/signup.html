@@ -1,21 +1,21 @@
 {% extends "base.html" %}
 
-{% block title %}Sign Up | AI Resume Builder & Tracker{% endblock %}
+{% block title %}Sign Up | Resume Studio{% endblock %}
 
 {% block content %}
-<section class="py-12 sm:py-16 flex items-center justify-center min-h-[calc(100vh-140px)]">
+<section class="py-12 sm:py-16 flex items-center justify-center min-h-[calc(100vh-140px)] bg-[#EDEBE7]">
   <div class="max-w-lg w-full mx-auto px-4">
 
     <!-- Signup Card -->
-    <div class="bg-white rounded-3xl border border-slate-200 p-8 sm:p-10 shadow-lg shadow-slate-200/50">
+    <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg border border-[#434451] p-8 sm:p-10 shadow-xs">
       
       <!-- Header -->
       <div class="text-center mb-8">
-        <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mx-auto mb-4 shadow-sm">
+        <div class="w-12 h-12 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center text-xl mx-auto mb-3 border border-[#434451]">
           <i class="bi bi-person-plus-fill"></i>
         </div>
-        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight mb-1">Create Your Account</h1>
-        <p class="text-xs text-slate-500">Join thousands of job seekers optimizing their resumes with AI.</p>
+        <h1 class="text-2xl font-bold text-[#25262E] tracking-tight mb-1">Create your account</h1>
+        <p class="text-xs text-[#626372] font-medium">Get started with building and optimizing your resumes.</p>
       </div>
 
       <!-- Form -->
@@ -24,33 +24,33 @@
 
         <!-- Full Name Field -->
         <div>
-          <label for="{{ form.full_name.id }}" class="block text-xs font-bold text-slate-700 mb-1.5">
+          <label for="{{ form.full_name.id }}" class="block text-xs font-bold text-[#25262E] mb-1">
             {{ form.full_name.label.text }} *
           </label>
-          <div class="relative rounded-xl shadow-xs">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
+          <div class="relative rounded-lg">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#626372]/70 text-sm">
               <i class="bi bi-person"></i>
             </div>
-            {{ form.full_name(class="block w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all " + ("border-rose-400 focus:ring-rose-400" if form.full_name.errors else ""), placeholder="Jane Smith", id=form.full_name.id) }}
+            {{ form.full_name(class="block w-full pl-10 pr-4 py-2.5 bg-[#EDEBE7] border border-[#434451] rounded-lg text-sm text-[#25262E] placeholder-[#626372]/50 font-medium focus:outline-none focus:ring-2 focus:ring-[#434451] transition-all " + ("border-rose-500 focus:ring-rose-500" if form.full_name.errors else ""), placeholder="Jane Smith", id=form.full_name.id) }}
           </div>
           {% if form.full_name.errors %}
-            <p class="mt-1 text-xs text-rose-500 font-medium">{{ form.full_name.errors[0] }}</p>
+            <p class="mt-1 text-xs text-rose-700 font-semibold">{{ form.full_name.errors[0] }}</p>
           {% endif %}
         </div>
 
         <!-- Email Field -->
         <div>
-          <label for="{{ form.email.id }}" class="block text-xs font-bold text-slate-700 mb-1.5">
+          <label for="{{ form.email.id }}" class="block text-xs font-bold text-[#25262E] mb-1">
             {{ form.email.label.text }} *
           </label>
-          <div class="relative rounded-xl shadow-xs">
-            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
+          <div class="relative rounded-lg">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#626372]/70 text-sm">
               <i class="bi bi-envelope"></i>
             </div>
-            {{ form.email(class="block w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all " + ("border-rose-400 focus:ring-rose-400" if form.email.errors else ""), placeholder="name@example.com", id=form.email.id) }}
+            {{ form.email(class="block w-full pl-10 pr-4 py-2.5 bg-[#EDEBE7] border border-[#434451] rounded-lg text-sm text-[#25262E] placeholder-[#626372]/50 font-medium focus:outline-none focus:ring-2 focus:ring-[#434451] transition-all " + ("border-rose-500 focus:ring-rose-500" if form.email.errors else ""), placeholder="name@example.com", id=form.email.id) }}
           </div>
           {% if form.email.errors %}
-            <p class="mt-1 text-xs text-rose-500 font-medium">{{ form.email.errors[0] }}</p>
+            <p class="mt-1 text-xs text-rose-700 font-semibold">{{ form.email.errors[0] }}</p>
           {% endif %}
         </div>
 
@@ -58,83 +58,63 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- Password -->
           <div>
-            <label for="{{ form.password.id }}" class="block text-xs font-bold text-slate-700 mb-1.5">
+            <label for="{{ form.password.id }}" class="block text-xs font-bold text-[#25262E] mb-1">
               {{ form.password.label.text }} *
             </label>
-            <div class="relative rounded-xl shadow-xs">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
+            <div class="relative rounded-lg">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#626372]/70 text-sm">
                 <i class="bi bi-lock"></i>
               </div>
-              {{ form.password(class="block w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all " + ("border-rose-400 focus:ring-rose-400" if form.password.errors else ""), placeholder="••••••••", id=form.password.id) }}
-              <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600" onclick="togglePasswordVisibility('{{ form.password.id }}', this)">
+              {{ form.password(class="block w-full pl-10 pr-10 py-2.5 bg-[#EDEBE7] border border-[#434451] rounded-lg text-sm text-[#25262E] placeholder-[#626372]/50 font-medium focus:outline-none focus:ring-2 focus:ring-[#434451] transition-all " + ("border-rose-500 focus:ring-rose-500" if form.password.errors else ""), placeholder="••••••••", id=form.password.id) }}
+              <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[#626372] hover:text-[#25262E]" onclick="togglePasswordVisibility('{{ form.password.id }}', this)">
                 <i class="bi bi-eye"></i>
               </button>
             </div>
             {% if form.password.errors %}
-              <p class="mt-1 text-xs text-rose-500 font-medium">{{ form.password.errors[0] }}</p>
+              <p class="mt-1 text-xs text-rose-700 font-semibold">{{ form.password.errors[0] }}</p>
             {% endif %}
           </div>
 
           <!-- Confirm Password -->
           <div>
-            <label for="{{ form.confirm_password.id }}" class="block text-xs font-bold text-slate-700 mb-1.5">
+            <label for="{{ form.confirm_password.id }}" class="block text-xs font-bold text-[#25262E] mb-1">
               {{ form.confirm_password.label.text }} *
             </label>
-            <div class="relative rounded-xl shadow-xs">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
+            <div class="relative rounded-lg">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#626372]/70 text-sm">
                 <i class="bi bi-shield-lock"></i>
               </div>
-              {{ form.confirm_password(class="block w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all " + ("border-rose-400 focus:ring-rose-400" if form.confirm_password.errors else ""), placeholder="••••••••", id=form.confirm_password.id) }}
-              <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600" onclick="togglePasswordVisibility('{{ form.confirm_password.id }}', this)">
+              {{ form.confirm_password(class="block w-full pl-10 pr-10 py-2.5 bg-[#EDEBE7] border border-[#434451] rounded-lg text-sm text-[#25262E] placeholder-[#626372]/50 font-medium focus:outline-none focus:ring-2 focus:ring-[#434451] transition-all " + ("border-rose-500 focus:ring-rose-500" if form.confirm_password.errors else ""), placeholder="••••••••", id=form.confirm_password.id) }}
+              <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[#626372] hover:text-[#25262E]" onclick="togglePasswordVisibility('{{ form.confirm_password.id }}', this)">
                 <i class="bi bi-eye"></i>
               </button>
             </div>
             {% if form.confirm_password.errors %}
-              <p class="mt-1 text-xs text-rose-500 font-medium">{{ form.confirm_password.errors[0] }}</p>
+              <p class="mt-1 text-xs text-rose-700 font-semibold">{{ form.confirm_password.errors[0] }}</p>
             {% endif %}
           </div>
         </div>
 
         <!-- Terms Checkbox -->
         <div class="flex items-start pt-1">
-          {{ form.terms_agree(class="h-4 w-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer", id=form.terms_agree.id) }}
-          <label for="{{ form.terms_agree.id }}" class="ml-2 block text-xs text-slate-600 cursor-pointer select-none leading-relaxed">
-            I agree to the <a href="#" onclick="alert('Terms & Privacy'); return false;" class="font-semibold text-blue-600 hover:underline">Terms of Service</a> & <a href="#" onclick="alert('Privacy guidelines'); return false;" class="font-semibold text-blue-600 hover:underline">Privacy Policy</a>
+          {{ form.terms_agree(class="h-4 w-4 mt-0.5 rounded border-[#434451] bg-[#EDEBE7] text-[#434451] focus:ring-[#434451] cursor-pointer", id=form.terms_agree.id) }}
+          <label for="{{ form.terms_agree.id }}" class="ml-2 block text-xs text-[#626372] cursor-pointer select-none leading-relaxed font-medium">
+            I agree to the <a href="#" onclick="alert('Terms & Privacy'); return false;" class="font-bold text-[#434451] hover:underline">Terms of Service</a> and <a href="#" onclick="alert('Privacy guidelines'); return false;" class="font-bold text-[#434451] hover:underline">Privacy Policy</a>
           </label>
         </div>
         {% if form.terms_agree.errors %}
-          <p class="text-xs text-rose-500 font-medium">{{ form.terms_agree.errors[0] }}</p>
+          <p class="text-xs text-rose-700 font-semibold">{{ form.terms_agree.errors[0] }}</p>
         {% endif %}
 
         <!-- Submit Button -->
-        <button type="submit" class="w-full py-3 px-4 rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-md shadow-blue-500/25 transition-all duration-150 hover:-translate-y-0.5 mt-2">
-          Create Account &rarr;
+        <button type="submit" class="w-full py-2.5 px-4 rounded-lg text-sm font-bold text-[#EDEBE7] bg-[#434451] hover:bg-[#25262E] shadow-xs transition-colors mt-2">
+          Create Account
         </button>
 
-        <!-- Social Logins Divider -->
-        <div class="relative my-6 text-center">
-          <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-slate-200"></div>
-          </div>
-          <div class="relative flex justify-center text-xs">
-            <span class="px-3 bg-white text-slate-400 font-medium">or sign up with</span>
-          </div>
-        </div>
-
-        <!-- Social Buttons -->
-        <div class="grid grid-cols-2 gap-3">
-          <a href="{{ url_for('main.google_login') }}" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs transition-colors">
-            <i class="bi bi-google text-rose-500 text-sm"></i> Google
-          </a>
-          <button type="button" onclick="alert('GitHub sign up enabled');" class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs transition-colors">
-            <i class="bi bi-github text-slate-900 text-sm"></i> GitHub
-          </button>
-        </div>
-
         <!-- Login Link -->
-        <p class="text-center text-xs text-slate-500 pt-4">
+        <p class="text-center text-xs text-[#626372] pt-3 font-medium">
           Already have an account? 
-          <a href="{{ url_for('main.login') }}" class="font-bold text-blue-600 hover:text-blue-700 ml-1">Log In</a>
+          <a href="{{ url_for('main.login') }}" class="font-bold text-[#434451] hover:underline ml-1">Log In</a>
         </p>
       </form>
 

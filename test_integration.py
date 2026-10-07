@@ -15,6 +15,9 @@ def test_upload_flow():
     app.config["WTF_CSRF_ENABLED"] = False
     
     with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user_email"] = "testuser@example.com"
+            sess["user_name"] = "Test User"
         # 1. Test DOCX upload
         print("Testing DOCX upload...")
         with open(docx_path, "rb") as docx_file:
