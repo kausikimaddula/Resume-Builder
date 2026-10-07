@@ -1,92 +1,47 @@
-"""Service for managing resume versions in PostgreSQL and SQLite databases."""
+"""Service for managing resume versions in MongoDB database."""
 
 from __future__ import annotations
 
 import difflib
 import json
 import logging
-import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from services.ats_checker import analyze_resume_ats
-from services.database import get_db_cursor, init_all_tables, is_postgres
+from services.database import (
+    create_resume_version_db,
+    get_all_versions_db,
+    get_latest_version_for_resume_db,
+    get_next_version_number_db,
+    get_version_db,
+    get_versions_for_resume_db,
+    init_all_tables,
+)
 from services.exceptions import DatabaseError
 from services.jd_matcher import match_resume_to_jd
 
 logger = logging.getLogger(__name__)
 
 
-def get_db_connection(db_path: Path | str) -> sqlite3.Connection:
-    """Create and return a SQLite database connection with Row factory."""
-    try:
-        conn = sqlite3.connect(str(db_path))
-        conn.row_factory = sqlite3.Row
-        return conn
-    except sqlite3.Error as error:
-        logger.error("Failed to connect to SQLite database at '%s': %s", db_path, error, exc_info=True)
-        raise DatabaseError(
-            message=f"Database connection error: {error}",
-            user_message="Could not connect to database. Please try again.",
-        ) from error
-
-
 def init_db(db_path: Path | str | None = None) -> None:
+<<<<<<< HEAD
     """Initialize database tables."""
+=======
+    """Initialize database tables and indexes."""
+>>>>>>> a71c92b46a51e4eb1df6b0a25e8d5ed1ed4c67db
     init_all_tables(db_path)
 
 
 def get_next_version_number(db_path: Path | str | None, resume_id: int) -> int:
     """Get the next version number for a given resume_id."""
-    if is_postgres(db_path):
-        with get_db_cursor(db_path) as cursor:
-            cursor.execute("SELECT MAX(version_number) FROM resume_versions WHERE resume_id = %s", (resume_id,))
-            row = cursor.fetchone()
-            val = row["max"] if isinstance(row, dict) else (row[0] if row else None)
-            return (val if val is not None else 0) + 1
-    else:
-        try:
-            with get_db_connection(db_path or "resume_builder.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT MAX(version_number) FROM resume_versions WHERE resume_id = ?", (resume_id,))
-                row = cursor.fetchone()
-                current_max = row[0] if row and row[0] is not None else 0
-                return current_max + 1
-        except sqlite3.Error as error:
-            logger.error("Error querying max version_number for resume_id %s: %s", resume_id, error, exc_info=True)
-            raise DatabaseError(
-                message=f"Database query error in get_next_version_number: {error}",
-                user_message="Database error occurred while resolving version number.",
-            ) from error
+    return get_next_version_number_db(resume_id, db_path)
 
 
 def get_latest_version_for_resume(db_path: Path | str | None, resume_id: int) -> dict[str, Any] | None:
     """Retrieve the latest version for a given resume_id."""
-    if is_postgres(db_path):
-        with get_db_cursor(db_path) as cursor:
-            cursor.execute(
-                "SELECT * FROM resume_versions WHERE resume_id = %s ORDER BY version_number DESC LIMIT 1",
-                (resume_id,),
-            )
-            row = cursor.fetchone()
-            return dict(row) if row else None
-    else:
-        try:
-            with get_db_connection(db_path or "resume_builder.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT * FROM resume_versions WHERE resume_id = ? ORDER BY version_number DESC LIMIT 1",
-                    (resume_id,),
-                )
-                row = cursor.fetchone()
-                return dict(row) if row else None
-        except sqlite3.Error as error:
-            logger.error("Error fetching latest version for resume_id %s: %s", resume_id, error, exc_info=True)
-            raise DatabaseError(
-                message=f"Database query error in get_latest_version_for_resume: {error}",
-                user_message="Database error occurred while fetching resume history.",
-            ) from error
+    return get_latest_version_for_resume_db(resume_id, db_path)
 
 
 def format_details_to_text(resume_details: dict[str, Any]) -> str:
@@ -208,7 +163,7 @@ def create_resume_version(
     model: str = "",
     extracted_text: str | None = None,
 ) -> dict[str, Any]:
-    """Create and persist a new resume version in PostgreSQL or SQLite database."""
+    """Create and persist a new resume version in MongoDB."""
     init_db(db_path)
     version_number = get_next_version_number(db_path, resume_id)
     version_name = f"Version {version_number}"
@@ -251,142 +206,38 @@ def create_resume_version(
     changes = calculate_changes_summary(latest_ver, resume_details, template_filename)
     details_json = json.dumps(resume_details)
 
-    if is_postgres(db_path):
-        with get_db_cursor(db_path) as cursor:
-            cursor.execute(
-                """
-                INSERT INTO resume_versions (
-                    resume_id, version_number, version_name, created_at,
-                    filename, file_path, ats_score, match_score, changes,
-                    resume_details_json, resume_text, template_filename
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id;
-                """,
-                (
-                    resume_id,
-                    version_number,
-                    version_name,
-                    created_at,
-                    filename,
-                    str(file_path),
-                    ats_score,
-                    match_score,
-                    changes,
-                    details_json,
-                    resume_text,
-                    template_filename,
-                ),
-            )
-            version_id = cursor.fetchone()["id"]
-    else:
-        try:
-            with get_db_connection(db_path or "resume_builder.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    """
-                    INSERT INTO resume_versions (
-                        resume_id, version_number, version_name, created_at,
-                        filename, file_path, ats_score, match_score, changes,
-                        resume_details_json, resume_text, template_filename
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                    """,
-                    (
-                        resume_id,
-                        version_number,
-                        version_name,
-                        created_at,
-                        filename,
-                        str(file_path),
-                        ats_score,
-                        match_score,
-                        changes,
-                        details_json,
-                        resume_text,
-                        template_filename,
-                    ),
-                )
-                conn.commit()
-                version_id = cursor.lastrowid
-        except sqlite3.Error as error:
-            logger.error("Failed to insert resume version into SQLite database: %s", error, exc_info=True)
-            raise DatabaseError(
-                message=f"Database insert error in create_resume_version: {error}",
-                user_message="Failed to save resume version to database.",
-            ) from error
+    version_id = create_resume_version_db(
+        resume_id=resume_id,
+        version_number=version_number,
+        version_name=version_name,
+        created_at=created_at,
+        filename=filename,
+        file_path=str(file_path),
+        ats_score=ats_score,
+        match_score=match_score,
+        changes=changes,
+        resume_details_json=details_json,
+        resume_text=resume_text,
+        template_filename=template_filename,
+        db_target=db_path,
+    )
 
     return get_version(db_path, version_id)  # type: ignore
 
 
 def get_version(db_path: Path | str | None, version_id: int) -> dict[str, Any] | None:
     """Retrieve one version by its database ID."""
-    if is_postgres(db_path):
-        with get_db_cursor(db_path) as cursor:
-            cursor.execute("SELECT * FROM resume_versions WHERE id = %s", (version_id,))
-            row = cursor.fetchone()
-            return dict(row) if row else None
-    else:
-        try:
-            with get_db_connection(db_path or "resume_builder.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM resume_versions WHERE id = ?", (version_id,))
-                row = cursor.fetchone()
-                return dict(row) if row else None
-        except sqlite3.Error as error:
-            logger.error("Error retrieving version_id %s from database: %s", version_id, error, exc_info=True)
-            raise DatabaseError(
-                message=f"Database error in get_version: {error}",
-                user_message="Database error occurred while loading resume version.",
-            ) from error
+    return get_version_db(version_id, db_path)
 
 
 def get_versions_for_resume(db_path: Path | str | None, resume_id: int) -> list[dict[str, Any]]:
     """Retrieve all versions associated with a specific resume_id."""
-    init_db(db_path)
-    if is_postgres(db_path):
-        with get_db_cursor(db_path) as cursor:
-            cursor.execute(
-                "SELECT * FROM resume_versions WHERE resume_id = %s ORDER BY version_number ASC",
-                (resume_id,),
-            )
-            rows = cursor.fetchall()
-            return [dict(row) for row in rows]
-    else:
-        try:
-            with get_db_connection(db_path or "resume_builder.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT * FROM resume_versions WHERE resume_id = ? ORDER BY version_number ASC",
-                    (resume_id,),
-                )
-                return [dict(row) for row in cursor.fetchall()]
-        except sqlite3.Error as error:
-            logger.error("Error retrieving version history for resume_id %s: %s", resume_id, error, exc_info=True)
-            raise DatabaseError(
-                message=f"Database error in get_versions_for_resume: {error}",
-                user_message="Database error occurred while fetching resume history.",
-            ) from error
+    return get_versions_for_resume_db(resume_id, db_path)
 
 
 def get_all_versions(db_path: Path | str | None) -> list[dict[str, Any]]:
     """Retrieve all versions across all resumes."""
-    init_db(db_path)
-    if is_postgres(db_path):
-        with get_db_cursor(db_path) as cursor:
-            cursor.execute("SELECT * FROM resume_versions ORDER BY resume_id ASC, version_number ASC")
-            rows = cursor.fetchall()
-            return [dict(row) for row in rows]
-    else:
-        try:
-            with get_db_connection(db_path or "resume_builder.db") as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM resume_versions ORDER BY resume_id ASC, version_number ASC")
-                return [dict(row) for row in cursor.fetchall()]
-        except sqlite3.Error as error:
-            logger.error("Error retrieving all resume versions: %s", error, exc_info=True)
-            raise DatabaseError(
-                message=f"Database error in get_all_versions: {error}",
-                user_message="Database error occurred while loading versions list.",
-            ) from error
+    return get_all_versions_db(db_path)
 
 
 def compare_versions(

@@ -1,27 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}Resume Details | AI Resume Builder & Tracker{% endblock %}
+{% block title %}Resume Studio | Create Resume{% endblock %}
 
-{% macro render_field(field, placeholder="", rows=0, icon_class="") %}
-  <div class="mb-3">
-    <label for="{{ field.id }}" class="form-label fw-semibold text-dark small d-flex align-items-center gap-1">
+{% macro render_field(field, placeholder="", rows=0, icon_class="", help_text="", extra_class="") %}
+  <div class="{{ extra_class }}">
+    <label for="{{ field.id }}" class="block text-xs font-bold text-[#25262E] mb-1.5 flex items-center gap-1.5">
       {% if icon_class %}
-        <i class="bi {{ icon_class }} text-primary" aria-hidden="true"></i>
+        <i class="bi {{ icon_class }} text-[#434451]"></i>
       {% endif %}
       <span>{{ field.label.text }}</span>
       {% if field.flags.required %}
-        <span class="text-danger" aria-label="required">*</span>
+        <span class="text-[#434451] font-bold" title="Required">*</span>
       {% endif %}
     </label>
 
+    {% set err_class = "border-rose-500 bg-rose-50 text-rose-950" if field.errors else "border-[#434451] bg-[#EDEBE7] text-[#25262E]" %}
+
     {% if rows %}
-      {{ field(class="form-control" ~ (" is-invalid" if field.errors else ""), rows=rows, placeholder=placeholder, id=field.id, **{"aria-describedby": field.id ~ "-help" if field.errors else None}) }}
+      {{ field(class="w-full px-3.5 py-2.5 rounded-lg border text-xs sm:text-sm font-medium transition-all focus:outline-none placeholder-[#626372]/60 resize-y " ~ err_class, rows=rows, placeholder=placeholder, id=field.id) }}
     {% else %}
-      {{ field(class="form-control" ~ (" is-invalid" if field.errors else ""), placeholder=placeholder, id=field.id, **{"aria-describedby": field.id ~ "-help" if field.errors else None}) }}
+      {{ field(class="w-full px-3.5 py-2.5 rounded-lg border text-xs sm:text-sm font-medium transition-all focus:outline-none placeholder-[#626372]/60 " ~ err_class, placeholder=placeholder, id=field.id) }}
+    {% endif %}
+
+    {% if help_text and not field.errors %}
+      <p class="text-[11px] text-[#626372] mt-1">{{ help_text }}</p>
     {% endif %}
 
     {% if field.errors %}
-      <div id="{{ field.id }}-help" class="invalid-feedback d-flex align-items-center gap-1" role="alert">
+      <div id="{{ field.id }}-help" class="flex items-center gap-1 text-xs text-rose-700 font-semibold mt-1" role="alert">
         <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
         <span>{{ field.errors[0] }}</span>
       </div>
@@ -31,131 +37,180 @@
 
 {% block content %}
 <!-- Header Banner -->
-<section class="py-4 bg-white border-bottom shadow-xs">
-  <div class="container">
-    <div class="row align-items-center g-3">
-      <div class="col-lg-8">
-        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold mb-2">
-          <i class="bi bi-pencil-square me-1" aria-hidden="true"></i> Manual Builder
-        </span>
-        <h1 class="h2 fw-bold text-dark mb-1">Add Resume Information</h1>
-        <p class="text-secondary mb-0">
-          Enter your structured contact details, education, experience, skills, and projects to store in server memory.
+<section class="bg-[#EDEBE7] text-[#25262E] border-b border-[#434451]/30 py-8 sm:py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-[#25262E]">
+          Resume Studio
+        </h1>
+        <p class="text-xs sm:text-sm text-[#626372] mt-1 max-w-2xl font-medium">
+          Enter your contact info, experience, education, and skills. You can generate a styled DOCX/PDF resume at any time.
         </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="{{ url_for('main.version_history') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#EDEBE7] hover:bg-[#DFDCD5] border border-[#434451] text-[#25262E] text-xs font-bold transition-colors">
+          <i class="bi bi-clock-history text-[#434451]"></i> View Saved
+        </a>
       </div>
     </div>
   </div>
 </section>
 
-<section class="py-5">
-  <div class="container">
-    <form method="post" novalidate>
+<!-- Form Container (Ivory Canvas) -->
+<section class="py-8 sm:py-10 bg-[#EDEBE7]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <form method="post" novalidate class="space-y-6">
       {{ form.hidden_tag() }}
 
-      <div class="row g-4">
-        <!-- Personal Information Section -->
-        <div class="col-lg-6">
-          <div class="card border-0 shadow-sm p-4 bg-white h-100">
-            <h2 class="h5 fw-bold text-dark mb-4 border-bottom pb-2 d-flex align-items-center gap-2">
-              <i class="bi bi-person-vcard text-primary" aria-hidden="true"></i> Personal Information
-            </h2>
-            {{ render_field(form.full_name, "Jane Doe", icon_class="bi-person") }}
-            {{ render_field(form.email, "jane@example.com", icon_class="bi-envelope") }}
-            {{ render_field(form.phone, "+1 555 123 4567", icon_class="bi-telephone") }}
-            {{ render_field(form.linkedin, "https://www.linkedin.com/in/janedoe", icon_class="bi-linkedin") }}
-            {{ render_field(form.github, "https://github.com/janedoe", icon_class="bi-github") }}
-            {{ render_field(form.portfolio, "https://janedoe.dev", icon_class="bi-globe") }}
-            {{ render_field(form.address, "City, State, Country", icon_class="bi-geo-alt") }}
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left Column: Personal Info & Work Experience (7 Cols) -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          <!-- 1. Personal & Contact Information -->
+          <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 sm:p-7 shadow-xs border border-[#434451]">
+            <div class="flex items-center gap-2.5 pb-3 mb-5 border-b border-[#434451]/30">
+              <div class="w-8 h-8 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center font-bold border border-[#434451]">
+                <i class="bi bi-person-badge text-base"></i>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-[#25262E]">Contact & Profile</h2>
+                <p class="text-xs text-[#626372]">Your basic information and links</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {{ render_field(form.full_name, "e.g. Alex Morgan", icon_class="bi-person", extra_class="sm:col-span-2") }}
+              {{ render_field(form.email, "alex@example.com", icon_class="bi-envelope") }}
+              {{ render_field(form.phone, "+1 (555) 234-5678", icon_class="bi-telephone") }}
+              {{ render_field(form.linkedin, "https://linkedin.com/in/alexmorgan", icon_class="bi-linkedin") }}
+              {{ render_field(form.github, "https://github.com/alexmorgan", icon_class="bi-github") }}
+              {{ render_field(form.portfolio, "https://alexmorgan.dev", icon_class="bi-globe", extra_class="sm:col-span-2") }}
+              {{ render_field(form.address, "San Francisco, CA", icon_class="bi-geo-alt", extra_class="sm:col-span-2") }}
+            </div>
           </div>
+
+          <!-- 2. Work Experience -->
+          <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 sm:p-7 shadow-xs border border-[#434451]">
+            <div class="flex items-center gap-2.5 pb-3 mb-5 border-b border-[#434451]/30">
+              <div class="w-8 h-8 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center font-bold border border-[#434451]">
+                <i class="bi bi-briefcase text-base"></i>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-[#25262E]">Work Experience</h2>
+                <p class="text-xs text-[#626372]">Your recent roles, responsibilities, and achievements</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {{ render_field(form.company, "e.g. Acme Corp", icon_class="bi-building") }}
+              {{ render_field(form.role, "e.g. Senior Software Engineer", icon_class="bi-person-badge") }}
+              {{ render_field(form.duration, "e.g. 2023 - Present", icon_class="bi-calendar3", extra_class="sm:col-span-2") }}
+              {{ render_field(form.responsibilities, "• Led redesign of microservices reducing API latency by 35%.\n• Built automated CI/CD pipelines using Docker and GitHub Actions.\n• Mentored 3 junior developers and introduced automated testing.", rows=6, icon_class="bi-list-check", help_text="Tip: Use bullet points with numbers and impact metrics for highest ATS scoring.", extra_class="sm:col-span-2") }}
+            </div>
+          </div>
+
+          <!-- 3. Featured Projects -->
+          <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 sm:p-7 shadow-xs border border-[#434451]">
+            <div class="flex items-center gap-2.5 pb-3 mb-5 border-b border-[#434451]/30">
+              <div class="w-8 h-8 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center font-bold border border-[#434451]">
+                <i class="bi bi-folder2 text-base"></i>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-[#25262E]">Featured Projects (Optional)</h2>
+                <p class="text-xs text-[#626372]">Key applications, open source, or side projects</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {{ render_field(form.project_name, "e.g. Cloud Resume Platform", icon_class="bi-folder2-open") }}
+              {{ render_field(form.technologies, "e.g. Python, Flask, Tailwind CSS, MongoDB", icon_class="bi-code-square") }}
+              {{ render_field(form.project_description, "Designed a full-stack career platform with automated ATS evaluation, handling 10k+ monthly parsing requests.", rows=4, icon_class="bi-card-text", extra_class="sm:col-span-2") }}
+            </div>
+          </div>
+
         </div>
 
-        <!-- Education & Skills Section -->
-        <div class="col-lg-6 d-flex flex-column gap-4">
-          <div class="card border-0 shadow-sm p-4 bg-white">
-            <h2 class="h5 fw-bold text-dark mb-4 border-bottom pb-2 d-flex align-items-center gap-2">
-              <i class="bi bi-mortarboard text-primary" aria-hidden="true"></i> Education
-            </h2>
-            {{ render_field(form.degree, "B.Tech in Computer Science", icon_class="bi-award") }}
-            {{ render_field(form.college, "Example University", icon_class="bi-building") }}
-            {{ render_field(form.graduation_year, "2026", icon_class="bi-calendar-event") }}
-            {{ render_field(form.gpa, "8.7 / 10", icon_class="bi-star") }}
+        <!-- Right Column: Education, Skills, Accreditations (5 Cols) -->
+        <div class="lg:col-span-5 space-y-6">
+          
+          <!-- 4. Education -->
+          <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 sm:p-7 shadow-xs border border-[#434451]">
+            <div class="flex items-center gap-2.5 pb-3 mb-5 border-b border-[#434451]/30">
+              <div class="w-8 h-8 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center font-bold border border-[#434451]">
+                <i class="bi bi-mortarboard text-base"></i>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-[#25262E]">Education</h2>
+                <p class="text-xs text-[#626372]">Academic qualifications</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              {{ render_field(form.degree, "e.g. B.S. in Computer Science", icon_class="bi-award") }}
+              {{ render_field(form.college, "e.g. University of California, Berkeley", icon_class="bi-building") }}
+              <div class="grid grid-cols-2 gap-4">
+                {{ render_field(form.graduation_year, "e.g. 2025", icon_class="bi-calendar-event") }}
+                {{ render_field(form.gpa, "e.g. 3.8 / 4.0", icon_class="bi-check2-circle") }}
+              </div>
+            </div>
           </div>
 
-          <div class="card border-0 shadow-sm p-4 bg-white flex-grow-1">
-            <h2 class="h5 fw-bold text-dark mb-4 border-bottom pb-2 d-flex align-items-center gap-2">
-              <i class="bi bi-tools text-primary" aria-hidden="true"></i> Core Skills
-            </h2>
-            {{ render_field(form.skills, "Python\nFlask\nSQL\nBootstrap", 6, icon_class="bi-code-slash") }}
+          <!-- 5. Core Skills -->
+          <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 sm:p-7 shadow-xs border border-[#434451]">
+            <div class="flex items-center gap-2.5 pb-3 mb-5 border-b border-[#434451]/30">
+              <div class="w-8 h-8 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center font-bold border border-[#434451]">
+                <i class="bi bi-tools text-base"></i>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-[#25262E]">Technical & Core Skills</h2>
+                <p class="text-xs text-[#626372]">Languages, frameworks, and tools</p>
+              </div>
+            </div>
+
+            <div>
+              {{ render_field(form.skills, "Python, Flask, JavaScript, React, Tailwind CSS, MongoDB, Docker, Git, REST APIs", rows=6, icon_class="bi-code-slash", help_text="Separate with commas or list on new lines.") }}
+            </div>
           </div>
+
+          <!-- 6. Honors & Extras -->
+          <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 sm:p-7 shadow-xs border border-[#434451]">
+            <div class="flex items-center gap-2.5 pb-3 mb-5 border-b border-[#434451]/30">
+              <div class="w-8 h-8 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center font-bold border border-[#434451]">
+                <i class="bi bi-award text-base"></i>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-[#25262E]">Certifications & Languages</h2>
+                <p class="text-xs text-[#626372]">Additional credentials</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              {{ render_field(form.certifications, "• AWS Certified Solutions Architect\n• Certified Kubernetes Administrator", rows=3, icon_class="bi-award") }}
+              {{ render_field(form.achievements, "• Winner, Hackathon 2025\n• Dean's Honor List", rows=3, icon_class="bi-trophy") }}
+              {{ render_field(form.languages, "English (Native), Spanish (Conversational)", icon_class="bi-translate") }}
+            </div>
+          </div>
+
         </div>
 
-        <!-- Work Experience Section -->
-        <div class="col-lg-6">
-          <div class="card border-0 shadow-sm p-4 bg-white h-100">
-            <h2 class="h5 fw-bold text-dark mb-4 border-bottom pb-2 d-flex align-items-center gap-2">
-              <i class="bi bi-briefcase text-primary" aria-hidden="true"></i> Work Experience
-            </h2>
-            {{ render_field(form.company, "Company name", icon_class="bi-building") }}
-            {{ render_field(form.role, "Software Developer Intern", icon_class="bi-person-badge") }}
-            {{ render_field(form.duration, "Jan 2026 - Jun 2026", icon_class="bi-clock") }}
-            {{ render_field(form.responsibilities, "Built Flask routes and responsive Bootstrap templates.", 6, icon_class="bi-list-check") }}
-          </div>
-        </div>
-
-        <!-- Projects Section -->
-        <div class="col-lg-6">
-          <div class="card border-0 shadow-sm p-4 bg-white h-100">
-            <h2 class="h5 fw-bold text-dark mb-4 border-bottom pb-2 d-flex align-items-center gap-2">
-              <i class="bi bi-rocket-takeoff text-primary" aria-hidden="true"></i> Projects
-            </h2>
-            {{ render_field(form.project_name, "Resume Builder & Tracker", icon_class="bi-folder2-open") }}
-            {{ render_field(form.project_description, "A web application for managing and optimizing resumes.", 5, icon_class="bi-card-text") }}
-            {{ render_field(form.technologies, "Python, Flask, Bootstrap, SQLite", icon_class="bi-cpu") }}
-          </div>
-        </div>
-
-        <!-- Certifications, Achievements & Languages Section -->
-        <div class="col-lg-4">
-          <div class="card border-0 shadow-sm p-4 bg-white h-100">
-            <h2 class="h5 fw-bold text-dark mb-4 border-bottom pb-2 d-flex align-items-center gap-2">
-              <i class="bi bi-patch-check text-primary" aria-hidden="true"></i> Certifications
-            </h2>
-            {{ render_field(form.certifications, "AWS Certified Developer\nGoogle Cloud Engineer", 5) }}
-          </div>
-        </div>
-
-        <div class="col-lg-4">
-          <div class="card border-0 shadow-sm p-4 bg-white h-100">
-            <h2 class="h5 fw-bold text-dark mb-4 border-bottom pb-2 d-flex align-items-center gap-2">
-              <i class="bi bi-trophy text-primary" aria-hidden="true"></i> Achievements
-            </h2>
-            {{ render_field(form.achievements, "Hackathon Finalist 2025\nDean's Honor List", 5) }}
-          </div>
-        </div>
-
-        <div class="col-lg-4">
-          <div class="card border-0 shadow-sm p-4 bg-white h-100">
-            <h2 class="h5 fw-bold text-dark mb-4 border-bottom pb-2 d-flex align-items-center gap-2">
-              <i class="bi bi-translate text-primary" aria-hidden="true"></i> Languages
-            </h2>
-            {{ render_field(form.languages, "English\nHindi", 5) }}
-          </div>
-        </div>
       </div>
 
-      <!-- Sticky Action Save Bar -->
-      <div class="sticky-actions shadow-md mt-4 p-3 bg-white border">
-        <div class="container d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
-          <div class="d-flex align-items-center gap-2 text-secondary small">
-            <i class="bi bi-shield-lock-fill text-success" aria-hidden="true"></i>
-            <span>Information is processed safely in active memory.</span>
-          </div>
-          <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">
-            <i class="bi bi-save me-1" aria-hidden="true"></i> Save Resume Details
-          </button>
-        </div>
+      <!-- Action Bottom Bar -->
+      <div class="bg-[#EDEBE7] rounded-lg p-5 shadow-xs flex items-center justify-between border border-[#434451]">
+        <a href="{{ url_for('main.index') }}" class="px-4 py-2 rounded-lg border border-[#434451] text-xs font-bold text-[#25262E] hover:bg-[#DFDCD5] transition-colors">
+          Cancel
+        </a>
+        <button type="submit" class="px-6 py-2.5 rounded-lg font-bold text-xs sm:text-sm text-[#EDEBE7] bg-[#434451] hover:bg-[#25262E] shadow-xs transition-colors flex items-center gap-2">
+          <i class="bi bi-save2"></i> Save Resume Details
+        </button>
       </div>
+
     </form>
+
   </div>
 </section>
 {% endblock %}

@@ -11,6 +11,9 @@ def test_jd_upload_flow() -> bool:
     app.config["WTF_CSRF_ENABLED"] = False
     
     with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess["user_email"] = "testuser@example.com"
+            sess["user_name"] = "Test User"
         # 1. Test TXT file upload
         print("Testing Job Description TXT upload...")
         response = client.post(

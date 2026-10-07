@@ -26,6 +26,7 @@ def test_match_resume_to_jd_heuristic_fallback(sample_resume_text: str, sample_j
     assert result["analysis_type"] == "Local Diagnostics"
     assert "match_percentage" in result
     assert 0 <= result["match_percentage"] <= 100
+    assert isinstance(result["required_skills"], list)
     assert isinstance(result["matching_skills"], list)
     assert isinstance(result["missing_technical_skills"], list)
 

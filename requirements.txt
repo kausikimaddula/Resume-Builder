@@ -11,4 +11,5 @@ pytest
 pytest-flask
 Authlib
 requests
-psycopg2-binary
+pymongo
+mongomock

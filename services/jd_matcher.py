@@ -58,17 +58,14 @@ def match_resume_to_jd(
 
 def _validate_matcher_schema(parsed: dict[str, Any]) -> dict[str, Any]:
     """Validate required keys and data structures from JD matcher JSON response."""
-    required_keys = [
+    # Ensure core matching keys are present
+    core_keys = [
         "match_percentage",
         "matching_skills",
         "missing_technical_skills",
         "missing_soft_skills",
-        "recommended_keywords",
-        "recommended_certifications",
-        "recommended_projects",
-        "learning_roadmap",
     ]
-    for key in required_keys:
+    for key in core_keys:
         if key not in parsed:
             raise JdMatcherError(f"Missing required key in matching analysis JSON: '{key}'")
 
@@ -81,6 +78,7 @@ def _validate_matcher_schema(parsed: dict[str, Any]) -> dict[str, Any]:
 
     # Ensure list types
     list_keys = [
+        "required_skills",
         "matching_skills",
         "missing_technical_skills",
         "missing_soft_skills",
@@ -90,10 +88,20 @@ def _validate_matcher_schema(parsed: dict[str, Any]) -> dict[str, Any]:
         "learning_roadmap",
     ]
     for key in list_keys:
-        if not isinstance(parsed[key], list):
+        if key not in parsed:
+            parsed[key] = []
+        elif not isinstance(parsed[key], list):
             parsed[key] = [str(parsed[key])] if parsed[key] else []
         else:
-            parsed[key] = [str(item) for item in parsed[key]]
+            parsed[key] = [str(item) for item in parsed[key] if str(item).strip()]
+
+    # If required_skills not explicitly extracted, synthesize from matching + missing
+    if not parsed["required_skills"]:
+        synth = []
+        for s in parsed["matching_skills"] + parsed["missing_technical_skills"] + parsed["missing_soft_skills"]:
+            if s and str(s).strip() and str(s).strip() not in synth:
+                synth.append(str(s).strip())
+        parsed["required_skills"] = synth
 
     return parsed
 
@@ -213,8 +221,15 @@ def _match_resume_to_jd_heuristics(resume_text: str, jd_text: str) -> dict[str, 
     # Local warning additions
     learning_roadmap.append("Step Note: Set OPENAI_API_KEY to acquire complete AI personalized roadmap recommendations.")
 
+    # Calculate full required skills list from JD
+    all_jd_skills = sorted(list(jd_tech.union(jd_soft)))
+    required_skills_formatted = [s.capitalize() for s in all_jd_skills] if all_jd_skills else [s.capitalize() for s in matching_skills] + [s.capitalize() for s in missing_tech_list if "No significant" not in s]
+    if not required_skills_formatted:
+        required_skills_formatted = ["General Domain Competency"]
+
     return {
         "match_percentage": match_percentage,
+        "required_skills": required_skills_formatted,
         "matching_skills": [s.capitalize() for s in matching_skills] if matching_skills else ["General Domain Competency"],
         "missing_technical_skills": [s.capitalize() for s in missing_tech_list],
         "missing_soft_skills": [s.capitalize() for s in missing_soft_list],

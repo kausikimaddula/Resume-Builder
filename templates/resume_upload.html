@@ -1,277 +1,302 @@
 {% extends "base.html" %}
 
-{% block title %}Upload Resume | AI Resume Builder & Tracker{% endblock %}
+{% block title %}ATS Resume Scanner & Grammar Check | Resume Studio{% endblock %}
 
 {% block content %}
 <!-- Header Banner -->
-<section class="py-4 bg-white border-bottom shadow-xs">
-  <div class="container">
-    <div class="row align-items-center g-3">
-      <div class="col-lg-8">
-        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold mb-2">
-          <i class="bi bi-file-earmark-arrow-up me-1" aria-hidden="true"></i> Resume Parser & ATS Evaluator
-        </span>
-        <h1 class="h2 fw-bold text-dark mb-1">Upload & Extract Resume Text</h1>
-        <p class="text-secondary mb-0">
-          Upload your existing resume in PDF or DOCX format to parse content, compute ATS compatibility scores, and detect spelling/grammar issues.
+<section class="bg-[#EDEBE7] text-[#25262E] border-b border-[#434451]/30 py-8 sm:py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-[#25262E]">
+          ATS Resume Scanner
+        </h1>
+        <p class="text-xs sm:text-sm text-[#626372] mt-1 max-w-2xl font-medium">
+          Upload your resume in PDF or DOCX format to analyze readability, ATS compatibility score, and spelling/grammar mistakes.
         </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('main.compare_resume_vs_jd') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#EDEBE7] hover:bg-[#DFDCD5] border border-[#434451] text-[#25262E] text-xs font-bold transition-colors">
+          <i class="bi bi-briefcase text-[#434451]"></i> Job Matcher
+        </a>
       </div>
     </div>
   </div>
 </section>
 
-<section class="py-5">
-  <div class="container">
-    <div class="row g-4">
-      <!-- File Upload Dropzone Form Column -->
-      <div class="col-12">
-        <div class="card border-0 shadow-sm p-4 bg-white">
-          <form method="post" enctype="multipart/form-data" novalidate class="row g-3">
-            {{ form.hidden_tag() }}
+<!-- Main Workspace -->
+<section class="py-8 sm:py-10 bg-[#EDEBE7]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    
+    <!-- Upload Card -->
+    <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 sm:p-8 shadow-xs border border-[#434451]">
+      <form method="post" enctype="multipart/form-data" novalidate class="space-y-6">
+        {{ form.hidden_tag() }}
 
-            <div class="col-12">
-              <label for="{{ form.resume_file.id }}" class="form-label fw-bold text-dark mb-2 d-flex align-items-center gap-1">
-                <i class="bi bi-cloud-arrow-up text-primary" aria-hidden="true"></i> Select or Drag & Drop Resume File
-              </label>
+        <div class="drop-zone hover:bg-[#DFDCD5] hover:border-[#25262E] transition-all bg-[#EDEBE7] p-8 sm:p-10 rounded-lg border-2 border-dashed border-[#434451] text-center relative cursor-pointer">
+          <div class="w-12 h-12 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center text-2xl mx-auto mb-3 shadow-xs font-bold border border-[#434451]">
+            <i class="bi bi-cloud-arrow-up"></i>
+          </div>
+          <span class="block font-bold text-sm sm:text-base text-[#25262E] mb-1">Drag and drop your resume file here</span>
+          <span class="block text-xs text-[#626372] mb-3">or click to browse your computer</span>
+          <span class="inline-block px-3 py-1 rounded-md bg-[#DFDCD5] border border-[#434451] text-xs font-semibold text-[#25262E]">
+            Supported formats: PDF, DOCX (Max 5MB)
+          </span>
+          {{ form.resume_file(class="drop-zone__input absolute inset-0 opacity-0 cursor-pointer w-full h-full", id=form.resume_file.id) }}
+          <div class="drop-zone__file-name mt-3 text-xs font-bold text-[#434451]"></div>
+        </div>
 
-              <!-- Interactive Dropzone -->
-              <div class="drop-zone shadow-xs">
-                <i class="bi bi-file-earmark-arrow-up display-4 text-primary mb-2 d-block" aria-hidden="true"></i>
-                <span class="d-block fw-semibold text-dark mb-1">Drag and drop your resume file here</span>
-                <span class="d-block text-muted small mb-2">or click to browse from your computer</span>
-                <span class="badge bg-light text-secondary border px-3 py-1">Supported formats: .docx, .pdf (Max size: 5MB)</span>
+        {% if form.resume_file.errors %}
+          <div class="flex items-center gap-1.5 text-xs text-rose-700 font-semibold" role="alert">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span>{{ form.resume_file.errors[0] }}</span>
+          </div>
+        {% endif %}
 
-                {{ form.resume_file(class="drop-zone__input" ~ (" is-invalid" if form.resume_file.errors else "")) }}
-                <div class="drop-zone__file-name mt-3 small text-primary"></div>
-              </div>
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+          <p class="text-xs text-[#626372]">Your file is analyzed securely for text extraction and ATS feedback.</p>
+          <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm text-[#EDEBE7] bg-[#434451] hover:bg-[#25262E] shadow-xs transition-colors flex items-center justify-center gap-2">
+            <i class="bi bi-search"></i> Scan Resume
+          </button>
+        </div>
+      </form>
+    </div>
 
-              {% if form.resume_file.errors %}
-              <div class="text-danger small mt-2 d-flex align-items-center gap-1" role="alert">
-                <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
-                <span>{{ form.resume_file.errors[0] }}</span>
-              </div>
-              {% endif %}
+    {% if file_info and extracted_text %}
+    <!-- RESULTS SECTION -->
+    <div class="space-y-6 pt-4 border-t border-[#434451]/30">
+      
+      <!-- Unified Summary Header Bar -->
+      <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 shadow-xs border border-[#434451] flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-[#626372] block mb-1">Evaluation Results</span>
+          <h2 class="text-xl font-bold text-[#25262E]">
+            {{ file_info.original_filename }}
+          </h2>
+          <p class="text-xs text-[#626372] mt-0.5 font-medium">Format: {{ file_info.file_type }}</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+          {% if ats_analysis %}
+          <!-- ATS Score Pill -->
+          <div class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-[#EDEBE7] border border-[#434451]">
+            <div class="w-10 h-10 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center text-lg font-bold border border-[#434451]">
+              <i class="bi bi-speedometer2"></i>
             </div>
-
-            <!-- Upload Progress Bar Container -->
-            <div class="col-12 upload-progress-bar d-none">
-              <div class="d-flex justify-content-between align-items-center mb-1 small text-secondary">
-                <span>Uploading & Parsing Resume...</span>
-                <span class="fw-bold text-primary">Processing</span>
-              </div>
-              <div class="progress" style="height: 10px;">
-                <div class="progress-bar progress-bar-indigo progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-              </div>
+            <div>
+              <span class="block text-[10px] font-bold uppercase text-[#626372]">ATS Compatibility Score</span>
+              <span class="text-lg font-black text-[#25262E]">
+                {{ ats_analysis.score }}<span class="text-xs text-[#626372] font-normal">/100</span>
+              </span>
             </div>
+          </div>
+          {% endif %}
 
-            <div class="col-12 mt-3 d-grid d-md-flex justify-content-md-end">
-              <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">
-                <i class="bi bi-gear-wide-connected me-1" aria-hidden="true"></i> Parse & Analyze Resume
+          {% if proofread_results %}
+          <!-- Grammar Issues Pill -->
+          <div class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-[#EDEBE7] border border-[#434451]">
+            <div class="w-10 h-10 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center text-lg font-bold border border-[#434451]">
+              <i class="bi bi-spellcheck"></i>
+            </div>
+            <div>
+              <span class="block text-[10px] font-bold uppercase text-[#626372]">Writing Check</span>
+              <span class="text-base font-bold text-[#25262E]">
+                {{ proofread_results.mistakes|length }} issue{{ 's' if proofread_results.mistakes|length != 1 else '' }}
+              </span>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if ats_analysis %}
+          <!-- Export Reports -->
+          <div class="flex items-center gap-2">
+            <form method="post" action="{{ url_for('main.export_ats_report_route', fmt='docx') }}">
+              <input type="hidden" name="ats_data_json" value="{{ ats_analysis | tojson }}">
+              <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#434451] bg-[#EDEBE7] hover:bg-[#DFDCD5] text-[#25262E] text-xs font-bold shadow-xs transition-colors">
+                <i class="bi bi-file-earmark-word text-[#434451]"></i> DOCX
               </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {% if file_info and extracted_text %}
-      <!-- Extracted Text Display Column -->
-      <div class="col-12">
-        <div class="card border-0 shadow-sm p-4 bg-white mb-4">
-          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 border-bottom pb-3">
-            <h2 class="h5 fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-              <i class="bi bi-file-text text-primary" aria-hidden="true"></i>
-              <span>Extracted Text — {{ file_info.original_filename }}</span>
-              <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small">{{ file_info.file_type }}</span>
-            </h2>
-            <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" onclick="copyToClipboard(document.getElementById('extracted-text-area').textContent, 'Extracted resume text copied to clipboard!')">
-              <i class="bi bi-clipboard me-1" aria-hidden="true"></i> Copy Text
-            </button>
-          </div>
-          <div class="bg-light p-3 border rounded">
-            <pre id="extracted-text-area" class="mb-0 text-dark overflow-auto"
-              style="max-height: 400px; white-space: pre-wrap; font-family: var(--bs-font-monospace); font-size: 0.875rem;">{{ extracted_text }}</pre>
-          </div>
-        </div>
-      </div>
-
-      {% if ats_analysis %}
-      <!-- ATS Score Analysis Section -->
-      <div class="col-12">
-        <div class="card border-0 shadow-sm p-4 bg-white mb-4">
-          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 border-bottom pb-3">
-            <h2 class="h4 fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-              <i class="bi bi-speedometer2 text-primary" aria-hidden="true"></i>
-              <span>ATS Score Analysis</span>
-              <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-6 fw-semibold ms-2">{{ ats_analysis.analysis_type }}</span>
-            </h2>
-            <div class="d-flex align-items-center gap-2">
-              <form method="post" action="{{ url_for('main.export_ats_report_route', fmt='docx') }}" class="d-inline">
-                <input type="hidden" name="ats_data_json" value="{{ ats_analysis | tojson }}">
-                <button type="submit" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1">
-                  <i class="bi bi-file-earmark-word text-primary" aria-hidden="true"></i> Export DOCX
-                </button>
-              </form>
-              <form method="post" action="{{ url_for('main.export_ats_report_route', fmt='pdf') }}" class="d-inline">
-                <input type="hidden" name="ats_data_json" value="{{ ats_analysis | tojson }}">
-                <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1">
-                  <i class="bi bi-file-earmark-pdf text-danger" aria-hidden="true"></i> Export PDF
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <div class="row g-4 align-items-center mb-4">
-            <div class="col-md-3 text-center border-end pe-md-4">
-              <div class="display-3 fw-bold text-primary mb-1">{{ ats_analysis.score }}</div>
-              <div class="text-uppercase fw-semibold text-secondary small">Overall ATS Score</div>
-            </div>
-            <div class="col-md-9 ps-md-4">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <h3 class="h6 fw-bold mb-0">ATS Compatibility Rating</h3>
-                <span class="fw-bold text-dark">{{ ats_analysis.score }} / 100</span>
-              </div>
-              <div class="progress mb-2" style="height: 22px;">
-                {% if ats_analysis.score >= 80 %}
-                <div class="progress-bar bg-success progress-bar-emerald progress-bar-striped progress-bar-animated fw-bold" role="progressbar"
-                  style="width: {{ ats_analysis.score }}%;" aria-valuenow="{{ ats_analysis.score }}"
-                  aria-valuemin="0" aria-valuemax="100">{{ ats_analysis.score }}%</div>
-                {% elif ats_analysis.score >= 50 %}
-                <div class="progress-bar bg-warning progress-bar-amber progress-bar-striped progress-bar-animated text-dark fw-bold"
-                  role="progressbar" style="width: {{ ats_analysis.score }}%;"
-                  aria-valuenow="{{ ats_analysis.score }}" aria-valuemin="0" aria-valuemax="100">{{ ats_analysis.score }}%</div>
-                {% else %}
-                <div class="progress-bar bg-danger progress-bar-rose progress-bar-striped progress-bar-animated fw-bold" role="progressbar"
-                  style="width: {{ ats_analysis.score }}%;" aria-valuenow="{{ ats_analysis.score }}"
-                  aria-valuemin="0" aria-valuemax="100">{{ ats_analysis.score }}%</div>
-                {% endif %}
-              </div>
-              <p class="text-muted small mb-0">
-                A score of 80 or above indicates strong ATS compatibility and structure.
-              </p>
-            </div>
-          </div>
-
-          <div class="row g-4">
-            <div class="col-md-4">
-              <div class="card h-100 border-0 bg-success-subtle bg-opacity-50 p-3">
-                <h3 class="h6 fw-bold text-success mb-3 d-flex align-items-center gap-2">
-                  <i class="bi bi-check-circle-fill" aria-hidden="true"></i> Strengths
-                </h3>
-                <ul class="list-unstyled mb-0 text-dark small">
-                  {% for strength in ats_analysis.strengths %}
-                  <li class="mb-2 d-flex align-items-start gap-2">
-                    <i class="bi bi-check2 text-success mt-1" aria-hidden="true"></i>
-                    <span>{{ strength }}</span>
-                  </li>
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="card h-100 border-0 bg-danger-subtle bg-opacity-50 p-3">
-                <h3 class="h6 fw-bold text-danger mb-3 d-flex align-items-center gap-2">
-                  <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> Weaknesses
-                </h3>
-                <ul class="list-unstyled mb-0 text-dark small">
-                  {% for weakness in ats_analysis.weaknesses %}
-                  <li class="mb-2 d-flex align-items-start gap-2">
-                    <i class="bi bi-x-circle text-danger mt-1" aria-hidden="true"></i>
-                    <span>{{ weakness }}</span>
-                  </li>
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="card h-100 border-0 bg-warning-subtle bg-opacity-50 p-3">
-                <h3 class="h6 fw-bold text-warning-emphasis mb-3 d-flex align-items-center gap-2">
-                  <i class="bi bi-lightbulb-fill" aria-hidden="true"></i> Suggestions
-                </h3>
-                <ul class="list-unstyled mb-0 text-dark small">
-                  {% for suggestion in ats_analysis.suggestions %}
-                  <li class="mb-2 d-flex align-items-start gap-2">
-                    <i class="bi bi-arrow-right-short text-warning-emphasis mt-1 fs-6" aria-hidden="true"></i>
-                    <span>{{ suggestion }}</span>
-                  </li>
-                  {% endfor %}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endif %}
-
-      {% if proofread_results %}
-      <!-- Grammar and Spelling Checker Section -->
-      <div class="col-12 mb-4">
-        <div class="card border-0 shadow-sm p-4 bg-white">
-          <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 border-bottom pb-3">
-            <h2 class="h4 fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-              <i class="bi bi-spellcheck text-primary" aria-hidden="true"></i>
-              <span>Grammar & Spelling Review</span>
-              <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 small">{{ proofread_results.analysis_type }}</span>
-            </h2>
-          </div>
-
-          {% if proofread_results.mistakes %}
-          <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
-            <i class="bi bi-exclamation-circle-fill fs-5" aria-hidden="true"></i>
-            <div>
-              Found <strong>{{ proofread_results.mistakes|length }}</strong> potential writing issues in your resume. Check suggestions below:
-            </div>
-          </div>
-
-          <div class="row g-3">
-            {% for mistake in proofread_results.mistakes %}
-            <div class="col-12">
-              <div class="card border border-light-subtle shadow-xs">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle fw-semibold">
-                    <i class="bi bi-bug me-1" aria-hidden="true"></i> Issue #{{ loop.index }}
-                  </span>
-                  <small class="text-secondary small fw-semibold">Grammar Notice</small>
-                </div>
-                <div class="card-body">
-                  <div class="mb-3">
-                    <strong class="text-secondary small d-block mb-1 text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Original Sentence</strong>
-                    <div class="p-2 bg-light border border-light-subtle rounded text-dark">
-                      {% if mistake.mistake_word and mistake.mistake_word in mistake.original %}
-                      {{ mistake.original.replace(mistake.mistake_word, '<mark class="bg-danger bg-opacity-25 text-danger border border-danger-subtle px-1 rounded font-weight-bold">' ~ mistake.mistake_word ~ '</mark>') | safe }}
-                      {% else %}
-                      {{ mistake.original }}
-                      {% endif %}
-                    </div>
-                  </div>
-                  <div class="mb-3">
-                    <strong class="text-success small d-block mb-1 text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Suggested Correction</strong>
-                    <div class="p-2 bg-success-subtle text-success-emphasis border border-success-subtle rounded fw-semibold">
-                      <i class="bi bi-check2 me-1" aria-hidden="true"></i> {{ mistake.correction }}
-                    </div>
-                  </div>
-                  <div>
-                    <strong class="text-secondary small d-block mb-1 text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px;">Reason & Context</strong>
-                    <p class="mb-0 text-muted small">{{ mistake.reason }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-          </div>
-          {% else %}
-          <div class="alert alert-success d-flex align-items-center gap-2 mb-0" role="alert">
-            <i class="bi bi-check-circle-fill fs-5" aria-hidden="true"></i>
-            <div>
-              <strong>Great job!</strong> No grammar, spelling, or punctuation mistakes were detected in your resume.
-            </div>
+            </form>
+            <form method="post" action="{{ url_for('main.export_ats_report_route', fmt='pdf') }}">
+              <input type="hidden" name="ats_data_json" value="{{ ats_analysis | tojson }}">
+              <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#434451] bg-[#EDEBE7] hover:bg-[#DFDCD5] text-[#25262E] text-xs font-bold shadow-xs transition-colors">
+                <i class="bi bi-file-earmark-pdf text-rose-700"></i> PDF
+              </button>
+            </form>
           </div>
           {% endif %}
         </div>
       </div>
-      {% endif %}
 
-      {% endif %}
+      <!-- Main Results Grid: Insights & Extracted Content -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left: ATS Feedback & Grammar Mistakes (7 cols) -->
+        <div class="lg:col-span-7 space-y-6">
+          
+          {% if ats_analysis %}
+          <!-- Strengths, Weaknesses & Suggestions -->
+          <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 shadow-xs border border-[#434451] space-y-6">
+            <h3 class="text-base font-bold text-[#25262E] border-b border-[#434451]/30 pb-3">
+              ATS Feedback & Recommendations
+            </h3>
+
+            <!-- Strengths -->
+            <div>
+              <span class="flex items-center gap-2 text-xs font-bold uppercase text-emerald-800 mb-2">
+                <i class="bi bi-check-circle-fill text-emerald-700"></i> Strengths
+              </span>
+              <ul class="space-y-1.5 text-xs text-[#25262E]">
+                {% for item in ats_analysis.strengths %}
+                  <li class="flex items-start gap-2 bg-[#DFDCD5] p-2.5 rounded-lg border border-[#434451]/40 font-medium">
+                    <i class="bi bi-check2 text-emerald-700 font-bold mt-0.5"></i>
+                    <span>{{ item }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+
+            <!-- Weaknesses -->
+            {% if ats_analysis.weaknesses %}
+            <div>
+              <span class="flex items-center gap-2 text-xs font-bold uppercase text-rose-800 mb-2">
+                <i class="bi bi-exclamation-circle-fill text-rose-700"></i> Areas for Improvement
+              </span>
+              <ul class="space-y-1.5 text-xs text-[#25262E]">
+                {% for item in ats_analysis.weaknesses %}
+                  <li class="flex items-start gap-2 bg-[#DFDCD5] p-2.5 rounded-lg border border-[#434451]/40 font-medium">
+                    <i class="bi bi-x text-rose-700 font-bold mt-0.5 text-sm"></i>
+                    <span>{{ item }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+
+            <!-- Actionable Advice -->
+            {% if ats_analysis.suggestions %}
+            <div>
+              <span class="flex items-center gap-2 text-xs font-bold uppercase text-[#434451] mb-2">
+                <i class="bi bi-lightbulb-fill text-[#434451]"></i> Actionable Advice
+              </span>
+              <ul class="space-y-1.5 text-xs text-[#25262E]">
+                {% for item in ats_analysis.suggestions %}
+                  <li class="flex items-start gap-2 bg-[#DFDCD5] p-2.5 rounded-lg border border-[#434451]/40 font-medium">
+                    <i class="bi bi-arrow-right text-[#434451] font-bold mt-0.5 text-xs"></i>
+                    <span>{{ item }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if proofread_results %}
+          <!-- Grammar & Spelling -->
+          <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 shadow-xs border border-[#434451] space-y-4">
+            <div class="flex items-center justify-between border-b border-[#434451]/30 pb-3">
+              <h3 class="text-base font-bold text-[#25262E] flex items-center gap-2">
+                <i class="bi bi-spellcheck text-[#434451]"></i> Writing & Grammar Check
+              </h3>
+              {% if proofread_results.mistakes %}
+                <span class="px-2.5 py-0.5 rounded-md bg-[#DFDCD5] text-[#25262E] text-xs font-bold border border-[#434451]">
+                  {{ proofread_results.mistakes|length }} Notice{{ 's' if proofread_results.mistakes|length != 1 else '' }}
+                </span>
+              {% else %}
+                <span class="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-xs font-bold border border-emerald-300">
+                  No Issues Detected
+                </span>
+              {% endif %}
+            </div>
+
+            {% if proofread_results.mistakes %}
+              <div class="space-y-3">
+                {% for mistake in proofread_results.mistakes %}
+                  <div class="p-3.5 rounded-lg bg-[#DFDCD5] border border-[#434451] space-y-2 text-xs text-[#25262E]">
+                    <div>
+                      <span class="text-[10px] font-bold uppercase text-[#626372] block mb-0.5">Original</span>
+                      <p class="font-medium text-[#25262E]">
+                        {{ mistake.original }}
+                      </p>
+                    </div>
+                    <div>
+                      <span class="text-[10px] font-bold uppercase text-[#434451] block mb-0.5">Suggested Correction</span>
+                      <div class="flex items-center justify-between bg-[#EDEBE7] text-[#25262E] p-2 rounded-lg border border-[#434451] font-semibold">
+                        <span><i class="bi bi-check2 text-emerald-700 mr-1"></i> {{ mistake.correction }}</span>
+                        <button type="button" class="text-[11px] text-[#434451] hover:underline font-bold" onclick="copyToClipboard('{{ mistake.correction | replace("'", "\\'") }}', 'Correction copied!')">
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                    {% if mistake.reason %}
+                      <p class="text-[11px] text-[#626372]"><strong>Note:</strong> {{ mistake.reason }}</p>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="p-4 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 flex items-center gap-2.5 text-xs font-medium">
+                <i class="bi bi-check-circle-fill text-emerald-700 text-base"></i>
+                <span>No spelling or grammatical issues detected in your resume text.</span>
+              </div>
+            {% endif %}
+          </div>
+          {% endif %}
+
+        </div>
+
+        <!-- Right: Extracted Text (5 cols) -->
+        <div class="lg:col-span-5 bg-[#EDEBE7] text-[#25262E] rounded-lg p-6 shadow-xs border border-[#434451] space-y-4 sticky top-24">
+          <div class="flex items-center justify-between border-b border-[#434451]/30 pb-3">
+            <h3 class="text-base font-bold text-[#25262E] flex items-center gap-2">
+              <i class="bi bi-file-text text-[#434451]"></i> Extracted Text
+            </h3>
+            <button type="button" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#434451] bg-[#EDEBE7] hover:bg-[#DFDCD5] text-xs font-bold text-[#25262E] shadow-xs transition-colors" onclick="copyToClipboard(document.getElementById('extracted-text-area').textContent, 'Resume text copied!')">
+              <i class="bi bi-clipboard"></i> Copy
+            </button>
+          </div>
+
+          <div class="p-3.5 rounded-lg bg-[#DFDCD5] border border-[#434451] max-h-[500px] overflow-auto">
+            <pre id="extracted-text-area" class="text-xs text-[#25262E] whitespace-pre-wrap font-mono leading-relaxed">{{ extracted_text }}</pre>
+          </div>
+        </div>
+
+      </div>
+
     </div>
+    {% endif %}
+
   </div>
 </section>
+
+<!-- Dropzone Interactive JS -->
+<script>
+  document.querySelectorAll('.drop-zone').forEach(zone => {
+    const input = zone.querySelector('.drop-zone__input');
+    const nameDisplay = zone.querySelector('.drop-zone__file-name');
+
+    if (!input) return;
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      zone.addEventListener(eventName, e => {
+        e.preventDefault();
+        zone.classList.add('bg-[#DFDCD5]', 'border-[#25262E]');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      zone.addEventListener(eventName, e => {
+        e.preventDefault();
+        zone.classList.remove('bg-[#DFDCD5]', 'border-[#25262E]');
+      });
+    });
+
+    input.addEventListener('change', () => {
+      if (input.files && input.files[0] && nameDisplay) {
+        nameDisplay.textContent = 'Selected: ' + input.files[0].name;
+      }
+    });
+  });
+</script>
 {% endblock %}

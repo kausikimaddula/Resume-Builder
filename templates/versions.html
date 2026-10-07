@@ -1,62 +1,67 @@
 {% extends "base.html" %}
 
-{% block title %}Resume Versions | AI Resume Builder & Tracker{% endblock %}
+{% block title %}Resume Versions & History | Resume Studio{% endblock %}
 
 {% block content %}
 <!-- Header Banner -->
-<section class="py-4 bg-white border-bottom shadow-xs">
-  <div class="container">
-    <div class="row align-items-center g-3">
-      <div class="col-lg-8">
-        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 fw-semibold mb-2">
-          <i class="bi bi-clock-history me-1" aria-hidden="true"></i> SQLite Version History
-        </span>
-        <h1 class="h2 fw-bold text-dark mb-1">
+<section class="bg-[#EDEBE7] border-b border-[#434451]/30 py-8 sm:py-10 text-[#25262E]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-[#25262E]">
           {% if resume %}
-            Versions for {{ resume.personal.full_name }}
+            Saved Versions for {{ resume.personal.full_name }}
           {% else %}
-            Resume Versions History
+            Resume Version History
           {% endif %}
         </h1>
-        <p class="text-secondary mb-0">
-          Track, inspect, and compare every generated version of your resume stored in SQLite.
+        <p class="text-xs sm:text-sm text-[#626372] mt-1 max-w-2xl font-medium">
+          View past generated versions, compare changes side-by-side, and download DOCX or PDF exports.
         </p>
       </div>
-      <div class="col-lg-4 text-lg-end">
-        <a class="btn btn-outline-primary me-2" href="{{ url_for('main.compare_versions_route') }}">
-          <i class="bi bi-arrow-left-right me-1" aria-hidden="true"></i> Compare Versions
-        </a>
+
+      <div class="flex items-center gap-3">
         {% if resume_id %}
-          <a class="btn btn-primary" href="{{ url_for('main.resume_detail', resume_id=resume_id) }}">
-            <i class="bi bi-file-earmark-person me-1" aria-hidden="true"></i> Back to Resume
+          <a href="{{ url_for('main.resume_detail', resume_id=resume_id) }}" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#EDEBE7] hover:bg-[#DFDCD5] border border-[#434451] text-[#25262E] text-xs font-bold transition-colors">
+            <i class="bi bi-file-earmark-person text-[#434451]"></i> Resume Details
           </a>
         {% endif %}
+        <a href="{{ url_for('main.resume_form') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#434451] hover:bg-[#25262E] text-[#EDEBE7] text-xs font-bold shadow-xs transition-colors">
+          <i class="bi bi-plus-lg"></i> New Resume
+        </a>
       </div>
     </div>
   </div>
 </section>
 
-<section class="py-5">
-  <div class="container">
+<!-- Main Versions Table Section -->
+<section class="py-8 sm:py-10 bg-[#EDEBE7]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    
     {% if compare_form.version_a.choices|length >= 2 %}
-      <!-- Compare Form Card -->
-      <div class="card border-0 shadow-sm mb-4 p-4 bg-white">
-        <h2 class="h5 fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-          <i class="bi bi-arrow-left-right text-primary" aria-hidden="true"></i> Quick Compare Two Versions
+      <!-- Quick Compare Bar -->
+      <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg border border-[#434451] p-5 shadow-xs">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-[#626372] mb-3 flex items-center gap-1.5">
+          <i class="bi bi-arrow-left-right text-[#434451]"></i> Compare Two Versions Side-by-Side
         </h2>
-        <form method="post" action="{{ url_for('main.compare_versions_route') }}" class="row g-3 align-items-end">
+
+        <form method="post" action="{{ url_for('main.compare_versions_route') }}" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
           {{ compare_form.hidden_tag() }}
-          <div class="col-md-5">
-            <label for="{{ compare_form.version_a.id }}" class="form-label fw-semibold text-dark small">{{ compare_form.version_a.label.text }}</label>
-            {{ compare_form.version_a(class="form-select") }}
+          <div class="md:col-span-5">
+            <label for="{{ compare_form.version_a.id }}" class="block text-[11px] font-bold text-[#626372] mb-1">
+              {{ compare_form.version_a.label.text }}
+            </label>
+            {{ compare_form.version_a(class="w-full px-3 py-2 bg-[#EDEBE7] border border-[#434451] rounded-lg text-xs font-bold text-[#25262E] focus:outline-none focus:ring-2 focus:ring-[#434451]") }}
           </div>
-          <div class="col-md-5">
-            <label for="{{ compare_form.version_b.id }}" class="form-label fw-semibold text-dark small">{{ compare_form.version_b.label.text }}</label>
-            {{ compare_form.version_b(class="form-select") }}
+          <div class="md:col-span-5">
+            <label for="{{ compare_form.version_b.id }}" class="block text-[11px] font-bold text-[#626372] mb-1">
+              {{ compare_form.version_b.label.text }}
+            </label>
+            {{ compare_form.version_b(class="w-full px-3 py-2 bg-[#EDEBE7] border border-[#434451] rounded-lg text-xs font-bold text-[#25262E] focus:outline-none focus:ring-2 focus:ring-[#434451]") }}
           </div>
-          <div class="col-md-2">
-            <button type="submit" class="btn btn-success w-100 fw-semibold">
-              <i class="bi bi-check2-circle me-1" aria-hidden="true"></i> Compare
+          <div class="md:col-span-2">
+            <button type="submit" class="w-full py-2 px-3.5 rounded-lg font-bold text-xs text-[#EDEBE7] bg-[#434451] hover:bg-[#25262E] shadow-xs transition-colors flex items-center justify-center gap-1.5">
+              <i class="bi bi-arrow-left-right"></i> Compare
             </button>
           </div>
         </form>
@@ -64,97 +69,87 @@
     {% endif %}
 
     <!-- Versions Table Card -->
-    <div class="card border-0 shadow-sm bg-white">
-      <div class="card-body p-0">
-        {% if versions %}
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th scope="col" class="ps-4">Version</th>
-                  <th scope="col">Timestamp</th>
-                  <th scope="col">ATS Score</th>
-                  <th scope="col">Match Score</th>
-                  <th scope="col">Changes Summary</th>
-                  <th scope="col">Template / File</th>
-                  <th scope="col" class="text-end pe-4">Export & Actions</th>
+    <div class="bg-[#EDEBE7] text-[#25262E] rounded-lg border border-[#434451] shadow-xs overflow-hidden">
+      {% if versions %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-[#DFDCD5] text-[#25262E] border-b border-[#434451]">
+              <tr>
+                <th class="py-3 px-6 font-bold">Version Name</th>
+                <th class="py-3 px-4 font-bold">Date Created</th>
+                <th class="py-3 px-4 font-bold">ATS Score</th>
+                <th class="py-3 px-4 font-bold">Match Score</th>
+                <th class="py-3 px-4 font-bold">Changes</th>
+                <th class="py-3 px-4 font-bold">Template</th>
+                <th class="py-3 px-6 text-right font-bold">Download & Diff</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#434451]/30">
+              {% for version in versions %}
+                <tr class="hover:bg-[#DFDCD5]/50 transition-colors">
+                  <td class="py-3.5 px-6">
+                    <span class="inline-block px-2.5 py-1 rounded-md bg-[#DFDCD5] text-[#25262E] font-bold text-xs border border-[#434451]">{{ version.version_name }}</span>
+                    <div class="text-[10px] text-[#626372] font-mono mt-0.5">#{{ version.id }}</div>
+                  </td>
+                  <td class="py-3.5 px-4 font-medium text-[#25262E]">
+                    {{ version.created_at }}
+                  </td>
+                  <td class="py-3.5 px-4">
+                    {% if version.ats_score is not none %}
+                      <span class="px-2 py-0.5 rounded-md bg-[#EDEBE7] text-[#25262E] font-bold border border-[#434451]">{{ version.ats_score }}/100</span>
+                    {% else %}
+                      <span class="text-[#626372]">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="py-3.5 px-4">
+                    {% if version.match_score is not none %}
+                      <span class="px-2 py-0.5 rounded-md bg-[#EDEBE7] text-[#25262E] font-bold border border-[#434451]">{{ version.match_score }}%</span>
+                    {% else %}
+                      <span class="text-[#626372]">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="py-3.5 px-4 max-w-xs">
+                    <p class="text-[#626372] line-clamp-2 font-medium">{{ version.changes if version.changes else "Initial version" }}</p>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <div class="font-medium text-[#25262E]">{{ version.template_filename }}</div>
+                  </td>
+                  <td class="py-3.5 px-6 text-right">
+                    <div class="inline-flex items-center gap-1.5">
+                      <a href="{{ url_for('main.export_version_resume', version_id=version.id, fmt='docx') }}" class="px-2.5 py-1 rounded-lg border border-[#434451] bg-[#EDEBE7] hover:bg-[#DFDCD5] text-[#25262E] font-bold text-xs shadow-xs transition-colors" title="Download DOCX">
+                        <i class="bi bi-file-earmark-word text-[#434451]"></i> DOCX
+                      </a>
+                      <a href="{{ url_for('main.export_version_resume', version_id=version.id, fmt='pdf') }}" class="px-2.5 py-1 rounded-lg border border-[#434451] bg-[#EDEBE7] hover:bg-[#DFDCD5] text-[#25262E] font-bold text-xs shadow-xs transition-colors" title="Download PDF">
+                        <i class="bi bi-file-earmark-pdf text-rose-700"></i> PDF
+                      </a>
+                      {% if loop.index > 1 %}
+                        <a href="{{ url_for('main.compare_versions_route', a=versions[loop.index0 - 2].id, b=version.id) }}" class="px-2.5 py-1 rounded-lg border border-[#434451] bg-[#DFDCD5] hover:bg-[#D5D1C9] text-[#25262E] font-bold text-xs transition-colors" title="Diff Against Previous">
+                          <i class="bi bi-arrow-left-right text-[#434451]"></i> Diff
+                        </a>
+                      {% endif %}
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {% for version in versions %}
-                  <tr>
-                    <td class="ps-4">
-                      <span class="badge bg-primary fs-6">{{ version.version_name }}</span>
-                      <div class="small text-muted font-monospace mt-1">ID: #{{ version.id }}</div>
-                    </td>
-                    <td>
-                      <span class="fw-semibold text-dark small">{{ version.created_at }}</span>
-                    </td>
-                    <td>
-                      {% if version.ats_score is not none %}
-                        {% if version.ats_score >= 80 %}
-                          <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1.5 fs-7">{{ version.ats_score }}/100</span>
-                        {% elif version.ats_score >= 60 %}
-                          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1.5 fs-7">{{ version.ats_score }}/100</span>
-                        {% else %}
-                          <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2.5 py-1.5 fs-7">{{ version.ats_score }}/100</span>
-                        {% endif %}
-                      {% else %}
-                        <span class="badge bg-secondary-subtle text-secondary">N/A</span>
-                      {% endif %}
-                    </td>
-                    <td>
-                      {% if version.match_score is not none %}
-                        {% if version.match_score >= 75 %}
-                          <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1.5 fs-7">{{ version.match_score }}%</span>
-                        {% elif version.match_score >= 50 %}
-                          <span class="badge bg-info-subtle text-info border border-info-subtle px-2.5 py-1.5 fs-7">{{ version.match_score }}%</span>
-                        {% else %}
-                          <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2.5 py-1.5 fs-7">{{ version.match_score }}%</span>
-                        {% endif %}
-                      {% else %}
-                        <span class="badge bg-light text-secondary border">N/A</span>
-                      {% endif %}
-                    </td>
-                    <td style="max-width: 300px;">
-                      <p class="mb-0 small text-secondary preserve-lines">{{ version.changes if version.changes else "No changes recorded." }}</p>
-                    </td>
-                    <td>
-                      <div class="small fw-semibold text-dark">{{ version.template_filename }}</div>
-                      <div class="small text-muted font-monospace">{{ version.filename }}</div>
-                    </td>
-                    <td class="text-end pe-4">
-                      <div class="btn-group btn-group-sm">
-                        <a class="btn btn-outline-success d-inline-flex align-items-center gap-1" href="{{ url_for('main.export_version_resume', version_id=version.id, fmt='docx') }}">
-                          <i class="bi bi-file-earmark-word" aria-hidden="true"></i> DOCX
-                        </a>
-                        <a class="btn btn-outline-danger d-inline-flex align-items-center gap-1" href="{{ url_for('main.export_version_resume', version_id=version.id, fmt='pdf') }}">
-                          <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> PDF
-                        </a>
-                        {% if loop.index > 1 %}
-                          <a class="btn btn-outline-primary d-inline-flex align-items-center gap-1" href="{{ url_for('main.compare_versions_route', a=versions[loop.index0 - 2].id, b=version.id) }}">
-                            <i class="bi bi-arrow-left-right" aria-hidden="true"></i> Diff
-                          </a>
-                        {% endif %}
-                      </div>
-                    </td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="p-12 text-center space-y-3">
+          <div class="w-12 h-12 rounded-lg bg-[#DFDCD5] text-[#434451] flex items-center justify-center text-xl mx-auto border border-[#434451]">
+            <i class="bi bi-clock-history"></i>
           </div>
-        {% else %}
-          <div class="p-5 text-center">
-            <i class="bi bi-clock-history display-4 text-secondary opacity-50 mb-3 d-block" aria-hidden="true"></i>
-            <h3 class="h5 text-muted">No resume versions found in SQLite.</h3>
-            <p class="text-secondary mb-3">Whenever a resume is generated, a version snapshot will automatically be saved here.</p>
-            <a class="btn btn-primary" href="{{ url_for('main.resume_form') }}">
-              <i class="bi bi-plus-circle me-1" aria-hidden="true"></i> Create Resume Details
+          <h3 class="text-sm font-bold text-[#25262E]">No resume versions saved yet</h3>
+          <p class="text-xs text-[#626372] max-w-sm mx-auto font-medium">Whenever a resume is generated, an automatic version snapshot will appear here.</p>
+          <div class="pt-2">
+            <a href="{{ url_for('main.resume_form') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[#EDEBE7] font-bold text-xs bg-[#434451] hover:bg-[#25262E] transition-colors">
+              <i class="bi bi-plus-lg"></i> Create Resume
             </a>
           </div>
-        {% endif %}
-      </div>
+        </div>
+      {% endif %}
     </div>
+
   </div>
 </section>
 {% endblock %}

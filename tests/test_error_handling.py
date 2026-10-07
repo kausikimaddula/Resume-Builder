@@ -159,17 +159,17 @@ class TestErrorHandling(unittest.TestCase):
         self.assertIn("rate limit exceeded", ctx.exception.user_message.lower())
 
     # 4. Database Errors
-    @patch("services.version_service.get_db_connection")
+    @patch("services.database.get_mongo_db")
     def test_database_error_handling(self, mock_get_db) -> None:
-        """Verify DatabaseError is raised and caught cleanly on SQLite failures."""
-        import sqlite3
-        mock_get_db.side_effect = sqlite3.Error("Disk I/O failure")
+        """Verify DatabaseError is raised and caught cleanly on database failures."""
+        mock_get_db.side_effect = DatabaseError(message="Connection failure", user_message="Could not connect to database.")
 
         with self.assertRaises(DatabaseError) as ctx:
-            get_versions_for_resume(self.app.config["DATABASE_PATH"], resume_id=1)
+            get_versions_for_resume(None, resume_id=1)
         self.assertTrue(
             "database" in ctx.exception.user_message.lower()
             or "failed" in ctx.exception.user_message.lower()
+            or "connect" in ctx.exception.user_message.lower()
         )
 
     # 5. Unexpected Exceptions User-Friendly Handling
